@@ -80,6 +80,16 @@ create table users (
 create index idx_users_role on users(role);
 create index idx_users_class on users(class_id);
 
+-- Helper: read the caller's role/id from their own users row. Defined here
+-- (right after `users` exists) rather than down in §9, since §8's policies
+-- need it too and SQL scripts run top to bottom.
+create or replace function current_role_is(target_role user_role)
+returns boolean language sql stable as $$
+  select exists (
+    select 1 from users where id = auth.uid() and role = target_role
+  );
+$$;
+
 -- which subjects a teacher is assigned to teach, and to which classes
 create table teacher_subjects (
   teacher_id uuid not null references users(id) on delete cascade,
@@ -319,13 +329,19 @@ alter table student_answers enable row level security;
 alter table results enable row level security;
 alter table term_subject_results enable row level security;
 
--- Helper: read the caller's role/id from their own users row.
-create or replace function current_role_is(target_role user_role)
-returns boolean language sql stable as $$
-  select exists (
-    select 1 from users where id = auth.uid() and role = target_role
-  );
-$$;
+-- Reference/lookup tables — no sensitive content, but RLS still needs to
+-- be turned on explicitly or they're wide open to the anon key by default.
+alter table academic_sessions enable row level security;
+alter table terms enable row level security;
+alter table classes enable row level security;
+alter table subjects enable row level security;
+alter table class_subjects enable row level security;
+alter table teacher_subjects enable row level security;
+alter table exam_questions enable row level security;
+alter table grading_scale enable row level security;
+
+-- Helper: read the caller's role/id from their own users row — defined
+-- up in §3, right after `users`, so §8's policies could reach it too.
 
 -- Students may only see and modify their own answers/sessions/results.
 create policy student_sessions_own on student_exam_sessions
@@ -351,6 +367,120 @@ create policy users_read_own on users
 create policy admin_full_access_users on users
   for all using (current_role_is('super_admin'));
 
+-- exams: teacher who created it (or admin) manages it; a student can read
+-- an exam once they're assigned to one of its batches.
+create policy exams_manage on exams
+  for all using (
+    current_role_is('super_admin')
+    or created_by = auth.uid()
+  );
+
+create policy exams_student_read on exams
+  for select using (
+    exists (
+      select 1 from exam_batches eb
+      join batch_students bs on bs.batch_id = eb.id
+      where eb.exam_id = exams.id and bs.student_id = auth.uid()
+    )
+  );
+
+-- exam_batches: same owning-teacher/admin pattern; students read only the
+-- batch(es) they're actually assigned to.
+create policy exam_batches_manage on exam_batches
+  for all using (
+    current_role_is('super_admin')
+    or exists (select 1 from exams where exams.id = exam_batches.exam_id and exams.created_by = auth.uid())
+  );
+
+create policy exam_batches_student_read on exam_batches
+  for select using (
+    exists (select 1 from batch_students bs where bs.batch_id = exam_batches.id and bs.student_id = auth.uid())
+  );
+
+-- batch_students: the owning teacher/admin assigns students; a student can
+-- read their own assignment rows (to know which batch they're in).
+create policy batch_students_manage on batch_students
+  for all using (
+    current_role_is('super_admin')
+    or exists (
+      select 1 from exam_batches eb join exams e on e.id = eb.exam_id
+      where eb.id = batch_students.batch_id and e.created_by = auth.uid()
+    )
+  );
+
+create policy batch_students_own_read on batch_students
+  for select using (student_id = auth.uid());
+
+-- term_subject_results: admin manages; a student reads only their own
+-- published rollup. (Not yet written to by any app code today — report
+-- cards compute the rollup live from `results` — but locked down now
+-- rather than left wide open until something does use it.)
+create policy term_subject_results_admin on term_subject_results
+  for all using (current_role_is('super_admin'));
+
+create policy term_subject_results_student_read on term_subject_results
+  for select using (student_id = auth.uid() and published = true);
+
+-- Pin the helper function's search_path (Supabase lint: function_search_path_mutable) —
+-- prevents a search_path-hijacking attack from shadowing `users` with a
+-- malicious table of the same name in another schema.
+create or replace function current_role_is(target_role user_role)
+returns boolean language sql stable
+set search_path = public
+as $$
+  select exists (
+    select 1 from users where id = auth.uid() and role = target_role
+  );
+$$;
+
 -- NOTE: extend these policies per-table as the app's access patterns firm up —
 -- these are a secure-by-default starting point, not the full policy set for
 -- every write path (e.g. teacher grading, batch assignment).
+
+-- Reference/lookup tables: any signed-in user can read, only admin writes.
+create policy authenticated_read_academic_sessions on academic_sessions for select using (auth.uid() is not null);
+create policy admin_write_academic_sessions on academic_sessions for all using (current_role_is('super_admin'));
+
+create policy authenticated_read_terms on terms for select using (auth.uid() is not null);
+create policy admin_write_terms on terms for all using (current_role_is('super_admin'));
+
+create policy authenticated_read_classes on classes for select using (auth.uid() is not null);
+create policy admin_write_classes on classes for all using (current_role_is('super_admin'));
+
+create policy authenticated_read_subjects on subjects for select using (auth.uid() is not null);
+create policy admin_write_subjects on subjects for all using (current_role_is('super_admin'));
+
+create policy authenticated_read_class_subjects on class_subjects for select using (auth.uid() is not null);
+create policy admin_write_class_subjects on class_subjects for all using (current_role_is('super_admin'));
+
+create policy authenticated_read_teacher_subjects on teacher_subjects for select using (auth.uid() is not null);
+create policy admin_write_teacher_subjects on teacher_subjects for all using (current_role_is('super_admin'));
+
+create policy authenticated_read_grading_scale on grading_scale for select using (auth.uid() is not null);
+create policy admin_write_grading_scale on grading_scale for all using (current_role_is('super_admin'));
+
+-- exam_questions: teachers/admins manage their own exams; students can see
+-- which questions belong to an exam only once they have a session for it.
+create policy exam_questions_manage on exam_questions
+  for all using (
+    current_role_is('super_admin')
+    or exists (select 1 from exams where exams.id = exam_questions.exam_id and exams.created_by = auth.uid())
+  );
+
+create policy exam_questions_student_read on exam_questions
+  for select using (
+    exists (
+      select 1 from student_exam_sessions ses
+      where ses.exam_id = exam_questions.exam_id and ses.student_id = auth.uid()
+    )
+  );
+
+-- question_options: deliberately NOT readable by students via RLS, even
+-- for their own exam — is_correct would leak the answer key through the
+-- REST API directly. Student-facing reads go through the app's API routes
+-- using the service-role client, which strips is_correct before responding.
+create policy question_options_manage on question_options
+  for all using (
+    current_role_is('super_admin')
+    or exists (select 1 from questions q where q.id = question_options.question_id and q.created_by = auth.uid())
+  );
