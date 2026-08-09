@@ -1,0 +1,193 @@
+"use client";
+
+/**
+ * BulkImportModal — upload a CSV of students or teachers, see per-row
+ * validation before anything is written, then import only the valid rows.
+ *
+ * Expected columns (header row, any order):
+ *   students → full_name, email, admission_number, class
+ *   teachers → full_name, email, staff_id, subjects   (subjects: "Math;English")
+ */
+
+import { useMemo, useState } from "react";
+import { Upload, Download, CheckCircle2, XCircle, Loader2, X } from "lucide-react";
+import { parseCSVToObjects } from "./csv";
+import type { PersonRole } from "./types";
+
+export interface ImportRow {
+  fullName: string;
+  email: string;
+  admissionNumber?: string;
+  staffId?: string;
+  classId?: string;
+  subjectNames?: string[];
+}
+
+interface ParsedRow {
+  raw: Record<string, string>;
+  data: ImportRow | null;
+  error: string | null;
+}
+
+interface BulkImportModalProps {
+  role: PersonRole;
+  classOptions: { id: string; name: string }[];
+  subjectOptions: string[];
+  onImport: (rows: ImportRow[]) => Promise<void>;
+  onClose: () => void;
+}
+
+export default function BulkImportModal({ role, classOptions, subjectOptions, onImport, onClose }: BulkImportModalProps) {
+  const [parsed, setParsed] = useState<ParsedRow[] | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const validRows = useMemo(() => (parsed ?? []).filter((r) => r.data).map((r) => r.data!), [parsed]);
+  const invalidCount = (parsed?.length ?? 0) - validRows.length;
+
+  const validateRow = (raw: Record<string, string>): ParsedRow => {
+    const fullName = raw["full_name"] ?? raw["name"] ?? "";
+    const email = raw["email"] ?? "";
+    if (!fullName.trim()) return { raw, data: null, error: "Missing full_name" };
+    if (!email.trim() || !email.includes("@")) return { raw, data: null, error: "Missing or invalid email" };
+
+    if (role === "student") {
+      const admissionNumber = raw["admission_number"] ?? raw["admission number"] ?? "";
+      const className = raw["class"] ?? "";
+      if (!admissionNumber.trim()) return { raw, data: null, error: "Missing admission_number" };
+      const matchedClass = classOptions.find((c) => c.name.toLowerCase() === className.trim().toLowerCase());
+      if (!matchedClass) return { raw, data: null, error: `Unrecognized class "${className}"` };
+      return { raw, data: { fullName, email, admissionNumber, classId: matchedClass.id }, error: null };
+    }
+
+    const staffId = raw["staff_id"] ?? raw["staff id"] ?? "";
+    if (!staffId.trim()) return { raw, data: null, error: "Missing staff_id" };
+    const subjectNames = (raw["subjects"] ?? "")
+      .split(";")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const unknown = subjectNames.filter((s) => !subjectOptions.some((o) => o.toLowerCase() === s.toLowerCase()));
+    if (unknown.length > 0) return { raw, data: null, error: `Unrecognized subject(s): ${unknown.join(", ")}` };
+    return { raw, data: { fullName, email, staffId, subjectNames }, error: null };
+  };
+
+  const handleFile = async (file: File) => {
+    setError(null);
+    try {
+      const text = await file.text();
+      const objects = parseCSVToObjects(text);
+      if (objects.length === 0) {
+        setError("That file has no data rows.");
+        return;
+      }
+      setParsed(objects.map(validateRow));
+    } catch {
+      setError("Couldn't read that file. Make sure it's a plain .csv export.");
+    }
+  };
+
+  const downloadTemplate = () => {
+    const header = role === "student" ? "full_name,email,admission_number,class" : "full_name,email,staff_id,subjects";
+    const example =
+      role === "student"
+        ? "Chidinma Okafor,chidinma@example.com,SFGS/2024/0201,JSS1"
+        : "Mrs. Adeyemi,adeyemi@example.com,SFGS-T-014,Mathematics;Further Mathematics";
+    const blob = new Blob([`${header}\n${example}\n`], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${role}_import_template.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleConfirm = async () => {
+    setImporting(true);
+    setError(null);
+    try {
+      await onImport(validRows);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Import failed partway through. Check for duplicates and try again.");
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/50 p-4">
+      <div className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-lg bg-white shadow-card-hover">
+        <div className="flex items-center justify-between border-b border-black/5 px-5 py-4">
+          <h2 className="font-display text-[15px] font-semibold text-ink">Bulk import {role === "student" ? "students" : "teachers"}</h2>
+          <button onClick={onClose} className="rounded-md p-1.5 text-ink/40 hover:bg-background-muted">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-5 py-4">
+          {!parsed ? (
+            <div className="space-y-3.5">
+              <p className="text-[13px] text-ink/60">
+                Upload a CSV with columns {role === "student" ? "full_name, email, admission_number, class" : "full_name, email, staff_id, subjects"}.
+              </p>
+              <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed border-black/15 px-4 py-8 text-center hover:border-black/25">
+                <Upload size={22} className="text-ink/35" />
+                <span className="text-[13px] font-medium text-ink/60">Choose a .csv file</span>
+                <input type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
+              </label>
+              <button onClick={downloadTemplate} className="flex items-center gap-1.5 text-[12.5px] font-medium text-crimson-700 hover:text-crimson-800">
+                <Download size={13} /> Download a template
+              </button>
+              {error && <p className="rounded-md bg-crimson-50 px-3 py-2 text-[12.5px] text-crimson-700">{error}</p>}
+            </div>
+          ) : (
+            <div>
+              <div className="mb-3 flex items-center gap-4 text-[13px]">
+                <span className="flex items-center gap-1.5 font-medium text-success">
+                  <CheckCircle2 size={15} /> {validRows.length} ready to import
+                </span>
+                {invalidCount > 0 && (
+                  <span className="flex items-center gap-1.5 font-medium text-crimson-600">
+                    <XCircle size={15} /> {invalidCount} with errors
+                  </span>
+                )}
+              </div>
+              <div className="max-h-72 space-y-1.5 overflow-y-auto">
+                {parsed.map((row, i) => (
+                  <div
+                    key={i}
+                    className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-[12.5px] ${
+                      row.data ? "bg-background-muted text-ink/70" : "bg-crimson-50 text-crimson-700"
+                    }`}
+                  >
+                    {row.data ? <CheckCircle2 size={14} className="shrink-0" /> : <XCircle size={14} className="shrink-0" />}
+                    <span className="flex-1 truncate">{row.raw["full_name"] || row.raw["name"] || `Row ${i + 1}`}</span>
+                    <span className="shrink-0 text-[11.5px] opacity-80">{row.error ?? "OK"}</span>
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => setParsed(null)} className="mt-3 text-[12.5px] font-medium text-ink/50 hover:text-ink/70">
+                Choose a different file
+              </button>
+              {error && <p className="mt-3 rounded-md bg-crimson-50 px-3 py-2 text-[12.5px] text-crimson-700">{error}</p>}
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-2.5 border-t border-black/5 px-5 py-4">
+          <button onClick={onClose} disabled={importing} className="flex-1 rounded-lg border border-black/10 py-2.5 text-[13px] font-medium text-ink/70 hover:bg-background-muted disabled:opacity-50">
+            Cancel
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={!parsed || validRows.length === 0 || importing}
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-white hover:bg-crimson-700 disabled:opacity-50"
+          >
+            {importing && <Loader2 size={14} className="animate-spin" />}
+            {importing ? "Importing…" : `Import ${validRows.length || ""} ${role === "student" ? "student" : "teacher"}${validRows.length === 1 ? "" : "s"}`}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

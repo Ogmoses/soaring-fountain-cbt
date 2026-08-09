@@ -1,0 +1,108 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { gradeObjectiveAnswers, sumAwardedPoints, type GradableQuestion, type SubmittedAnswer } from "@/lib/grading";
+import type { AnswersMap } from "@/components/exam/ExamInterface";
+
+/**
+ * POST /api/exam-sessions/submit
+ * body: { sessionId: string, answers: AnswersMap }
+ *
+ * Persists the final answer set, closes the session, and immediately
+ * auto-marks every objective question (multiple_choice / true_false /
+ * fill_blank). short_theory answers are left pending for the Grading
+ * Queue — /api/student-answers/grade finishes the score once they're in.
+ */
+export async function POST(req: NextRequest) {
+  const { sessionId, answers } = (await req.json()) as { sessionId: string; answers: AnswersMap };
+  if (!sessionId) return NextResponse.json({ error: "sessionId is required." }, { status: 400 });
+
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+
+  const { data: session } = await supabase.from("student_exam_sessions").select("id, exam_id, student_id, status").eq("id", sessionId).single();
+  if (!session || session.student_id !== auth.user.id) return NextResponse.json({ error: "Session not found." }, { status: 404 });
+  if (session.status !== "active") return NextResponse.json({ error: "This exam has already been submitted." }, { status: 409 });
+
+  const { data: exam } = await supabase.from("exams").select("show_result_instantly").eq("id", session.exam_id).single();
+
+  // ---- Fetch grading data: each question's type/points/correct answer ----
+  const { data: examQuestions } = await supabase
+    .from("exam_questions")
+    .select("questions(id, type, points, reference_answer, question_options(id, is_correct))")
+    .eq("exam_id", session.exam_id);
+
+  const gradableQuestions: GradableQuestion[] = (examQuestions ?? []).map((eq: any) => ({
+    id: eq.questions.id,
+    type: eq.questions.type,
+    points: eq.questions.points,
+    referenceAnswer: eq.questions.reference_answer,
+    correctOptionId: eq.questions.question_options?.find((o: any) => o.is_correct)?.id ?? null,
+  }));
+  const typeById = new Map(gradableQuestions.map((q) => [q.id, q.type]));
+
+  // ---- Persist the final answer set (covers anything since the last autosave tick) ----
+  if (answers && Object.keys(answers).length > 0) {
+    const rows = Object.entries(answers).map(([questionId, a]) => {
+      const isObjective = typeById.get(questionId) === "multiple_choice" || typeById.get(questionId) === "true_false";
+      return {
+        session_id: sessionId,
+        question_id: questionId,
+        selected_option_id: isObjective ? a.value || null : null,
+        free_text_answer: !isObjective ? a.value || null : null,
+        is_flagged: a.flagged,
+        updated_at: new Date().toISOString(),
+      };
+    });
+    await supabase.from("student_answers").upsert(rows, { onConflict: "session_id,question_id" });
+  }
+
+  // ---- Auto-grade ----
+  const { data: savedAnswers } = await supabase.from("student_answers").select("question_id, selected_option_id, free_text_answer").eq("session_id", sessionId);
+  const submitted: SubmittedAnswer[] = (savedAnswers ?? []).map((a) => ({
+    questionId: a.question_id,
+    selectedOptionId: a.selected_option_id,
+    freeTextAnswer: a.free_text_answer,
+  }));
+  const graded = gradeObjectiveAnswers(gradableQuestions, submitted);
+
+  await Promise.all(
+    graded
+      .filter((g) => g.isAutoGraded)
+      .map((g) =>
+        supabase
+          .from("student_answers")
+          .update({ is_auto_graded: true, points_awarded: g.pointsAwarded, graded_at: new Date().toISOString() })
+          .eq("session_id", sessionId)
+          .eq("question_id", g.questionId)
+      )
+  );
+
+  const objectiveScore = sumAwardedPoints(graded);
+  const maxScore = gradableQuestions.reduce((sum, q) => sum + q.points, 0);
+  const hasPendingTheory = graded.some((g) => !g.isAutoGraded);
+
+  // ---- Close the session and write the (possibly provisional) result ----
+  await supabase.from("student_exam_sessions").update({ status: "submitted", submitted_at: new Date().toISOString() }).eq("id", sessionId);
+
+  await supabase.from("results").upsert(
+    {
+      student_id: session.student_id,
+      exam_id: session.exam_id,
+      session_id: sessionId,
+      objective_score: objectiveScore,
+      theory_score: 0, // filled in by /api/student-answers/grade once theory answers are marked
+      total_score: objectiveScore,
+      published: false,
+    },
+    { onConflict: "student_id,exam_id" }
+  );
+
+  return NextResponse.json({
+    ok: true,
+    objectiveScore,
+    maxScore,
+    hasPendingTheory,
+    showResultInstantly: !!exam?.show_result_instantly && !hasPendingTheory,
+  });
+}
