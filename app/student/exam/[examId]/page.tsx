@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import ExamInterface, { type AnswersMap, type ExamData } from "@/components/exam/ExamInterface";
@@ -16,7 +16,8 @@ function getDeviceFingerprint(): string {
   return id;
 }
 
-export default function StudentExamPage() {
+/** Holds the useSearchParams() call — needs a Suspense boundary above it, see the default export below. */
+function StudentExamContent() {
   const params = useParams<{ examId: string }>();
   const searchParams = useSearchParams();
   const batchId = searchParams.get("batch") ?? "";
@@ -111,5 +112,19 @@ export default function StudentExamPage() {
       onAutoSave={handleAutoSave}
       onSubmit={handleSubmit}
     />
+  );
+}
+
+export default function StudentExamPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-cream-50">
+          <Loader2 size={22} className="animate-spin text-crimson-600" />
+        </div>
+      }
+    >
+      <StudentExamContent />
+    </Suspense>
   );
 }

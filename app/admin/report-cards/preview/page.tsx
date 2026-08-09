@@ -1,12 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Loader2, AlertTriangle } from "lucide-react";
 import ReportCardPrintView from "@/components/reports/ReportCardPrintView";
 import type { ReportCardData } from "@/components/reports/types";
 
-export default function ReportCardPreviewPage() {
+/**
+ * useSearchParams() opts a page out of static prerendering and requires a
+ * Suspense boundary around whatever calls it — Next.js's build fails
+ * without one. The actual logic lives in this inner component; the
+ * default export below just wraps it.
+ */
+function ReportCardPreviewContent() {
   const searchParams = useSearchParams();
   const studentId = searchParams.get("student") ?? "";
   const termId = searchParams.get("term") ?? "";
@@ -54,4 +60,18 @@ export default function ReportCardPreviewPage() {
   }
 
   return <ReportCardPrintView data={data} pdfUrl={`/api/report-cards/${studentId}/${termId}?comment=${encodeURIComponent(comment)}&principal=${encodeURIComponent(principal)}`} />;
+}
+
+export default function ReportCardPreviewPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-cream-50">
+          <Loader2 size={20} className="animate-spin text-crimson-600" />
+        </div>
+      }
+    >
+      <ReportCardPreviewContent />
+    </Suspense>
+  );
 }
