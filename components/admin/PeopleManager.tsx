@@ -49,7 +49,7 @@ export default function PeopleManager({
     [people, search]
   );
 
-  const handleSave = async (person: Omit<PersonRow, "isActive"> & { id?: string }) => {
+  const handleSave = async (person: Omit<PersonRow, "id" | "isActive"> & { id?: string }) => {
     if (person.id) {
       await onUpdate(tab, person.id, person);
     } else {

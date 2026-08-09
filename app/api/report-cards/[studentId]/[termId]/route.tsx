@@ -32,7 +32,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ stud
     const data = await buildReportCardData(supabase, studentId, termId, { teacherComment, principalName });
     const pdfBuffer = await renderToBuffer(<ReportCardDocument data={data} />);
 
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${data.studentName.replace(/\s+/g, "_")}_${data.termName.replace(/\s+/g, "_")}_report_card.pdf"`,

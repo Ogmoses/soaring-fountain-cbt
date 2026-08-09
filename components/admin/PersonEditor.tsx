@@ -14,7 +14,7 @@ interface PersonEditorProps {
   initial?: PersonRow | null;
   classOptions: { id: string; name: string }[]; // for students
   subjectOptions: string[]; // for teachers
-  onSave: (person: Omit<PersonRow, "isActive"> & { id?: string }) => Promise<{ credential?: string } | void>;
+  onSave: (person: Omit<PersonRow, "id" | "isActive"> & { id?: string }) => Promise<{ credential?: string } | void>;
   onCancel: () => void;
 }
 

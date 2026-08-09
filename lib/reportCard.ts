@@ -16,10 +16,9 @@ const SCHOOL_PROFILE_FALLBACK = {
 
 interface ExamMeta {
   id: string;
-  subjectId: string;
-  subjectName: string;
-  weightPercent: number;
-  isTerminal: boolean;
+  subject_id: string;
+  weight_percent: number;
+  is_terminal: boolean;
 }
 
 /** Sum of a question bank's points for one exam — `exams` doesn't cache a max_score column. */
