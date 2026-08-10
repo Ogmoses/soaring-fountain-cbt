@@ -117,7 +117,29 @@ first real deploy):
 
 **Every screen across all three portals is now wired to real Supabase —
 none of the sample-data constants from earlier passes remain anywhere in
-`app/`.** What's left is the small items above, plus the DB needing real
-content: as of this deploy it has zero users, zero classes, zero of
-everything (the grading scale defaults are now seeded). Bootstrapping the
-first Super Admin is the one manual step nothing else can substitute for.
+`app/`.**
+
+**Since the first live deploy, two more real bugs surfaced and got fixed:**
+- A stray extra `)` in `app/student/page.tsx`'s Supabase select string —
+  these strings are type-checked at compile time, so a malformed one
+  produces a `ParserError` type rather than a normal syntax error.
+- `teacher_subjects` was a real, working table with nothing populating or
+  reading it — Question Bank and Exam Builder showed every teacher every
+  subject in the school. Closed the loop both ways: the People screen now
+  has a real subject-and-class assignment editor per teacher (writing to
+  `teacher_subjects`), and Question Bank/Exam Builder now filter to a
+  signed-in teacher's actual assignments — falling back to showing
+  everything only if a teacher has zero assignments yet, so nobody's ever
+  completely stuck.
+
+**The Super Admin bootstrap is done** — Moses (`ogmoses321@gmail.com`) is
+`super_admin` in `public.users`, matching the Supabase Auth user created
+by hand. Grading scale defaults (A–F) are seeded. Classes, subjects, and
+real students/teachers still need creating through the app.
+
+**Deliberately not done, and why:** Settings' logo upload still saves a
+`data:` URL instead of uploading to Supabase Storage. Fixing it properly
+means creating a bucket, writing its RLS policies, and rewriting the
+upload handlers in two components — real work with real risk of new bugs,
+and unlike everything above, a `data:` URL logo doesn't break anything,
+it's just inefficient. Left for a dedicated pass rather than rushed here.

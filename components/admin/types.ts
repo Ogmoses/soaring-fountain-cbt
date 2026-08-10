@@ -2,6 +2,11 @@
 
 export type PersonRole = "student" | "teacher";
 
+export interface TeacherAssignment {
+  subjectId: string;
+  classId: string;
+}
+
 export interface PersonRow {
   id: string;
   role: PersonRole;
@@ -10,7 +15,8 @@ export interface PersonRow {
   admissionNumber?: string; // students
   staffId?: string; // teachers
   classId?: string; // students: current class (FK -> classes.id)
-  subjectNames?: string[]; // teachers: assigned subjects (display only — see note in app/admin/people/page.tsx)
+  subjectNames?: string[]; // teachers: display only, derived from `assignments` by the page
+  assignments?: TeacherAssignment[]; // teachers: the real (subject, class) pairs written to teacher_subjects
   isActive: boolean;
 }
 

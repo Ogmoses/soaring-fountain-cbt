@@ -35,7 +35,7 @@ export default function StudentHomePage() {
         supabase.from("student_exam_sessions").select("exam_id, status").eq("student_id", authUser.id),
         supabase
           .from("results")
-          .select("exam_id, total_score, grade_letter, exams(id, title, subjects(name), terms(name)))")
+          .select("exam_id, total_score, grade_letter, exams(id, title, subjects(name), terms(name))")
           .eq("student_id", authUser.id)
           .eq("published", true),
       ]);

@@ -20,11 +20,8 @@ export default function TeacherQuestionsPage() {
   const loadAll = async () => {
     if (!authUser) return;
 
-    // TODO: filter to `teacher_subjects` once that table is actually
-    // populated at account-creation time (see README's known gap) —
-    // every subject is shown for now rather than an empty list.
     const [{ data: subjectRows }, { data: questionRows }] = await Promise.all([
-      supabase.from("subjects").select("id, name").order("name"),
+      supabase.from("teacher_subjects").select("subjects(id, name)").eq("teacher_id", authUser.id),
       supabase
         .from("questions")
         .select("id, subject_id, topic, type, prompt, image_url, points, reference_answer, updated_at, subjects(name), question_options(id, option_text, is_correct, order_index)")
@@ -32,7 +29,21 @@ export default function TeacherQuestionsPage() {
         .order("updated_at", { ascending: false }),
     ]);
 
-    setSubjects(subjectRows ?? []);
+    const uniqueSubjects = new Map<string, string>();
+    for (const row of subjectRows ?? []) {
+      const s = (row as any).subjects;
+      if (s) uniqueSubjects.set(s.id, s.name);
+    }
+
+    if (uniqueSubjects.size === 0) {
+      // No teacher_subjects assignments yet (e.g. an admin hasn't set them
+      // up) — fall back to every subject rather than leaving the teacher
+      // completely unable to create a question.
+      const { data: allSubjects } = await supabase.from("subjects").select("id, name").order("name");
+      for (const s of allSubjects ?? []) uniqueSubjects.set(s.id, s.name);
+    }
+
+    setSubjects([...uniqueSubjects.entries()].map(([id, name]) => ({ id, name })));
     setQuestions(
       (questionRows ?? []).map((q: any) => ({
         id: q.id,

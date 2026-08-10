@@ -17,15 +17,28 @@ export default function AdminPeoplePage() {
   const [students, setStudents] = useState<PersonRow[]>([]);
   const [teachers, setTeachers] = useState<PersonRow[]>([]);
   const [classOptions, setClassOptions] = useState<{ id: string; name: string }[]>([]);
-  const [subjectOptions, setSubjectOptions] = useState<string[]>([]);
+  const [subjectOptions, setSubjectOptions] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadAll = async () => {
-    const [{ data: users }, { data: classes }, { data: subjects }] = await Promise.all([
+    const [{ data: users }, { data: classes }, { data: subjects }, { data: teacherSubjectRows }] = await Promise.all([
       supabase.from("users").select("id, role, full_name, email, admission_number, staff_id, class_id, is_active").in("role", ["student", "teacher"]),
       supabase.from("classes").select("id, name"),
-      supabase.from("subjects").select("name"),
+      supabase.from("subjects").select("id, name"),
+      supabase.from("teacher_subjects").select("teacher_id, subject_id, class_id, subjects(name)"),
     ]);
+
+    const assignmentsByTeacher = new Map<string, { subjectId: string; classId: string }[]>();
+    const subjectNamesByTeacher = new Map<string, Set<string>>();
+    for (const row of teacherSubjectRows ?? []) {
+      const list = assignmentsByTeacher.get(row.teacher_id) ?? [];
+      list.push({ subjectId: row.subject_id, classId: row.class_id });
+      assignmentsByTeacher.set(row.teacher_id, list);
+
+      const names = subjectNamesByTeacher.get(row.teacher_id) ?? new Set<string>();
+      names.add((row as any).subjects?.name ?? "");
+      subjectNamesByTeacher.set(row.teacher_id, names);
+    }
 
     const toRow = (u: any): PersonRow => ({
       id: u.id,
@@ -35,13 +48,15 @@ export default function AdminPeoplePage() {
       admissionNumber: u.admission_number ?? undefined,
       staffId: u.staff_id ?? undefined,
       classId: u.class_id ?? undefined,
+      assignments: assignmentsByTeacher.get(u.id),
+      subjectNames: subjectNamesByTeacher.get(u.id) ? [...subjectNamesByTeacher.get(u.id)!] : undefined,
       isActive: u.is_active,
     });
 
     setStudents((users ?? []).filter((u) => u.role === "student").map(toRow));
     setTeachers((users ?? []).filter((u) => u.role === "teacher").map(toRow));
     setClassOptions(classes ?? []);
-    setSubjectOptions((subjects ?? []).map((s) => s.name));
+    setSubjectOptions(subjects ?? []);
     setLoading(false);
   };
 
@@ -50,7 +65,14 @@ export default function AdminPeoplePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleCreate = async (role: PersonRole, person: Omit<PersonRow, "id" | "isActive">) => {
+  const syncTeacherSubjects = async (teacherId: string, assignments?: { subjectId: string; classId: string }[]) => {
+    await supabase.from("teacher_subjects").delete().eq("teacher_id", teacherId);
+    if (assignments && assignments.length > 0) {
+      await supabase.from("teacher_subjects").insert(assignments.map((a) => ({ teacher_id: teacherId, subject_id: a.subjectId, class_id: a.classId })));
+    }
+  };
+
+  const handleCreate = async (role: PersonRole, person: Omit<PersonRow, "id" | "isActive" | "subjectNames">) => {
     const res = await fetch("/api/admin/people", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -58,11 +80,12 @@ export default function AdminPeoplePage() {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? "Couldn't create that account.");
+    if (role === "teacher") await syncTeacherSubjects(data.id, person.assignments);
     await loadAll();
     return { credential: data.credential as string };
   };
 
-  const handleUpdate = async (_role: PersonRole, id: string, person: Omit<PersonRow, "id" | "isActive">) => {
+  const handleUpdate = async (role: PersonRole, id: string, person: Omit<PersonRow, "id" | "isActive" | "subjectNames">) => {
     const res = await fetch("/api/admin/people", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -70,6 +93,7 @@ export default function AdminPeoplePage() {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? "Couldn't update that account.");
+    if (role === "teacher") await syncTeacherSubjects(id, person.assignments);
     await loadAll();
   };
 

@@ -13,11 +13,11 @@ import type { PersonRole, PersonRow } from "./types";
 
 interface PeopleManagerProps {
   classOptions: { id: string; name: string }[];
-  subjectOptions: string[];
+  subjectOptions: { id: string; name: string }[];
   students: PersonRow[];
   teachers: PersonRow[];
-  onCreate: (role: PersonRole, person: Omit<PersonRow, "id" | "isActive">) => Promise<{ credential?: string } | void>;
-  onUpdate: (role: PersonRole, id: string, person: Omit<PersonRow, "id" | "isActive">) => Promise<void>;
+  onCreate: (role: PersonRole, person: Omit<PersonRow, "id" | "isActive" | "subjectNames">) => Promise<{ credential?: string } | void>;
+  onUpdate: (role: PersonRole, id: string, person: Omit<PersonRow, "id" | "isActive" | "subjectNames">) => Promise<void>;
   onToggleActive: (role: PersonRole, id: string, isActive: boolean) => Promise<void>;
   onDelete: (role: PersonRole, id: string) => Promise<void>;
   onBulkImport: (role: PersonRole, rows: ImportRow[]) => Promise<void>;
@@ -49,7 +49,7 @@ export default function PeopleManager({
     [people, search]
   );
 
-  const handleSave = async (person: Omit<PersonRow, "id" | "isActive"> & { id?: string }) => {
+  const handleSave = async (person: Omit<PersonRow, "id" | "isActive" | "subjectNames"> & { id?: string }) => {
     if (person.id) {
       await onUpdate(tab, person.id, person);
     } else {
@@ -162,7 +162,7 @@ export default function PeopleManager({
         <BulkImportModal
           role={tab}
           classOptions={classOptions}
-          subjectOptions={subjectOptions}
+          subjectOptions={subjectOptions.map((s) => s.name)}
           onImport={(rows) => onBulkImport(tab, rows)}
           onClose={() => setImportOpen(false)}
         />

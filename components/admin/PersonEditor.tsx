@@ -6,15 +6,15 @@
  */
 
 import { useState } from "react";
-import { X, Loader2 } from "lucide-react";
-import type { PersonRole, PersonRow } from "./types";
+import { X, Loader2, Plus, Trash2 } from "lucide-react";
+import type { PersonRole, PersonRow, TeacherAssignment } from "./types";
 
 interface PersonEditorProps {
   role: PersonRole;
   initial?: PersonRow | null;
-  classOptions: { id: string; name: string }[]; // for students
-  subjectOptions: string[]; // for teachers
-  onSave: (person: Omit<PersonRow, "id" | "isActive"> & { id?: string }) => Promise<{ credential?: string } | void>;
+  classOptions: { id: string; name: string }[];
+  subjectOptions: { id: string; name: string }[];
+  onSave: (person: Omit<PersonRow, "id" | "isActive" | "subjectNames"> & { id?: string }) => Promise<{ credential?: string } | void>;
   onCancel: () => void;
 }
 
@@ -24,12 +24,15 @@ export default function PersonEditor({ role, initial, classOptions, subjectOptio
   const [admissionNumber, setAdmissionNumber] = useState(initial?.admissionNumber ?? "");
   const [staffId, setStaffId] = useState(initial?.staffId ?? "");
   const [classId, setClassId] = useState(initial?.classId ?? classOptions[0]?.id ?? "");
-  const [subjectNames, setSubjectNames] = useState<string[]>(initial?.subjectNames ?? []);
+  const [assignments, setAssignments] = useState<TeacherAssignment[]>(initial?.assignments ?? []);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const toggleSubject = (name: string) =>
-    setSubjectNames((prev) => (prev.includes(name) ? prev.filter((s) => s !== name) : [...prev, name]));
+  const addAssignment = () =>
+    setAssignments((prev) => [...prev, { subjectId: subjectOptions[0]?.id ?? "", classId: classOptions[0]?.id ?? "" }]);
+  const updateAssignment = (i: number, patch: Partial<TeacherAssignment>) =>
+    setAssignments((prev) => prev.map((a, idx) => (idx === i ? { ...a, ...patch } : a)));
+  const removeAssignment = (i: number) => setAssignments((prev) => prev.filter((_, idx) => idx !== i));
 
   const handleSubmit = async () => {
     if (!fullName.trim() || !email.trim()) {
@@ -55,7 +58,7 @@ export default function PersonEditor({ role, initial, classOptions, subjectOptio
         admissionNumber: role === "student" ? admissionNumber.trim() : undefined,
         staffId: role === "teacher" ? staffId.trim() : undefined,
         classId: role === "student" ? classId : undefined,
-        subjectNames: role === "teacher" ? subjectNames : undefined,
+        assignments: role === "teacher" ? assignments.filter((a) => a.subjectId && a.classId) : undefined,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't save this account. Try again.");
@@ -66,7 +69,7 @@ export default function PersonEditor({ role, initial, classOptions, subjectOptio
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/50 p-4">
-      <div className="w-full max-w-md rounded-lg bg-white shadow-card-hover">
+      <div className="flex max-h-[90vh] w-full max-w-md flex-col rounded-lg bg-white shadow-card-hover">
         <div className="flex items-center justify-between border-b border-black/5 px-5 py-4">
           <h2 className="font-display text-[15px] font-semibold text-ink">
             {initial ? "Edit" : "New"} {role === "student" ? "student" : "teacher"}
@@ -76,7 +79,7 @@ export default function PersonEditor({ role, initial, classOptions, subjectOptio
           </button>
         </div>
 
-        <div className="space-y-3.5 px-5 py-4">
+        <div className="flex-1 space-y-3.5 overflow-y-auto px-5 py-4">
           <Field label="Full name" value={fullName} onChange={setFullName} placeholder="e.g. Chidinma Okafor" />
           <Field label="Email" value={email} onChange={setEmail} placeholder="name@soaringfountain.edu" type="email" />
 
@@ -100,21 +103,42 @@ export default function PersonEditor({ role, initial, classOptions, subjectOptio
             <>
               <Field label="Staff ID" value={staffId} onChange={setStaffId} placeholder="e.g. SFGS-T-014" />
               <div>
-                <span className="mb-1.5 block text-[12px] font-medium text-ink/60">Subjects taught</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {subjectOptions.map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => toggleSubject(s)}
-                      className={`rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors duration-200 ${
-                        subjectNames.includes(s) ? "bg-crimson-600 text-white" : "bg-background-muted text-ink/60 hover:bg-black/5"
-                      }`}
-                    >
-                      {s}
-                    </button>
+                <span className="mb-1.5 block text-[12px] font-medium text-ink/60">Teaches — subject &amp; class</span>
+                <div className="space-y-2">
+                  {assignments.map((a, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <select
+                        value={a.subjectId}
+                        onChange={(e) => updateAssignment(i, { subjectId: e.target.value })}
+                        className="flex-1 rounded-lg border border-black/10 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500"
+                      >
+                        {subjectOptions.map((s) => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
+                      <select
+                        value={a.classId}
+                        onChange={(e) => updateAssignment(i, { classId: e.target.value })}
+                        className="flex-1 rounded-lg border border-black/10 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500"
+                      >
+                        {classOptions.map((c) => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                      <button onClick={() => removeAssignment(i)} className="shrink-0 rounded-md p-2 text-ink/30 hover:bg-crimson-50 hover:text-crimson-700">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   ))}
                 </div>
+                <button
+                  type="button"
+                  onClick={addAssignment}
+                  disabled={subjectOptions.length === 0 || classOptions.length === 0}
+                  className="mt-2 flex items-center gap-1.5 text-[12.5px] font-medium text-crimson-700 hover:text-crimson-800 disabled:opacity-40"
+                >
+                  <Plus size={13} /> Add subject &amp; class
+                </button>
               </div>
             </>
           )}
