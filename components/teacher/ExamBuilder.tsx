@@ -20,6 +20,7 @@ import {
   Loader2,
   Shuffle,
   Eye,
+  Trophy,
 } from "lucide-react";
 import type { BankQuestion, ClassOption, SubjectOption, TermOption } from "./types";
 
@@ -42,6 +43,8 @@ export interface ExamFormData {
   shuffleQuestions: boolean;
   shuffleOptions: boolean;
   showResultInstantly: boolean;
+  /** True for the term's single Terminal Exam; false for CA/CBT-style contributors. Drives the report card's CA-vs-Terminal split. */
+  isTerminal: boolean;
   questionIds: string[];
   batches: ExamBatchDraft[];
 }
@@ -67,6 +70,7 @@ const DEFAULTS: ExamFormData = {
   shuffleQuestions: true,
   shuffleOptions: true,
   showResultInstantly: false,
+  isTerminal: false,
   questionIds: [],
   batches: [],
 };
@@ -183,6 +187,7 @@ export default function ExamBuilder({ subjects, classes, terms, questionBank, in
           <Toggle icon={Shuffle} label="Shuffle question order per student" checked={form.shuffleQuestions} onChange={(v) => update("shuffleQuestions", v)} />
           <Toggle icon={Shuffle} label="Shuffle option order per student" checked={form.shuffleOptions} onChange={(v) => update("shuffleOptions", v)} />
           <Toggle icon={Eye} label="Show result instantly after submission" checked={form.showResultInstantly} onChange={(v) => update("showResultInstantly", v)} />
+          <Toggle icon={Trophy} label="This is the term's Terminal Exam (not a CA/CBT)" checked={form.isTerminal} onChange={(v) => update("isTerminal", v)} />
         </div>
       </SectionCard>
 

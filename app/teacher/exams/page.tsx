@@ -1,65 +1,115 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import ExamBuilder, { type ExamFormData } from "@/components/teacher/ExamBuilder";
+import { createClient } from "@/lib/supabase/client";
+import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import type { BankQuestion, ClassOption, SubjectOption, TermOption } from "@/components/teacher/types";
-// import { createClient } from "@/lib/supabase/client";
-
-// TODO: replace all four with real queries — subjects/classes from
-// teacher_subjects, terms from the current academic_session, and the
-// question bank from `questions` filtered to this teacher's subjects.
-const SUBJECTS: SubjectOption[] = [{ id: "sub-math", name: "Mathematics" }];
-const CLASSES: ClassOption[] = [{ id: "cls-jss1", name: "JSS1" }, { id: "cls-jss2", name: "JSS2" }];
-const TERMS: TermOption[] = [{ id: "term-2", name: "Second Term" }];
-const QUESTION_BANK: BankQuestion[] = [
-  {
-    id: "q1",
-    subjectId: "sub-math",
-    subjectName: "Mathematics",
-    topic: "Quadratic equations",
-    type: "multiple_choice",
-    prompt: "What are the roots of x² − 5x + 6 = 0?",
-    points: 2,
-    options: [
-      { id: "o1", text: "2 and 3", isCorrect: true },
-      { id: "o2", text: "1 and 6", isCorrect: false },
-    ],
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: "q2",
-    subjectId: "sub-math",
-    subjectName: "Mathematics",
-    topic: "Fractions",
-    type: "fill_blank",
-    prompt: "Simplify 12/16 to its lowest terms.",
-    points: 1,
-    referenceAnswer: "3/4",
-    updatedAt: new Date().toISOString(),
-  },
-];
 
 export default function TeacherExamBuilderPage() {
   const router = useRouter();
+  const authUser = useAuthUser();
+  const supabase = createClient();
+
+  const [subjects, setSubjects] = useState<SubjectOption[]>([]);
+  const [classes, setClasses] = useState<ClassOption[]>([]);
+  const [terms, setTerms] = useState<TermOption[]>([]);
+  const [questionBank, setQuestionBank] = useState<BankQuestion[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!authUser) return;
+    (async () => {
+      // TODO: subjects/classes should filter to `teacher_subjects` once
+      // that table is populated at account creation (see README).
+      const [{ data: subjectRows }, { data: classRows }, { data: termRows }, { data: questionRows }] = await Promise.all([
+        supabase.from("subjects").select("id, name").order("name"),
+        supabase.from("classes").select("id, name").order("name"),
+        supabase.from("terms").select("id, name").order("is_current", { ascending: false }),
+        supabase
+          .from("questions")
+          .select("id, subject_id, topic, type, prompt, points, reference_answer, subjects(name)")
+          .eq("created_by", authUser.id),
+      ]);
+
+      setSubjects(subjectRows ?? []);
+      setClasses(classRows ?? []);
+      setTerms(termRows ?? []);
+      setQuestionBank(
+        (questionRows ?? []).map((q: any) => ({
+          id: q.id,
+          subjectId: q.subject_id,
+          subjectName: q.subjects?.name ?? "",
+          topic: q.topic ?? "",
+          type: q.type,
+          prompt: q.prompt,
+          points: q.points,
+          referenceAnswer: q.reference_answer,
+          updatedAt: new Date().toISOString(),
+        }))
+      );
+      setLoading(false);
+    })();
+  }, [authUser?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const persistExam = async (data: ExamFormData, status: "draft" | "published") => {
-    // TODO:
-    // 1. upsert into `exams` (title, subject_id, class_id, term_id, duration_minutes,
-    //    pass_mark, weight_percent, shuffle_*, show_result_instantly, status)
-    // 2. replace `exam_questions` rows to match data.questionIds order
-    // 3. upsert `exam_batches` from data.batches (convert datetime-local strings
-    //    to timestamptz before sending)
-    console.log(status, data);
+    if (!authUser) return;
+
+    const { data: exam, error: examError } = await supabase
+      .from("exams")
+      .insert({
+        title: data.title,
+        subject_id: data.subjectId,
+        class_id: data.classId,
+        term_id: data.termId,
+        created_by: authUser.id,
+        duration_minutes: data.durationMinutes,
+        pass_mark: data.passMark,
+        weight_percent: data.weightPercent,
+        is_terminal: data.isTerminal,
+        shuffle_questions: data.shuffleQuestions,
+        shuffle_options: data.shuffleOptions,
+        show_result_instantly: data.showResultInstantly,
+        status,
+      })
+      .select("id")
+      .single();
+    if (examError || !exam) throw new Error(examError?.message ?? "Couldn't save the exam.");
+
+    if (data.questionIds.length > 0) {
+      const { error: eqError } = await supabase
+        .from("exam_questions")
+        .insert(data.questionIds.map((questionId, i) => ({ exam_id: exam.id, question_id: questionId, order_index: i })));
+      if (eqError) throw new Error(eqError.message);
+    }
+
+    if (data.batches.length > 0) {
+      const { error: batchError } = await supabase.from("exam_batches").insert(
+        data.batches.map((b) => ({
+          exam_id: exam.id,
+          label: b.label,
+          starts_at: new Date(b.startsAt).toISOString(),
+          ends_at: new Date(b.endsAt).toISOString(),
+          lab_room: b.labRoom || null,
+        }))
+      );
+      if (batchError) throw new Error(batchError.message);
+    }
+
+    router.push("/teacher/exams");
   };
 
+  if (loading) return null; // TODO: swap in a loading skeleton once the design system has one
+
   return (
-    <DashboardLayout role="teacher" pageTitle="Exam Builder" userName="Mrs. Adeyemi" onLogout={() => router.push("/login")}>
+    <DashboardLayout role="teacher" pageTitle="Exam Builder" userName={authUser?.fullName ?? ""} onLogout={() => signOutAndRedirect(router)}>
       <ExamBuilder
-        subjects={SUBJECTS}
-        classes={CLASSES}
-        terms={TERMS}
-        questionBank={QUESTION_BANK}
+        subjects={subjects}
+        classes={classes}
+        terms={terms}
+        questionBank={questionBank}
         onSaveDraft={(data) => persistExam(data, "draft")}
         onPublish={(data) => persistExam(data, "published")}
       />

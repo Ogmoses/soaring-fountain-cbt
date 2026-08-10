@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import ExamInterface, { type AnswersMap, type ExamData } from "@/components/exam/ExamInterface";
+import { useAuthUser } from "@/lib/useAuthUser";
 
 /** Persistent per-browser id — lets the start endpoint tell "same computer, reloading" from "different computer, trying to log in too". */
 function getDeviceFingerprint(): string {
@@ -22,6 +23,7 @@ function StudentExamContent() {
   const searchParams = useSearchParams();
   const batchId = searchParams.get("batch") ?? "";
   const router = useRouter();
+  const authUser = useAuthUser();
 
   const [state, setState] = useState<"loading" | "error" | "ready">("loading");
   const [error, setError] = useState<string | null>(null);
@@ -107,7 +109,7 @@ function StudentExamContent() {
     <ExamInterface
       exam={session.exam}
       sessionId={session.sessionId}
-      studentName="" // TODO: pass the authenticated student's name down from a server component wrapper
+      studentName={authUser?.fullName ?? ""}
       initialAnswers={session.existingAnswers}
       onAutoSave={handleAutoSave}
       onSubmit={handleSubmit}

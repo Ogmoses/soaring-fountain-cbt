@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { AnswersMap } from "@/components/exam/ExamInterface";
 
 /**
@@ -10,6 +11,12 @@ import type { AnswersMap } from "@/components/exam/ExamInterface";
  * this doubles as the "is this session still alive" signal that
  * /api/exam-sessions/start uses to decide whether a stale session on
  * another device can be reclaimed.
+ *
+ * Uses the admin client after identifying the caller: the ownership check
+ * right below stands in for RLS. Notably, the nested `questions(id, type)`
+ * read needs it regardless — a student has no RLS SELECT on `questions`
+ * at all, so under the regular client `eq.questions` would come back null
+ * for every row and this route would crash trying to read `.type` off it.
  */
 export async function POST(req: NextRequest) {
   const { sessionId, answers } = (await req.json()) as { sessionId: string; answers: AnswersMap };
@@ -19,7 +26,9 @@ export async function POST(req: NextRequest) {
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return NextResponse.json({ error: "Not signed in." }, { status: 401 });
 
-  const { data: session } = await supabase.from("student_exam_sessions").select("id, exam_id, student_id, status").eq("id", sessionId).single();
+  const admin = createAdminClient();
+
+  const { data: session } = await admin.from("student_exam_sessions").select("id, exam_id, student_id, status").eq("id", sessionId).single();
   if (!session || session.student_id !== auth.user.id) {
     return NextResponse.json({ error: "Session not found." }, { status: 404 });
   }
@@ -29,7 +38,7 @@ export async function POST(req: NextRequest) {
 
   // Need each question's type to know whether the value is an option id
   // (multiple_choice/true_false) or free text (fill_blank/short_theory).
-  const { data: examQuestions } = await supabase.from("exam_questions").select("questions(id, type)").eq("exam_id", session.exam_id);
+  const { data: examQuestions } = await admin.from("exam_questions").select("questions(id, type)").eq("exam_id", session.exam_id);
   const typeByQuestion = new Map((examQuestions ?? []).map((eq: any) => [eq.questions.id, eq.questions.type as string]));
 
   const rows = Object.entries(answers).map(([questionId, a]) => {
@@ -45,11 +54,11 @@ export async function POST(req: NextRequest) {
   });
 
   if (rows.length > 0) {
-    const { error } = await supabase.from("student_answers").upsert(rows, { onConflict: "session_id,question_id" });
+    const { error } = await admin.from("student_answers").upsert(rows, { onConflict: "session_id,question_id" });
     if (error) return NextResponse.json({ error: "Couldn't save your answers — your local copy is still safe, retrying shortly." }, { status: 500 });
   }
 
-  await supabase.from("student_exam_sessions").update({ last_heartbeat_at: new Date().toISOString() }).eq("id", sessionId);
+  await admin.from("student_exam_sessions").update({ last_heartbeat_at: new Date().toISOString() }).eq("id", sessionId);
 
   return NextResponse.json({ ok: true, savedAt: new Date().toISOString() });
 }

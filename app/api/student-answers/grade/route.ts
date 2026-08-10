@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { computeGradeLetter } from "@/lib/grading";
 
 /**
@@ -11,6 +12,13 @@ import { computeGradeLetter } from "@/lib/grading";
  * auto-graded ones already do, from /api/exam-sessions/submit — this
  * rolls the theory score into the exam's `results` row and assigns the
  * final grade letter from `grading_scale`.
+ *
+ * Uses the admin client for every read/write below: `student_answers` and
+ * `student_exam_sessions` only have RLS policies for a student reading
+ * their *own* rows, so a teacher grading someone else's answer would
+ * otherwise have every query here silently return nothing/update zero
+ * rows under RLS — no error, just data that never actually saves. The
+ * role check right below is what stands in for RLS on this route.
  */
 export async function POST(req: NextRequest) {
   const { answerId, pointsAwarded, feedback } = await req.json();
@@ -27,19 +35,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Only teachers can grade answers." }, { status: 403 });
   }
 
-  const { data: answer } = await supabase.from("student_answers").select("id, session_id").eq("id", answerId).single();
+  const admin = createAdminClient();
+
+  const { data: answer } = await admin.from("student_answers").select("id, session_id").eq("id", answerId).single();
   if (!answer) return NextResponse.json({ error: "Answer not found." }, { status: 404 });
 
-  await supabase
+  await admin
     .from("student_answers")
     .update({ points_awarded: pointsAwarded, feedback: feedback ?? null, graded_by: auth.user.id, graded_at: new Date().toISOString() })
     .eq("id", answerId);
 
   // ---- Check whether the whole session is now fully graded, and if so, roll up the result ----
-  const { data: session } = await supabase.from("student_exam_sessions").select("id, exam_id, student_id").eq("id", answer.session_id).single();
+  const { data: session } = await admin.from("student_exam_sessions").select("id, exam_id, student_id").eq("id", answer.session_id).single();
   if (!session) return NextResponse.json({ ok: true, sessionFullyGraded: false });
 
-  const { data: sessionAnswers } = await supabase
+  const { data: sessionAnswers } = await admin
     .from("student_answers")
     .select("points_awarded, questions(type, points)")
     .eq("session_id", session.id);
@@ -52,15 +62,15 @@ export async function POST(req: NextRequest) {
     .reduce((sum, a) => sum + (a.points_awarded ?? 0), 0);
   const maxScore = (sessionAnswers ?? []).reduce((sum: number, a: any) => sum + a.questions.points, 0);
 
-  const { data: existingResult } = await supabase.from("results").select("objective_score").eq("session_id", session.id).single();
+  const { data: existingResult } = await admin.from("results").select("objective_score").eq("session_id", session.id).single();
   const objectiveScore = existingResult?.objective_score ?? 0;
   const totalScore = objectiveScore + theoryScore;
 
-  const { data: scaleRows } = await supabase.from("grading_scale").select("min_score, max_score, grade_letter");
+  const { data: scaleRows } = await admin.from("grading_scale").select("min_score, max_score, grade_letter");
   const percentage = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
   const gradeLetter = computeGradeLetter(percentage, (scaleRows ?? []).map((r) => ({ minScore: r.min_score, maxScore: r.max_score, gradeLetter: r.grade_letter })));
 
-  await supabase.from("results").update({ theory_score: theoryScore, total_score: totalScore, grade_letter: gradeLetter }).eq("session_id", session.id);
+  await admin.from("results").update({ theory_score: theoryScore, total_score: totalScore, grade_letter: gradeLetter }).eq("session_id", session.id);
 
   return NextResponse.json({ ok: true, sessionFullyGraded: true, totalScore, maxScore, gradeLetter });
 }

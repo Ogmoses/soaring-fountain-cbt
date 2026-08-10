@@ -1,48 +1,69 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import GradingQueue, { type ExamOption } from "@/components/teacher/GradingQueue";
+import { createClient } from "@/lib/supabase/client";
+import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import type { GradingItem } from "@/components/teacher/types";
-// import { createClient } from "@/lib/supabase/client";
-
-// TODO: replace with exams this teacher created that have ungraded
-// fill_blank/short_theory answers (join exams → student_answers where
-// is_auto_graded is false and points_awarded is null).
-const EXAM_OPTIONS: ExamOption[] = [{ id: "exam-1", title: "Mid-Term Test", subjectName: "Mathematics" }];
-
-const ITEMS_BY_EXAM: Record<string, GradingItem[]> = {
-  "exam-1": [
-    {
-      id: "ans-1",
-      studentName: "Chidinma Okafor",
-      questionType: "short_theory",
-      questionPrompt: "Explain, in your own words, why the discriminant tells you how many real roots a quadratic has.",
-      referenceAnswer: "Should mention b²−4ac: positive → two real roots, zero → one repeated root, negative → no real roots.",
-      studentAnswerText: "If b squared minus 4ac is positive there are two answers, if it's zero there is one, if it's negative there are none because you can't square root a negative number.",
-      maxPoints: 4,
-      pointsAwarded: null,
-    },
-    {
-      id: "ans-2",
-      studentName: "Tunde Balogun",
-      questionType: "fill_blank",
-      questionPrompt: "Simplify 12/16 to its lowest terms.",
-      referenceAnswer: "3/4",
-      studentAnswerText: "6/8",
-      maxPoints: 1,
-      pointsAwarded: null,
-    },
-  ],
-};
 
 export default function TeacherGradingPage() {
   const router = useRouter();
-  const [selectedExamId, setSelectedExamId] = useState(EXAM_OPTIONS[0].id);
-  const [itemsByExam, setItemsByExam] = useState(ITEMS_BY_EXAM);
+  const authUser = useAuthUser();
+  const supabase = createClient();
 
-  const items = itemsByExam[selectedExamId] ?? [];
+  const [examOptions, setExamOptions] = useState<ExamOption[]>([]);
+  const [selectedExamId, setSelectedExamId] = useState("");
+  const [items, setItems] = useState<GradingItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!authUser) return;
+    (async () => {
+      const { data: examRows } = await supabase
+        .from("exams")
+        .select("id, title, subjects(name)")
+        .eq("created_by", authUser.id)
+        .eq("status", "published");
+      const options = (examRows ?? []).map((e: any) => ({ id: e.id, title: e.title, subjectName: e.subjects?.name ?? "" }));
+      setExamOptions(options);
+      setSelectedExamId(options[0]?.id ?? "");
+      setLoading(false);
+    })();
+  }, [authUser?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!selectedExamId) {
+      setItems([]);
+      return;
+    }
+    (async () => {
+      // Manually-marked types only (fill_blank/short_theory) — objective
+      // questions are already auto-graded at submission time.
+      const { data } = await supabase
+        .from("student_answers")
+        .select(
+          "id, free_text_answer, points_awarded, feedback, questions!inner(type, prompt, reference_answer, points), student_exam_sessions!inner(exam_id, student_id, users(full_name))"
+        )
+        .eq("student_exam_sessions.exam_id", selectedExamId)
+        .in("questions.type", ["fill_blank", "short_theory"]);
+
+      setItems(
+        (data ?? []).map((row: any) => ({
+          id: row.id,
+          studentName: row.student_exam_sessions?.users?.full_name ?? "",
+          questionType: row.questions.type,
+          questionPrompt: row.questions.prompt,
+          referenceAnswer: row.questions.reference_answer,
+          studentAnswerText: row.free_text_answer ?? "",
+          maxPoints: row.questions.points,
+          pointsAwarded: row.points_awarded,
+          feedback: row.feedback ?? undefined,
+        }))
+      );
+    })();
+  }, [selectedExamId]);
 
   const handleGrade = async (itemId: string, pointsAwarded: number, feedback: string) => {
     const res = await fetch("/api/student-answers/grade", {
@@ -54,15 +75,14 @@ export default function TeacherGradingPage() {
       const data = await res.json().catch(() => ({}));
       throw new Error(data.error ?? "Couldn't save this grade.");
     }
-    setItemsByExam((prev) => ({
-      ...prev,
-      [selectedExamId]: (prev[selectedExamId] ?? []).map((i) => (i.id === itemId ? { ...i, pointsAwarded, feedback } : i)),
-    }));
+    setItems((prev) => prev.map((i) => (i.id === itemId ? { ...i, pointsAwarded, feedback } : i)));
   };
 
+  if (loading) return null; // TODO: swap in a loading skeleton once the design system has one
+
   return (
-    <DashboardLayout role="teacher" pageTitle="Grading Queue" userName="Mrs. Adeyemi" onLogout={() => router.push("/login")}>
-      <GradingQueue examOptions={EXAM_OPTIONS} selectedExamId={selectedExamId} onExamChange={setSelectedExamId} items={items} onGrade={handleGrade} />
+    <DashboardLayout role="teacher" pageTitle="Grading Queue" userName={authUser?.fullName ?? ""} onLogout={() => signOutAndRedirect(router)}>
+      <GradingQueue examOptions={examOptions} selectedExamId={selectedExamId} onExamChange={setSelectedExamId} items={items} onGrade={handleGrade} />
     </DashboardLayout>
   );
 }

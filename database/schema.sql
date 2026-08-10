@@ -352,6 +352,20 @@ create policy student_answers_own on student_answers
     session_id in (select id from student_exam_sessions where student_id = auth.uid())
   );
 
+-- Teachers can read (not write — grading goes through the app's own
+-- privileged API route) student_answers for sessions belonging to an
+-- exam they created. Needed by the Grading Queue's list view and Class
+-- Analytics' per-question stats.
+create policy teacher_read_student_answers on student_answers
+  for select using (
+    current_role_is('super_admin')
+    or exists (
+      select 1 from student_exam_sessions ses
+      join exams e on e.id = ses.exam_id
+      where ses.id = student_answers.session_id and e.created_by = auth.uid()
+    )
+  );
+
 create policy student_results_own on results
   for select using (student_id = auth.uid() and published = true);
 

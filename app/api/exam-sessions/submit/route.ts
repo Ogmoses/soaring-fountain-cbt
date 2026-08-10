@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { gradeObjectiveAnswers, sumAwardedPoints, type GradableQuestion, type SubmittedAnswer } from "@/lib/grading";
 import type { AnswersMap } from "@/components/exam/ExamInterface";
 
@@ -11,6 +12,14 @@ import type { AnswersMap } from "@/components/exam/ExamInterface";
  * auto-marks every objective question (multiple_choice / true_false /
  * fill_blank). short_theory answers are left pending for the Grading
  * Queue — /api/student-answers/grade finishes the score once they're in.
+ *
+ * Uses the admin client after identifying the caller and confirming they
+ * own this session. Two separate RLS gaps make the regular client a
+ * non-starter here: a student has no SELECT on `questions`/
+ * `question_options` (so grading data comes back null), and `results`
+ * only has a SELECT policy for students, scoped to `published = true` —
+ * there's no INSERT policy at all, so the upsert below would be rejected
+ * outright on a brand-new, unpublished result.
  */
 export async function POST(req: NextRequest) {
   const { sessionId, answers } = (await req.json()) as { sessionId: string; answers: AnswersMap };
@@ -20,14 +29,16 @@ export async function POST(req: NextRequest) {
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return NextResponse.json({ error: "Not signed in." }, { status: 401 });
 
-  const { data: session } = await supabase.from("student_exam_sessions").select("id, exam_id, student_id, status").eq("id", sessionId).single();
+  const admin = createAdminClient();
+
+  const { data: session } = await admin.from("student_exam_sessions").select("id, exam_id, student_id, status").eq("id", sessionId).single();
   if (!session || session.student_id !== auth.user.id) return NextResponse.json({ error: "Session not found." }, { status: 404 });
   if (session.status !== "active") return NextResponse.json({ error: "This exam has already been submitted." }, { status: 409 });
 
-  const { data: exam } = await supabase.from("exams").select("show_result_instantly").eq("id", session.exam_id).single();
+  const { data: exam } = await admin.from("exams").select("show_result_instantly").eq("id", session.exam_id).single();
 
   // ---- Fetch grading data: each question's type/points/correct answer ----
-  const { data: examQuestions } = await supabase
+  const { data: examQuestions } = await admin
     .from("exam_questions")
     .select("questions(id, type, points, reference_answer, question_options(id, is_correct))")
     .eq("exam_id", session.exam_id);
@@ -54,11 +65,11 @@ export async function POST(req: NextRequest) {
         updated_at: new Date().toISOString(),
       };
     });
-    await supabase.from("student_answers").upsert(rows, { onConflict: "session_id,question_id" });
+    await admin.from("student_answers").upsert(rows, { onConflict: "session_id,question_id" });
   }
 
   // ---- Auto-grade ----
-  const { data: savedAnswers } = await supabase.from("student_answers").select("question_id, selected_option_id, free_text_answer").eq("session_id", sessionId);
+  const { data: savedAnswers } = await admin.from("student_answers").select("question_id, selected_option_id, free_text_answer").eq("session_id", sessionId);
   const submitted: SubmittedAnswer[] = (savedAnswers ?? []).map((a) => ({
     questionId: a.question_id,
     selectedOptionId: a.selected_option_id,
@@ -70,7 +81,7 @@ export async function POST(req: NextRequest) {
     graded
       .filter((g) => g.isAutoGraded)
       .map((g) =>
-        supabase
+        admin
           .from("student_answers")
           .update({ is_auto_graded: true, points_awarded: g.pointsAwarded, graded_at: new Date().toISOString() })
           .eq("session_id", sessionId)
@@ -83,9 +94,9 @@ export async function POST(req: NextRequest) {
   const hasPendingTheory = graded.some((g) => !g.isAutoGraded);
 
   // ---- Close the session and write the (possibly provisional) result ----
-  await supabase.from("student_exam_sessions").update({ status: "submitted", submitted_at: new Date().toISOString() }).eq("id", sessionId);
+  await admin.from("student_exam_sessions").update({ status: "submitted", submitted_at: new Date().toISOString() }).eq("id", sessionId);
 
-  await supabase.from("results").upsert(
+  await admin.from("results").upsert(
     {
       student_id: session.student_id,
       exam_id: session.exam_id,

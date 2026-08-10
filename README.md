@@ -61,13 +61,6 @@ Teacher portal is now complete end to end.
 | Student exam page wired to the above (device fingerprint, loading/error states) | `app/student/exam/[examId]/page.tsx` |
 
 ## Still to build
-- **The entire Admin console is now wired to Supabase.** What's left is the
-  Teacher side: Question Bank, Exam Builder, Grading Queue's data-fetching
-  half (grading itself already calls `/api/student-answers/grade`), and
-  Class Analytics. Same pattern throughout: fetch on mount with the browser
-  client, mutate with `supabase.from(...)` (or a small API route when the
-  anon key can't do it under RLS), `useAuthUser()` for the signed-in user's
-  name/role.
 - **Known gap**: creating a teacher doesn't populate `teacher_subjects` —
   that table needs a (teacher, subject, **class**) triple, and the People
   form only collects subjects, not which classes they're taught to. Needs
@@ -76,19 +69,55 @@ Teacher portal is now complete end to end.
 - Settings' logo upload still saves a `data:` URL straight into
   `school_profile.logo_url` rather than uploading to Supabase Storage first
   — fine for a demo, wasteful for production.
+- Report card PDFs need the three Plus Jakarta Sans `.ttf` files added
+  manually (see `public/fonts/README.md`) — not yet done as of this build.
+- Supabase's **Leaked Password Protection** (checks new passwords against
+  HaveIBeenPwned) is off by default and isn't something the project-level
+  connector can toggle — Dashboard → Authentication → Policies to enable it.
+- Minor performance-only lints remain (a few unindexed foreign keys, some
+  policies that re-evaluate `auth.uid()` per row instead of once per query)
+  — fine at this school's scale, not worth the migration churn yet.
 
 | Auth: real Supabase sign-in (student PIN + staff password), pre-auth admission-number lookup | `app/login/page.tsx`, `app/api/auth/resolve-student-email/route.ts`, `lib/supabase/admin.ts` |
 | Auth: session-refresh + route-protection proxy (Next.js 16 renamed `middleware.ts` to `proxy.ts`) | `proxy.ts` |
 | Auth: shared "who's signed in" hook, used instead of hardcoded userName props | `lib/useAuthUser.ts` |
 | Schema: added the three tables Lab Batches/Settings needed (`lab_rooms`, `batch_templates`, singleton `school_profile`) + their RLS policies | `database/schema.sql` §8 |
-| Admin: every screen (Overview, Classes & Subjects, Students & Teachers, Lab Batches, Results & Analytics, Settings, Report Cards) now runs on real Supabase queries — no more sample-data constants anywhere in `app/admin/**` | `app/admin/**/page.tsx` |
-| Admin Overview's lab-conflict flagging is now computed for real (groups today's batches by `lab_room`, checks time-window overlap) rather than a hardcoded id list | `app/admin/page.tsx` |
-| Fixed: `users` table had no self-read RLS policy — nothing after login could read its own role/name without it | `database/schema.sql` (`users_read_own` policy) |
+| Admin: every screen now runs on real Supabase queries | `app/admin/**/page.tsx` |
+| Teacher: every screen (Question Bank, Exam Builder, Grading Queue, Class Analytics) now runs on real Supabase queries | `app/teacher/**/page.tsx` |
+| Student: Exam Launchpad now shows the signed-in student's actual batches/results, not hardcoded sample data | `app/student/page.tsx` |
+| Exam Builder: added the missing `isTerminal` toggle — without it, every exam defaulted to "not terminal" and report cards' Terminal column would always show 0 | `components/teacher/ExamBuilder.tsx` |
 
-**Every feature from the original brief is now built, and the entire Admin
-console plus auth are wired end to end.** Remaining work: the four
-Teacher-side screens above, the `teacher_subjects` gap, real Storage for
-the school logo, and `npm i @react-pdf/renderer`.
+**Critical fixes found via Supabase's own security linter and a full RLS
+audit** (these were live bugs, not applied to a copy — caught after the
+first real deploy):
+- 8 tables had **no RLS policy at all** (`academic_sessions`, `terms`,
+  `classes`, `subjects`, `class_subjects`, `teacher_subjects`,
+  `exam_questions`, `grading_scale`) — wide open to the publishable key.
+  4 more (`exams`, `exam_batches`, `batch_students`, `term_subject_results`)
+  had RLS *enabled* with zero policies — locked shut, even for admins.
+- `question_options` was the same "locked shut" case — fixed by design to
+  stay that way for direct client reads (`is_correct` must never be
+  queryable by a student), with app code reading it via the service-role
+  client instead.
+- **The exam-taking flow itself was broken**: `/api/exam-sessions/start`,
+  `/answers`, and `/submit` all queried `questions`/`question_options`
+  using the RLS-bound client — but students have no SELECT policy on
+  either table. In practice this meant empty exams, autosave silently
+  mis-filing every multiple-choice answer as free text, and every
+  objective question auto-graded as wrong regardless of the real answer.
+  All three routes now use the service-role client, since each already
+  re-implements its own authorization in code (batch window, roster,
+  single-session enforcement) — that's the real boundary, not RLS.
+- `/api/student-answers/grade` had the identical issue for the *write*
+  side: a teacher grading another student's answer would have the update
+  silently affect zero rows under RLS — no error, nothing saved. Same fix.
+- Added a `teacher_read_student_answers` policy so Grading Queue and Class
+  Analytics can read (never write) other students' answers directly —
+  the one case where extending RLS was cleaner than another API route.
 
-Say "keep going" and I'll wire the Teacher screens next, or point me at a
-specific one.
+**Every screen across all three portals is now wired to real Supabase —
+none of the sample-data constants from earlier passes remain anywhere in
+`app/`.** What's left is the small items above, plus the DB needing real
+content: as of this deploy it has zero users, zero classes, zero of
+everything (the grading scale defaults are now seeded). Bootstrapping the
+first Super Admin is the one manual step nothing else can substitute for.
