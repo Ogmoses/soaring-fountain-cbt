@@ -7,6 +7,7 @@ import ClassAnalytics, { type ClassAnalyticsData, type ExamOption } from "@/comp
 import { createClient } from "@/lib/supabase/client";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import { fetchExamMaxScores } from "@/lib/reportCard";
+import PageLoading from "@/components/layout/PageLoading";
 
 /** Buckets scores into 5 even bands scaled to the exam's max score, e.g. "0–6", "7–12", ... for a 30-point exam. */
 function bucketScores(scores: number[], maxScore: number) {
@@ -114,11 +115,11 @@ export default function TeacherAnalyticsPage() {
     })();
   }, [selectedExamId]);
 
-  if (loading) return null; // TODO: swap in a loading skeleton once the design system has one
-
   return (
     <DashboardLayout role="teacher" pageTitle="Class Analytics" userName={authUser?.fullName ?? ""} onLogout={() => signOutAndRedirect(router)}>
-      <ClassAnalytics examOptions={examOptions} selectedExamId={selectedExamId} onExamChange={setSelectedExamId} data={data} />
+      {loading ? <PageLoading /> : (
+        <ClassAnalytics examOptions={examOptions} selectedExamId={selectedExamId} onExamChange={setSelectedExamId} data={data} />
+      )}
     </DashboardLayout>
   );
 }

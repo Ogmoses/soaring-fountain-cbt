@@ -143,3 +143,55 @@ means creating a bucket, writing its RLS policies, and rewriting the
 upload handlers in two components — real work with real risk of new bugs,
 and unlike everything above, a `data:` URL logo doesn't break anything,
 it's just inefficient. Left for a dedicated pass rather than rushed here.
+
+## Pass 4: two real 404s, loading states, mobile overflow, and the invite flow
+
+**Two pages the app promised and never built:**
+- `app/teacher/page.tsx` (Teacher Overview) didn't exist at all — the
+  sidebar linked to it *and* the login flow redirected every teacher
+  straight there, so signing in as a teacher was a guaranteed 404. Built
+  it for real: stat cards, today's batches across the teacher's own
+  exams, quick links to the other four teacher screens.
+- `app/student/batches/page.tsx` and `app/student/results/page.tsx` —
+  same story, linked from the student sidebar since the beginning, routes
+  never created. Built as focused pages (full history/schedule, not just
+  the launchpad's summary), not just redirects back to `/student`.
+
+**Blank-screen-during-load, fixed everywhere at once:** every dashboard
+page used to `return null` while its data fetched, which read as the app
+freezing rather than loading. Added `components/layout/PageLoading.tsx`
+and swapped it into all 12 pages that had the old pattern, plus the 3
+new ones — `DashboardLayout` (sidebar/navbar) now renders immediately
+either way, only the content area shows the loading state.
+
+**Mobile layout overflow** (the screenshots): `SettingsManager`'s grading
+scale editor forced 5 fixed grid columns with no mobile fallback — wide
+enough to overflow a phone screen and drag the *whole page* into
+horizontal scroll, which is why unrelated content looked clipped/shifted
+in the screenshots too, not just that one table. Rebuilt it with a real
+mobile layout (stacked cards) below `sm:`, kept the grid table above it.
+Also found `PersonEditor`'s subject/class dropdowns missing `min-w-0` —
+native `<select>` elements don't shrink below their content's width in a
+flex row without it, a second real contributor to the same symptom.
+Audited the whole project for both patterns (fixed-column grids without
+a mobile breakpoint; flex-1 inputs/selects without min-w-0) — these were
+the only instances. Added `overflow-x: hidden` on `html`/`body` in
+`globals.css` as a backstop regardless.
+
+**Teacher accounts now use a real invite-by-email flow, students a
+4-digit PIN:**
+- Creating a teacher (single or via bulk import) now calls Supabase's
+  `inviteUserByEmail` instead of generating a password — no credential
+  exists for the admin to share; the teacher gets an actual email, clicks
+  it, and lands on the new `app/register/page.tsx` to set their own
+  password, then routes to `/teacher` (or `/admin` if invited as an
+  admin).
+- Students dropped from a 6-digit to a 4-digit PIN, still admin-generated
+  and shown once.
+- **Needs one manual step to actually work**: Supabase → Authentication →
+  URL Configuration → **Redirect URLs** needs the deployed domain's
+  `/register` path added (e.g. `https://your-app.vercel.app/register`),
+  or invite links will fail to redirect. Also worth knowing: Supabase's
+  built-in email sender is rate-limited and meant for testing — a school
+  actually inviting many teachers wants real SMTP configured under
+  Authentication → Emails.

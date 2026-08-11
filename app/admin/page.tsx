@@ -7,6 +7,7 @@ import AdminOverview from "@/components/admin/AdminOverview";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import type { AdminStats, TodayBatch } from "@/components/admin/types";
+import PageLoading from "@/components/layout/PageLoading";
 
 /** Two batches conflict if they share a lab room and their time windows overlap. */
 function findConflicts(batches: TodayBatch[]): string[] {
@@ -86,11 +87,11 @@ export default function AdminOverviewPage() {
     })();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (loading) return null; // TODO: swap in a loading skeleton once the design system has one
-
   return (
     <DashboardLayout role="super_admin" pageTitle="Overview" userName={authUser?.fullName ?? ""} onLogout={() => signOutAndRedirect(router)}>
-      <AdminOverview schoolName={schoolName} stats={stats} todayBatches={todayBatches} conflictBatchIds={findConflicts(todayBatches)} />
+      {loading ? <PageLoading /> : (
+        <AdminOverview schoolName={schoolName} stats={stats} todayBatches={todayBatches} conflictBatchIds={findConflicts(todayBatches)} />
+      )}
     </DashboardLayout>
   );
 }

@@ -7,6 +7,7 @@ import ExamBuilder, { type ExamFormData } from "@/components/teacher/ExamBuilder
 import { createClient } from "@/lib/supabase/client";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import type { BankQuestion, ClassOption, SubjectOption, TermOption } from "@/components/teacher/types";
+import PageLoading from "@/components/layout/PageLoading";
 
 export default function TeacherExamBuilderPage() {
   const router = useRouter();
@@ -118,18 +119,18 @@ export default function TeacherExamBuilderPage() {
     router.push("/teacher/exams");
   };
 
-  if (loading) return null; // TODO: swap in a loading skeleton once the design system has one
-
   return (
     <DashboardLayout role="teacher" pageTitle="Exam Builder" userName={authUser?.fullName ?? ""} onLogout={() => signOutAndRedirect(router)}>
-      <ExamBuilder
-        subjects={subjects}
-        classes={classes}
-        terms={terms}
-        questionBank={questionBank}
-        onSaveDraft={(data) => persistExam(data, "draft")}
-        onPublish={(data) => persistExam(data, "published")}
-      />
+      {loading ? <PageLoading /> : (
+        <ExamBuilder
+          subjects={subjects}
+          classes={classes}
+          terms={terms}
+          questionBank={questionBank}
+          onSaveDraft={(data) => persistExam(data, "draft")}
+          onPublish={(data) => persistExam(data, "published")}
+        />
+      )}
     </DashboardLayout>
   );
 }

@@ -11,6 +11,7 @@ import ExamLaunchpad, {
 import { createClient } from "@/lib/supabase/client";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import { fetchExamMaxScores } from "@/lib/reportCard";
+import PageLoading from "@/components/layout/PageLoading";
 
 export default function StudentHomePage() {
   const router = useRouter();
@@ -97,16 +98,16 @@ export default function StudentHomePage() {
     })();
   }, [authUser?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (loading) return null; // TODO: swap in a loading skeleton once the design system has one
-
   return (
     <DashboardLayout role="student" pageTitle="Exam Launchpad" userName={authUser?.fullName ?? ""} onLogout={() => signOutAndRedirect(router)}>
-      <ExamLaunchpad
-        studentName={authUser?.fullName ?? ""}
-        availableExams={availableExams}
-        upcomingBatches={upcomingBatches}
-        pastResults={pastResults}
-      />
+      {loading ? <PageLoading /> : (
+        <ExamLaunchpad
+          studentName={authUser?.fullName ?? ""}
+          availableExams={availableExams}
+          upcomingBatches={upcomingBatches}
+          pastResults={pastResults}
+        />
+      )}
     </DashboardLayout>
   );
 }

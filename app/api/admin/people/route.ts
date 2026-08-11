@@ -4,20 +4,22 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
  * Admin-only account management for students and teachers.
- *   POST   — create an account. Generates a temporary credential (a 6-digit
- *            PIN for students, a random password for teachers) since there's
- *            no self-service email invite flow for a lab full of shared
- *            school computers — the admin hands the credential to the person
- *            directly. Returned once, never stored in plain text anywhere.
+ *   POST   — create an account.
+ *            Students: a 4-digit PIN is generated and returned once —
+ *            simple enough for a young student to remember or write down,
+ *            shared computers in the lab don't lend themselves to email
+ *            self-service anyway.
+ *            Teachers: no password is set here at all. Supabase sends a
+ *            real invite email; the teacher clicks it, lands on /register,
+ *            and sets their own password. Requires Supabase's email
+ *            sending to actually be configured — the built-in sender
+ *            works for testing but is rate-limited; a school-scale rollout
+ *            wants real SMTP configured (Supabase dashboard → Auth →
+ *            Emails), or invites will bounce or land in spam.
  *   PATCH  — update profile fields, or toggle is_active.
  *   DELETE — deletes the Supabase Auth user, which cascades to their
  *            `users` row (see `users.id references auth.users(id) on delete
  *            cascade` in database/schema.sql).
- *
- * NOTE: teacher `subjectNames` picked in the form aren't persisted yet —
- * `teacher_subjects` needs a (teacher, subject, class) triple and this form
- * only collects subjects, not which classes they're taught to. That
- * assignment belongs in its own screen; for now it's accepted but ignored.
  */
 
 async function assertIsAdmin() {
@@ -29,9 +31,8 @@ async function assertIsAdmin() {
   return { ok: true as const };
 }
 
-function generateCredential(role: "student" | "teacher"): string {
-  if (role === "student") return String(Math.floor(100000 + Math.random() * 900000)); // 6-digit PIN
-  return Math.random().toString(36).slice(2, 8) + Math.random().toString(36).slice(2, 6); // ~10-char password
+function generateStudentPin(): string {
+  return String(Math.floor(1000 + Math.random() * 9000)); // 4-digit PIN
 }
 
 export async function POST(req: NextRequest) {
@@ -43,16 +44,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "role, fullName, and email are required." }, { status: 400 });
   }
 
-  const credential = generateCredential(role);
   const admin = createAdminClient();
+  let credential: string | undefined;
+  let authUserId: string;
 
-  const { data: created, error: authError } = await admin.auth.admin.createUser({ email, password: credential, email_confirm: true });
-  if (authError || !created.user) {
-    return NextResponse.json({ error: authError?.message ?? "Couldn't create the account." }, { status: 500 });
+  if (role === "student") {
+    credential = generateStudentPin();
+    const { data: created, error: authError } = await admin.auth.admin.createUser({ email, password: credential, email_confirm: true });
+    if (authError || !created.user) {
+      return NextResponse.json({ error: authError?.message ?? "Couldn't create the account." }, { status: 500 });
+    }
+    authUserId = created.user.id;
+  } else {
+    // Teacher (or another admin): invite by email, no password set here.
+    const redirectTo = `${req.nextUrl.origin}/register`;
+    const { data: invited, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, { redirectTo });
+    if (inviteError || !invited.user) {
+      return NextResponse.json({ error: inviteError?.message ?? "Couldn't send the invite email." }, { status: 500 });
+    }
+    authUserId = invited.user.id;
   }
 
   const { error: profileError } = await admin.from("users").insert({
-    id: created.user.id,
+    id: authUserId,
     role,
     full_name: fullName,
     email,
@@ -63,11 +77,11 @@ export async function POST(req: NextRequest) {
   });
 
   if (profileError) {
-    await admin.auth.admin.deleteUser(created.user.id); // roll back the orphaned auth user
+    await admin.auth.admin.deleteUser(authUserId); // roll back the orphaned auth user
     return NextResponse.json({ error: profileError.message }, { status: 500 });
   }
 
-  return NextResponse.json({ id: created.user.id, credential });
+  return NextResponse.json({ id: authUserId, credential, invited: role !== "student" });
 }
 
 export async function PATCH(req: NextRequest) {

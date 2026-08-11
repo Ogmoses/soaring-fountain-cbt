@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import type { ImportRow } from "@/components/admin/BulkImportModal";
 import type { PersonRole, PersonRow } from "@/components/admin/types";
+import PageLoading from "@/components/layout/PageLoading";
 
 export default function AdminPeoplePage() {
   const router = useRouter();
@@ -82,7 +83,7 @@ export default function AdminPeoplePage() {
     if (!res.ok) throw new Error(data.error ?? "Couldn't create that account.");
     if (role === "teacher") await syncTeacherSubjects(data.id, person.assignments);
     await loadAll();
-    return { credential: data.credential as string };
+    return { credential: data.credential as string | undefined, invited: data.invited as boolean | undefined };
   };
 
   const handleUpdate = async (role: PersonRole, id: string, person: Omit<PersonRow, "id" | "isActive" | "subjectNames">) => {
@@ -126,21 +127,21 @@ export default function AdminPeoplePage() {
     }
   };
 
-  if (loading) return null; // TODO: swap in a loading skeleton once the design system has one
-
   return (
     <DashboardLayout role="super_admin" pageTitle="Students & Teachers" userName={authUser?.fullName ?? ""} onLogout={() => signOutAndRedirect(router)}>
-      <PeopleManager
-        classOptions={classOptions}
-        subjectOptions={subjectOptions}
-        students={students}
-        teachers={teachers}
-        onCreate={handleCreate}
-        onUpdate={handleUpdate}
-        onToggleActive={handleToggleActive}
-        onDelete={handleDelete}
-        onBulkImport={handleBulkImport}
-      />
+      {loading ? <PageLoading /> : (
+        <PeopleManager
+          classOptions={classOptions}
+          subjectOptions={subjectOptions}
+          students={students}
+          teachers={teachers}
+          onCreate={handleCreate}
+          onUpdate={handleUpdate}
+          onToggleActive={handleToggleActive}
+          onDelete={handleDelete}
+          onBulkImport={handleBulkImport}
+        />
+      )}
     </DashboardLayout>
   );
 }

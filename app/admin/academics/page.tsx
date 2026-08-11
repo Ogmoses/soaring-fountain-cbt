@@ -7,6 +7,7 @@ import AcademicsManager from "@/components/admin/AcademicsManager";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import type { ClassRow, SessionRow, SubjectRow, TermRow } from "@/components/admin/types";
+import PageLoading from "@/components/layout/PageLoading";
 
 export default function AdminAcademicsPage() {
   const router = useRouter();
@@ -116,24 +117,24 @@ export default function AdminAcademicsPage() {
     await loadAll();
   };
 
-  if (loading) return null; // TODO: swap in a loading skeleton once the design system has one
-
   return (
     <DashboardLayout role="super_admin" pageTitle="Classes & Subjects" userName={authUser?.fullName ?? ""} onLogout={() => signOutAndRedirect(router)}>
-      <AcademicsManager
-        sessions={sessions}
-        terms={terms}
-        classes={classes}
-        subjects={subjects}
-        onSaveSession={handleSaveSession}
-        onDeleteSession={handleDeleteSession}
-        onSaveTerm={handleSaveTerm}
-        onDeleteTerm={handleDeleteTerm}
-        onSaveClass={handleSaveClass}
-        onDeleteClass={handleDeleteClass}
-        onSaveSubject={handleSaveSubject}
-        onDeleteSubject={handleDeleteSubject}
-      />
+      {loading ? <PageLoading /> : (
+        <AcademicsManager
+          sessions={sessions}
+          terms={terms}
+          classes={classes}
+          subjects={subjects}
+          onSaveSession={handleSaveSession}
+          onDeleteSession={handleDeleteSession}
+          onSaveTerm={handleSaveTerm}
+          onDeleteTerm={handleDeleteTerm}
+          onSaveClass={handleSaveClass}
+          onDeleteClass={handleDeleteClass}
+          onSaveSubject={handleSaveSubject}
+          onDeleteSubject={handleDeleteSubject}
+        />
+      )}
     </DashboardLayout>
   );
 }

@@ -7,6 +7,7 @@ import GradingQueue, { type ExamOption } from "@/components/teacher/GradingQueue
 import { createClient } from "@/lib/supabase/client";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import type { GradingItem } from "@/components/teacher/types";
+import PageLoading from "@/components/layout/PageLoading";
 
 export default function TeacherGradingPage() {
   const router = useRouter();
@@ -78,11 +79,11 @@ export default function TeacherGradingPage() {
     setItems((prev) => prev.map((i) => (i.id === itemId ? { ...i, pointsAwarded, feedback } : i)));
   };
 
-  if (loading) return null; // TODO: swap in a loading skeleton once the design system has one
-
   return (
     <DashboardLayout role="teacher" pageTitle="Grading Queue" userName={authUser?.fullName ?? ""} onLogout={() => signOutAndRedirect(router)}>
-      <GradingQueue examOptions={examOptions} selectedExamId={selectedExamId} onExamChange={setSelectedExamId} items={items} onGrade={handleGrade} />
+      {loading ? <PageLoading /> : (
+        <GradingQueue examOptions={examOptions} selectedExamId={selectedExamId} onExamChange={setSelectedExamId} items={items} onGrade={handleGrade} />
+      )}
     </DashboardLayout>
   );
 }

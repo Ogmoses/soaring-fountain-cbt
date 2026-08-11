@@ -7,6 +7,7 @@ import LabBatchesManager from "@/components/admin/LabBatchesManager";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import type { BatchTemplate, LabRoom } from "@/components/admin/types";
+import PageLoading from "@/components/layout/PageLoading";
 
 export default function AdminLabBatchesPage() {
   const router = useRouter();
@@ -54,18 +55,18 @@ export default function AdminLabBatchesPage() {
     await loadAll();
   };
 
-  if (loading) return null; // TODO: swap in a loading skeleton once the design system has one
-
   return (
     <DashboardLayout role="super_admin" pageTitle="Lab Batches" userName={authUser?.fullName ?? ""} onLogout={() => signOutAndRedirect(router)}>
-      <LabBatchesManager
-        rooms={rooms}
-        templates={templates}
-        onSaveRoom={handleSaveRoom}
-        onDeleteRoom={handleDeleteRoom}
-        onSaveTemplate={handleSaveTemplate}
-        onDeleteTemplate={handleDeleteTemplate}
-      />
+      {loading ? <PageLoading /> : (
+        <LabBatchesManager
+          rooms={rooms}
+          templates={templates}
+          onSaveRoom={handleSaveRoom}
+          onDeleteRoom={handleDeleteRoom}
+          onSaveTemplate={handleSaveTemplate}
+          onDeleteTemplate={handleDeleteTemplate}
+        />
+      )}
     </DashboardLayout>
   );
 }

@@ -6,7 +6,7 @@
  */
 
 import { useMemo, useState } from "react";
-import { Plus, Upload, Pencil, Trash2, Search, Ban, CheckCircle, KeyRound } from "lucide-react";
+import { Plus, Upload, Pencil, Trash2, Search, Ban, CheckCircle, KeyRound, Mail } from "lucide-react";
 import PersonEditor from "./PersonEditor";
 import BulkImportModal, { type ImportRow } from "./BulkImportModal";
 import type { PersonRole, PersonRow } from "./types";
@@ -16,7 +16,7 @@ interface PeopleManagerProps {
   subjectOptions: { id: string; name: string }[];
   students: PersonRow[];
   teachers: PersonRow[];
-  onCreate: (role: PersonRole, person: Omit<PersonRow, "id" | "isActive" | "subjectNames">) => Promise<{ credential?: string } | void>;
+  onCreate: (role: PersonRole, person: Omit<PersonRow, "id" | "isActive" | "subjectNames">) => Promise<{ credential?: string; invited?: boolean } | void>;
   onUpdate: (role: PersonRole, id: string, person: Omit<PersonRow, "id" | "isActive" | "subjectNames">) => Promise<void>;
   onToggleActive: (role: PersonRole, id: string, isActive: boolean) => Promise<void>;
   onDelete: (role: PersonRole, id: string) => Promise<void>;
@@ -40,6 +40,7 @@ export default function PeopleManager({
   const [importOpen, setImportOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<PersonRow | null>(null);
   const [createdCredential, setCreatedCredential] = useState<{ name: string; credential: string } | null>(null);
+  const [invitedTeacher, setInvitedTeacher] = useState<{ name: string; email: string } | null>(null);
 
   const classNameById = (id?: string) => classOptions.find((c) => c.id === id)?.name ?? "No class";
 
@@ -55,6 +56,7 @@ export default function PeopleManager({
     } else {
       const result = await onCreate(tab, person);
       if (result?.credential) setCreatedCredential({ name: person.fullName, credential: result.credential });
+      else if (result?.invited) setInvitedTeacher({ name: person.fullName, email: person.email });
     }
     setEditorState("closed");
   };
@@ -201,13 +203,33 @@ export default function PeopleManager({
             </div>
             <h2 className="font-display text-[15px] font-semibold text-ink">Account created</h2>
             <p className="mt-1.5 text-[13px] text-ink/60">
-              Share this temporary {tab === "student" ? "PIN" : "password"} with {createdCredential.name} — it won't be shown again.
+              Share this PIN with {createdCredential.name} — it won't be shown again.
             </p>
-            <p className="mt-3 rounded-md bg-background-muted px-3 py-2.5 text-center font-mono text-[15px] font-semibold tracking-wider text-ink">
+            <p className="mt-3 rounded-md bg-background-muted px-3 py-2.5 text-center font-mono text-[20px] font-semibold tracking-[0.3em] text-ink">
               {createdCredential.credential}
             </p>
             <button
               onClick={() => setCreatedCredential(null)}
+              className="mt-4 w-full rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-white hover:bg-crimson-700"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
+
+      {invitedTeacher && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/50 p-4">
+          <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-card-hover">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-crimson-50 text-crimson-700">
+              <Mail size={18} />
+            </div>
+            <h2 className="font-display text-[15px] font-semibold text-ink">Invite sent</h2>
+            <p className="mt-1.5 text-[13px] text-ink/60">
+              {invitedTeacher.name} will get an email at <span className="font-medium text-ink">{invitedTeacher.email}</span> to set their own password and sign in.
+            </p>
+            <button
+              onClick={() => setInvitedTeacher(null)}
               className="mt-4 w-full rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-white hover:bg-crimson-700"
             >
               Done

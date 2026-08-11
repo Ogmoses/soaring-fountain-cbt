@@ -124,7 +124,8 @@ function GradingScaleSection({ bands: initialBands, onSave }: { bands: GradeBand
 
   return (
     <SectionCard title="Grading scale" subtitle="Score ranges map to a letter grade and remark">
-      <div className="space-y-2">
+      {/* Desktop/tablet: compact grid-table */}
+      <div className="hidden space-y-2 sm:block">
         <div className="grid grid-cols-[1fr_1fr_0.7fr_1.4fr_auto] gap-2 px-1 text-[11px] font-medium uppercase tracking-wide text-ink/40">
           <span>Min</span>
           <span>Max</span>
@@ -134,16 +135,38 @@ function GradingScaleSection({ bands: initialBands, onSave }: { bands: GradeBand
         </div>
         {bands.map((b) => (
           <div key={b.id} className="grid grid-cols-[1fr_1fr_0.7fr_1.4fr_auto] items-center gap-2">
-            <input type="number" value={b.minScore} onChange={(e) => update(b.id, { minScore: Number(e.target.value) })} className="rounded-lg border border-black/10 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500" />
-            <input type="number" value={b.maxScore} onChange={(e) => update(b.id, { maxScore: Number(e.target.value) })} className="rounded-lg border border-black/10 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500" />
-            <input value={b.gradeLetter} onChange={(e) => update(b.id, { gradeLetter: e.target.value })} className="rounded-lg border border-black/10 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500" />
-            <input value={b.remark} onChange={(e) => update(b.id, { remark: e.target.value })} className="rounded-lg border border-black/10 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500" />
-            <button onClick={() => removeBand(b.id)} className="rounded-md p-2 text-ink/30 hover:bg-crimson-50 hover:text-crimson-700">
+            <input type="number" value={b.minScore} onChange={(e) => update(b.id, { minScore: Number(e.target.value) })} className="w-full min-w-0 rounded-lg border border-black/10 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500" />
+            <input type="number" value={b.maxScore} onChange={(e) => update(b.id, { maxScore: Number(e.target.value) })} className="w-full min-w-0 rounded-lg border border-black/10 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500" />
+            <input value={b.gradeLetter} onChange={(e) => update(b.id, { gradeLetter: e.target.value })} className="w-full min-w-0 rounded-lg border border-black/10 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500" />
+            <input value={b.remark} onChange={(e) => update(b.id, { remark: e.target.value })} className="w-full min-w-0 rounded-lg border border-black/10 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500" />
+            <button onClick={() => removeBand(b.id)} className="shrink-0 rounded-md p-2 text-ink/30 hover:bg-crimson-50 hover:text-crimson-700">
               <Trash2 size={14} />
             </button>
           </div>
         ))}
       </div>
+
+      {/* Mobile: one card per band — a 5-column grid never fits a phone width */}
+      <div className="space-y-2.5 sm:hidden">
+        {bands.map((b) => (
+          <div key={b.id} className="rounded-lg border border-black/10 p-3">
+            <div className="mb-2 grid grid-cols-3 gap-2">
+              <MiniField label="Min" value={b.minScore} onChange={(v) => update(b.id, { minScore: Number(v) })} type="number" />
+              <MiniField label="Max" value={b.maxScore} onChange={(v) => update(b.id, { maxScore: Number(v) })} type="number" />
+              <MiniField label="Grade" value={b.gradeLetter} onChange={(v) => update(b.id, { gradeLetter: v })} />
+            </div>
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <MiniField label="Remark" value={b.remark} onChange={(v) => update(b.id, { remark: v })} />
+              </div>
+              <button onClick={() => removeBand(b.id)} className="shrink-0 rounded-md border border-black/10 p-2.5 text-ink/40 hover:bg-crimson-50 hover:text-crimson-700">
+                <Trash2 size={14} />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
       <button onClick={addBand} className="mt-3 flex items-center gap-1.5 text-[12.5px] font-medium text-crimson-700 hover:text-crimson-800">
         <Plus size={14} /> Add band
       </button>
@@ -151,6 +174,20 @@ function GradingScaleSection({ bands: initialBands, onSave }: { bands: GradeBand
       {error && <p className="mt-3 rounded-md bg-crimson-50 px-3 py-2 text-[12.5px] text-crimson-700">{error}</p>}
       <SaveButton onClick={handleSave} saving={saving} saved={saved} />
     </SectionCard>
+  );
+}
+
+function MiniField({ label, value, onChange, type = "text" }: { label: string; value: string | number; onChange: (v: string) => void; type?: string }) {
+  return (
+    <label className="block min-w-0">
+      <span className="mb-0.5 block text-[9.5px] font-medium uppercase tracking-wide text-ink/40">{label}</span>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full min-w-0 rounded-lg border border-black/10 px-2 py-2 text-[12.5px] outline-none focus:border-crimson-500"
+      />
+    </label>
   );
 }
 

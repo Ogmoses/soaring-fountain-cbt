@@ -5,4 +5,9 @@
 html,
 body {
   background-color: #fff7d3;
+  /* Defensive backstop: nothing in this app should ever need horizontal
+     scroll on a phone. If something someday overflows anyway, it gets
+     clipped instead of dragging the whole page into a scrollable mess. */
+  overflow-x: hidden;
+  max-width: 100vw;
 }

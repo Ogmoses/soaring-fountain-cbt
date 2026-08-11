@@ -110,7 +110,7 @@ export default function PersonEditor({ role, initial, classOptions, subjectOptio
                       <select
                         value={a.subjectId}
                         onChange={(e) => updateAssignment(i, { subjectId: e.target.value })}
-                        className="flex-1 rounded-lg border border-black/10 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500"
+                        className="min-w-0 flex-1 rounded-lg border border-black/10 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500"
                       >
                         {subjectOptions.map((s) => (
                           <option key={s.id} value={s.id}>{s.name}</option>
@@ -119,7 +119,7 @@ export default function PersonEditor({ role, initial, classOptions, subjectOptio
                       <select
                         value={a.classId}
                         onChange={(e) => updateAssignment(i, { classId: e.target.value })}
-                        className="flex-1 rounded-lg border border-black/10 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500"
+                        className="min-w-0 flex-1 rounded-lg border border-black/10 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500"
                       >
                         {classOptions.map((c) => (
                           <option key={c.id} value={c.id}>{c.name}</option>

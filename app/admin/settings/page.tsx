@@ -7,6 +7,7 @@ import SettingsManager from "@/components/admin/SettingsManager";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import type { GradeBand, SchoolProfile } from "@/components/admin/types";
+import PageLoading from "@/components/layout/PageLoading";
 
 const EMPTY_PROFILE: SchoolProfile = { schoolName: "", motto: "", address: "", logoUrl: null };
 
@@ -56,11 +57,11 @@ export default function AdminSettingsPage() {
     await loadAll();
   };
 
-  if (loading) return null; // TODO: swap in a loading skeleton once the design system has one
-
   return (
     <DashboardLayout role="super_admin" pageTitle="Settings" userName={authUser?.fullName ?? ""} onLogout={() => signOutAndRedirect(router)}>
-      <SettingsManager profile={profile} gradingScale={scale} onSaveProfile={handleSaveProfile} onSaveGradingScale={handleSaveGradingScale} />
+      {loading ? <PageLoading /> : (
+        <SettingsManager profile={profile} gradingScale={scale} onSaveProfile={handleSaveProfile} onSaveGradingScale={handleSaveGradingScale} />
+      )}
     </DashboardLayout>
   );
 }

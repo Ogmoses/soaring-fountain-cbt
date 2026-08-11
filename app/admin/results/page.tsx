@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import { fetchExamMaxScores } from "@/lib/reportCard";
 import type { ClassPerformance, PendingResult, SubjectPerformance } from "@/components/admin/types";
+import PageLoading from "@/components/layout/PageLoading";
 
 export default function AdminResultsPage() {
   const router = useRouter();
@@ -100,17 +101,17 @@ export default function AdminResultsPage() {
     await loadAll();
   };
 
-  if (loading) return null; // TODO: swap in a loading skeleton once the design system has one
-
   return (
     <DashboardLayout role="super_admin" pageTitle="Results & Analytics" userName={authUser?.fullName ?? ""} onLogout={() => signOutAndRedirect(router)}>
-      <ResultsAnalytics
-        pendingResults={pending}
-        classPerformance={classPerformance}
-        subjectPerformance={subjectPerformance}
-        schoolAveragePercent={schoolAveragePercent}
-        onPublish={handlePublish}
-      />
+      {loading ? <PageLoading /> : (
+        <ResultsAnalytics
+          pendingResults={pending}
+          classPerformance={classPerformance}
+          subjectPerformance={subjectPerformance}
+          schoolAveragePercent={schoolAveragePercent}
+          onPublish={handlePublish}
+        />
+      )}
     </DashboardLayout>
   );
 }

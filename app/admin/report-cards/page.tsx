@@ -6,6 +6,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import ReportCardsManager, { type ReportCardClassOption, type ReportCardTermOption, type RosterStudent } from "@/components/admin/ReportCardsManager";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
+import PageLoading from "@/components/layout/PageLoading";
 
 export default function AdminReportCardsPage() {
   const router = useRouter();
@@ -56,20 +57,20 @@ export default function AdminReportCardsPage() {
     })();
   }, [selectedClassId, selectedTermId]);
 
-  if (loading) return null; // TODO: swap in a loading skeleton once the design system has one
-
   return (
     <DashboardLayout role="super_admin" pageTitle="Report Cards" userName={authUser?.fullName ?? ""} onLogout={() => signOutAndRedirect(router)}>
-      <ReportCardsManager
-        classOptions={classes}
-        termOptions={terms}
-        selectedClassId={selectedClassId}
-        onClassChange={setSelectedClassId}
-        selectedTermId={selectedTermId}
-        onTermChange={setSelectedTermId}
-        roster={roster}
-        principalName={authUser?.role === "super_admin" ? authUser.fullName : undefined}
-      />
+      {loading ? <PageLoading /> : (
+        <ReportCardsManager
+          classOptions={classes}
+          termOptions={terms}
+          selectedClassId={selectedClassId}
+          onClassChange={setSelectedClassId}
+          selectedTermId={selectedTermId}
+          onTermChange={setSelectedTermId}
+          roster={roster}
+          principalName={authUser?.role === "super_admin" ? authUser.fullName : undefined}
+        />
+      )}
     </DashboardLayout>
   );
 }

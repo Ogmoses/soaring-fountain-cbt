@@ -7,6 +7,7 @@ import QuestionBankManager from "@/components/teacher/QuestionBankManager";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import type { BankQuestion, SubjectOption } from "@/components/teacher/types";
+import PageLoading from "@/components/layout/PageLoading";
 
 export default function TeacherQuestionsPage() {
   const router = useRouter();
@@ -124,11 +125,11 @@ export default function TeacherQuestionsPage() {
     await loadAll();
   };
 
-  if (loading) return null; // TODO: swap in a loading skeleton once the design system has one
-
   return (
     <DashboardLayout role="teacher" pageTitle="Question Bank" userName={authUser?.fullName ?? ""} onLogout={() => signOutAndRedirect(router)}>
-      <QuestionBankManager subjects={subjects} questions={questions} onCreate={handleCreate} onUpdate={handleUpdate} onDelete={handleDelete} />
+      {loading ? <PageLoading /> : (
+        <QuestionBankManager subjects={subjects} questions={questions} onCreate={handleCreate} onUpdate={handleUpdate} onDelete={handleDelete} />
+      )}
     </DashboardLayout>
   );
 }
