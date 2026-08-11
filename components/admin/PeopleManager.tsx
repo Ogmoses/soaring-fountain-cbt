@@ -6,7 +6,7 @@
  */
 
 import { useMemo, useState } from "react";
-import { Plus, Upload, Pencil, Trash2, Search, Ban, CheckCircle, KeyRound, Mail } from "lucide-react";
+import { Plus, Upload, Pencil, Trash2, Search, Ban, CheckCircle, KeyRound, Mail, Send } from "lucide-react";
 import PersonEditor from "./PersonEditor";
 import BulkImportModal, { type ImportRow } from "./BulkImportModal";
 import type { PersonRole, PersonRow } from "./types";
@@ -20,6 +20,7 @@ interface PeopleManagerProps {
   onUpdate: (role: PersonRole, id: string, person: Omit<PersonRow, "id" | "isActive" | "subjectNames">) => Promise<void>;
   onToggleActive: (role: PersonRole, id: string, isActive: boolean) => Promise<void>;
   onDelete: (role: PersonRole, id: string) => Promise<void>;
+  onResendAccess: (email: string) => Promise<void>;
   onBulkImport: (role: PersonRole, rows: ImportRow[]) => Promise<void>;
 }
 
@@ -32,6 +33,7 @@ export default function PeopleManager({
   onUpdate,
   onToggleActive,
   onDelete,
+  onResendAccess,
   onBulkImport,
 }: PeopleManagerProps) {
   const [tab, setTab] = useState<PersonRole>("student");
@@ -43,6 +45,11 @@ export default function PeopleManager({
   const [invitedTeacher, setInvitedTeacher] = useState<{ name: string; email: string } | null>(null);
 
   const classNameById = (id?: string) => classOptions.find((c) => c.id === id)?.name ?? "No class";
+
+  const handleResendAccess = async (person: PersonRow) => {
+    await onResendAccess(person.email);
+    setInvitedTeacher({ name: person.fullName, email: person.email });
+  };
 
   const people = tab === "student" ? students : teachers;
   const filtered = useMemo(
@@ -119,7 +126,7 @@ export default function PeopleManager({
       ) : (
         <div className="divide-y divide-black/5 rounded-lg border border-black/5 bg-white">
           {filtered.map((p) => (
-            <div key={p.id} className="flex items-center gap-3.5 px-4 py-3.5 sm:px-5">
+            <div key={p.id} className="flex flex-col gap-2.5 px-4 py-3.5 sm:flex-row sm:items-center sm:px-5">
               <div className="min-w-0 flex-1">
                 <p className={`truncate text-[13.5px] font-medium ${p.isActive ? "text-ink" : "text-ink/40"}`}>{p.fullName}</p>
                 <p className="truncate text-[12px] text-ink/50">
@@ -127,11 +134,16 @@ export default function PeopleManager({
                   {p.role === "student" ? ` · ${classNameById(p.classId)} · ${p.admissionNumber}` : ` · ${p.staffId}${p.subjectNames?.length ? ` · ${p.subjectNames.join(", ")}` : ""}`}
                 </p>
               </div>
-              {!p.isActive && <span className="shrink-0 rounded-full bg-background-muted px-2 py-0.5 text-[11px] font-medium text-ink/50">Inactive</span>}
-              <div className="flex shrink-0 items-center gap-1">
-                <button onClick={() => setEditorState(p)} className="rounded-md p-1.5 text-ink/40 hover:bg-background-muted hover:text-ink">
+              {!p.isActive && <span className="w-fit shrink-0 rounded-full bg-background-muted px-2 py-0.5 text-[11px] font-medium text-ink/50">Inactive</span>}
+              <div className="flex shrink-0 items-center gap-1 self-end sm:self-auto">
+                <button onClick={() => setEditorState(p)} className="rounded-md p-1.5 text-ink/40 hover:bg-background-muted hover:text-ink" title="Edit">
                   <Pencil size={15} />
                 </button>
+                {p.role === "teacher" && (
+                  <button onClick={() => handleResendAccess(p)} className="rounded-md p-1.5 text-ink/40 hover:bg-background-muted hover:text-ink" title="Resend access email">
+                    <Send size={15} />
+                  </button>
+                )}
                 <button
                   onClick={() => onToggleActive(tab, p.id, !p.isActive)}
                   className="rounded-md p-1.5 text-ink/40 hover:bg-background-muted hover:text-ink"
@@ -139,7 +151,7 @@ export default function PeopleManager({
                 >
                   {p.isActive ? <Ban size={15} /> : <CheckCircle size={15} />}
                 </button>
-                <button onClick={() => setDeleteTarget(p)} className="rounded-md p-1.5 text-ink/40 hover:bg-crimson-50 hover:text-crimson-700">
+                <button onClick={() => setDeleteTarget(p)} className="rounded-md p-1.5 text-ink/40 hover:bg-crimson-50 hover:text-crimson-700" title="Delete">
                   <Trash2 size={15} />
                 </button>
               </div>

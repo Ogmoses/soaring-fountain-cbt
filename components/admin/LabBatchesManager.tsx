@@ -56,18 +56,22 @@ export default function LabBatchesManager({ rooms, templates, onSaveRoom, onDele
           ) : (
             <div className="divide-y divide-black/5 rounded-lg border border-black/5 bg-white">
               {templates.map((t) => (
-                <div key={t.id} className="flex items-center gap-3 px-4 py-3.5 sm:px-5">
-                  <Clock3 size={16} className="shrink-0 text-crimson-600" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[13.5px] font-medium text-ink">{t.label}</p>
-                    <p className="text-[12px] text-ink/45">{formatTime(t.startTime)} – {formatTime(t.endTime)}</p>
+                <div key={t.id} className="flex flex-col gap-2 px-4 py-3.5 sm:flex-row sm:items-center sm:px-5">
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <Clock3 size={16} className="shrink-0 text-crimson-600" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13.5px] font-medium text-ink">{t.label}</p>
+                      <p className="text-[12px] text-ink/45">{formatTime(t.startTime)} – {formatTime(t.endTime)}</p>
+                    </div>
                   </div>
-                  <button onClick={() => setTemplateEditor(t)} className="rounded-md p-1.5 text-ink/40 hover:bg-background-muted hover:text-ink">
-                    <Pencil size={15} />
-                  </button>
-                  <button onClick={() => onDeleteTemplate(t.id)} className="rounded-md p-1.5 text-ink/40 hover:bg-crimson-50 hover:text-crimson-700">
-                    <Trash2 size={15} />
-                  </button>
+                  <div className="flex shrink-0 items-center gap-1 self-end sm:self-auto">
+                    <button onClick={() => setTemplateEditor(t)} className="rounded-md p-1.5 text-ink/40 hover:bg-background-muted hover:text-ink">
+                      <Pencil size={15} />
+                    </button>
+                    <button onClick={() => onDeleteTemplate(t.id)} className="rounded-md p-1.5 text-ink/40 hover:bg-crimson-50 hover:text-crimson-700">
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -85,18 +89,22 @@ export default function LabBatchesManager({ rooms, templates, onSaveRoom, onDele
           ) : (
             <div className="divide-y divide-black/5 rounded-lg border border-black/5 bg-white">
               {rooms.map((r) => (
-                <div key={r.id} className="flex items-center gap-3 px-4 py-3.5 sm:px-5">
-                  <MonitorPlay size={16} className="shrink-0 text-crimson-600" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[13.5px] font-medium text-ink">{r.name}</p>
-                    <p className="text-[12px] text-ink/45">{r.capacity} computers</p>
+                <div key={r.id} className="flex flex-col gap-2 px-4 py-3.5 sm:flex-row sm:items-center sm:px-5">
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <MonitorPlay size={16} className="shrink-0 text-crimson-600" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13.5px] font-medium text-ink">{r.name}</p>
+                      <p className="text-[12px] text-ink/45">{r.capacity} computers</p>
+                    </div>
                   </div>
-                  <button onClick={() => setRoomEditor(r)} className="rounded-md p-1.5 text-ink/40 hover:bg-background-muted hover:text-ink">
-                    <Pencil size={15} />
-                  </button>
-                  <button onClick={() => onDeleteRoom(r.id)} className="rounded-md p-1.5 text-ink/40 hover:bg-crimson-50 hover:text-crimson-700">
-                    <Trash2 size={15} />
-                  </button>
+                  <div className="flex shrink-0 items-center gap-1 self-end sm:self-auto">
+                    <button onClick={() => setRoomEditor(r)} className="rounded-md p-1.5 text-ink/40 hover:bg-background-muted hover:text-ink">
+                      <Pencil size={15} />
+                    </button>
+                    <button onClick={() => onDeleteRoom(r.id)} className="rounded-md p-1.5 text-ink/40 hover:bg-crimson-50 hover:text-crimson-700">
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

@@ -110,6 +110,18 @@ export default function AdminPeoplePage() {
     await loadAll();
   };
 
+  const handleResendAccess = async (email: string) => {
+    const res = await fetch("/api/admin/people/resend-access", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error ?? "Couldn't resend access.");
+    }
+  };
+
   const handleBulkImport = async (role: PersonRole, rows: ImportRow[]) => {
     const res = await fetch("/api/admin/people/bulk-import", {
       method: "POST",
@@ -139,6 +151,7 @@ export default function AdminPeoplePage() {
           onUpdate={handleUpdate}
           onToggleActive={handleToggleActive}
           onDelete={handleDelete}
+          onResendAccess={handleResendAccess}
           onBulkImport={handleBulkImport}
         />
       )}

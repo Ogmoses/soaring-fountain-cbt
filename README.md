@@ -195,3 +195,36 @@ the only instances. Added `overflow-x: hidden` on `html`/`body` in
   built-in email sender is rate-limited and meant for testing — a school
   actually inviting many teachers wants real SMTP configured under
   Authentication → Emails.
+
+## Pass 5: the mobile overflow's actual root cause, and a resend-access action
+
+**The mobile overflow bug had a specific, identifiable cause**, not just
+"needs more responsive tweaking": iOS Safari auto-detects and auto-links
+plain-text emails/phone numbers/dates in page content by default — which
+is why the teacher's email rendered as an unstyled blue underlined link
+in the screenshots, and very likely why its `text-overflow: ellipsis`
+truncation broke (a known WebKit quirk: the auto-injected `<a>` tag
+disrupts the parent's ellipsis calculation). Added `format-detection:
+telephone=no, email=no, address=no, date=no` to the root layout's
+metadata, which disables this globally in one place rather than needing
+a per-component workaround.
+
+**Audited every list-row-with-action-buttons pattern in the app** for the
+underlying structural risk (name/email text competing horizontally with
+multiple buttons in a row that doesn't stack on mobile) — `PeopleManager`
+was the only one actually broken (4 possible buttons + two lines of
+often-long text), but rebuilt it and 4 other, lower-risk rows
+(`AcademicsManager`'s classes/subjects, `LabBatchesManager`'s
+templates/rooms) to stack vertically below `sm:` regardless, since a
+`ReportCardsManager` row already used this pattern from the start and it
+held up fine.
+
+**Added a real "resend access" action** for teacher rows — sends a
+password-reset email (via `resetPasswordForEmail`, which works whether
+or not the account already has a password) and reuses the existing
+`/register` page to complete it. This is the actual fix for "the
+credentials I set aren't working": the account's own history in
+`auth.users` showed a password *was* set successfully once already — the
+issue was a forgotten/mistyped password, not a broken flow, and there
+was previously no way to recover from that without me manually
+intervening in the database. Now there is.

@@ -188,17 +188,19 @@ function ClassesTab({ classes, onSave, onDelete }: { classes: ClassRow[]; onSave
       </div>
       <div className="divide-y divide-black/5 rounded-lg border border-black/5 bg-white">
         {classes.map((c) => (
-          <div key={c.id} className="flex items-center gap-3 px-4 py-3.5 sm:px-5">
+          <div key={c.id} className="flex flex-col gap-2 px-4 py-3.5 sm:flex-row sm:items-center sm:px-5">
             <div className="min-w-0 flex-1">
               <p className="text-[13.5px] font-medium text-ink">{c.name}</p>
               <p className="text-[12px] text-ink/45">{c.level} · {c.studentCount} students</p>
             </div>
-            <button onClick={() => setEditor(c)} className="rounded-md p-1.5 text-ink/40 hover:bg-background-muted hover:text-ink">
-              <Pencil size={15} />
-            </button>
-            <button onClick={() => onDelete(c.id)} className="rounded-md p-1.5 text-ink/40 hover:bg-crimson-50 hover:text-crimson-700">
-              <Trash2 size={15} />
-            </button>
+            <div className="flex shrink-0 items-center gap-1 self-end sm:self-auto">
+              <button onClick={() => setEditor(c)} className="rounded-md p-1.5 text-ink/40 hover:bg-background-muted hover:text-ink">
+                <Pencil size={15} />
+              </button>
+              <button onClick={() => onDelete(c.id)} className="rounded-md p-1.5 text-ink/40 hover:bg-crimson-50 hover:text-crimson-700">
+                <Trash2 size={15} />
+              </button>
+            </div>
           </div>
         ))}
       </div>
@@ -236,17 +238,19 @@ function SubjectsTab({ subjects, classes, onSave, onDelete }: {
       </div>
       <div className="divide-y divide-black/5 rounded-lg border border-black/5 bg-white">
         {subjects.map((s) => (
-          <div key={s.id} className="flex items-center gap-3 px-4 py-3.5 sm:px-5">
+          <div key={s.id} className="flex flex-col gap-2 px-4 py-3.5 sm:flex-row sm:items-center sm:px-5">
             <div className="min-w-0 flex-1">
               <p className="text-[13.5px] font-medium text-ink">{s.name}{s.code ? ` (${s.code})` : ""}</p>
               <p className="truncate text-[12px] text-ink/45">{s.classIds.length === 0 ? "Not assigned to a class yet" : s.classIds.map(classNameById).join(", ")}</p>
             </div>
-            <button onClick={() => setEditor(s)} className="rounded-md p-1.5 text-ink/40 hover:bg-background-muted hover:text-ink">
-              <Pencil size={15} />
-            </button>
-            <button onClick={() => onDelete(s.id)} className="rounded-md p-1.5 text-ink/40 hover:bg-crimson-50 hover:text-crimson-700">
-              <Trash2 size={15} />
-            </button>
+            <div className="flex shrink-0 items-center gap-1 self-end sm:self-auto">
+              <button onClick={() => setEditor(s)} className="rounded-md p-1.5 text-ink/40 hover:bg-background-muted hover:text-ink">
+                <Pencil size={15} />
+              </button>
+              <button onClick={() => onDelete(s.id)} className="rounded-md p-1.5 text-ink/40 hover:bg-crimson-50 hover:text-crimson-700">
+                <Trash2 size={15} />
+              </button>
+            </div>
           </div>
         ))}
       </div>
