@@ -228,3 +228,36 @@ credentials I set aren't working": the account's own history in
 issue was a forgotten/mistyped password, not a broken flow, and there
 was previously no way to recover from that without me manually
 intervening in the database. Now there is.
+
+## Pass 6: a real session race condition in /register, not account confusion
+
+**What looked like password confusion was an actual bug.** `/register`
+called `supabase.auth.getUser()` immediately on mount, assuming it would
+reflect whichever invite/recovery link was just clicked. It doesn't
+reliably — the token lives in the URL's hash fragment, which Supabase's
+client parses *asynchronously*, and an immediate `getUser()` call can
+race that process and resolve using whatever session already existed in
+cookies instead (e.g. an admin still logged in on the same device).
+That's exactly what happened: clicking a teacher's invite link while
+already signed in as admin showed — and let the form overwrite the
+password for — the *admin* account instead of the invited teacher's.
+
+Fixed by never trusting an ambient session on this page: if the URL has
+no invite/recovery token at all, the page shows "invalid link" rather
+than falling back to whoever's already logged in; if it does, the page
+waits specifically for the `SIGNED_IN`/`PASSWORD_RECOVERY` auth event
+that fires once Supabase finishes processing *that* token, instead of
+racing it.
+
+**The admin account's password was reset directly** (via SQL, since the
+UI path was untrustworthy until the fix above landed) to a known value —
+see the conversation for what it was set to; change it once back in.
+
+**Still open**: data (teachers/students/subjects) not showing up in admin
+list pages even though it demonstrably exists in the database — ruled
+out RLS policies (checked live, correct), the query code in both
+`app/admin/people/page.tsx` and `app/admin/academics/page.tsx` (clean),
+and an in-app-browser cookie theory (reproduced in plain Chrome too).
+Current best lead is a stale session cookie from one of the admin
+account's several recreations during this debugging — needs a genuinely
+fresh sign-out/sign-in to confirm or rule out.

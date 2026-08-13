@@ -2,10 +2,25 @@
 
 /**
  * /register — where an invited teacher (or admin) lands after clicking
- * the link in their invite email. Supabase's browser client auto-detects
- * the session from the URL fragment on load (detectSessionInUrl, on by
- * default) — by the time this component mounts, `auth.getUser()` already
- * reflects the invited account, no token-parsing needed here.
+ * the link in their invite/reset email.
+ *
+ * IMPORTANT: the invite/recovery token lives in the URL's hash fragment,
+ * which Supabase's browser client parses *asynchronously* on load. An
+ * immediate `supabase.auth.getUser()` call can race that process and
+ * resolve using whatever session already existed in cookies — e.g. an
+ * admin who's still logged in on this device — rather than the new
+ * session the link is actually establishing. That bug shipped in an
+ * earlier version of this page: clicking a teacher's invite link while
+ * already logged in as admin would show (and let you overwrite the
+ * password for) the *admin* account instead.
+ *
+ * Fixed by never trusting an ambient session on this page:
+ *   1. If the URL has no invite/recovery token at all, never show
+ *      whatever account happens to already be logged in — show "invalid
+ *      link" instead, full stop.
+ *   2. If it does, wait specifically for the SIGNED_IN/PASSWORD_RECOVERY
+ *      auth event that fires once Supabase finishes processing *that*
+ *      token, rather than racing it with a direct getUser() call.
  */
 
 import { useEffect, useState, type FormEvent } from "react";
@@ -26,10 +41,38 @@ export default function RegisterPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setEmail(data.user?.email ?? null);
+    const hasToken = typeof window !== "undefined" && /access_token|type=recovery|type=invite/.test(window.location.hash);
+
+    if (!hasToken) {
+      // No token in this URL at all — never fall back to showing
+      // whichever account happens to already be logged in on this device.
       setChecking(false);
+      setEmail(null);
+      return;
+    }
+
+    let resolved = false;
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if ((event === "SIGNED_IN" || event === "PASSWORD_RECOVERY") && !resolved) {
+        resolved = true;
+        setEmail(session?.user?.email ?? null);
+        setChecking(false);
+      }
     });
+
+    // A token was present but never resolved to a session within a few
+    // seconds (expired/already-used link) — show invalid rather than hang.
+    const timeout = setTimeout(() => {
+      if (!resolved) {
+        setChecking(false);
+        setEmail(null);
+      }
+    }, 3000);
+
+    return () => {
+      listener.subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = async (e: FormEvent) => {
