@@ -21,16 +21,20 @@ interface ResultsAnalyticsProps {
 export default function ResultsAnalytics({ pendingResults, classPerformance, subjectPerformance, schoolAveragePercent, onPublish }: ResultsAnalyticsProps) {
   const [confirmExamId, setConfirmExamId] = useState<string | null>(null);
   const [publishing, setPublishing] = useState<string | null>(null);
+  const [publishError, setPublishError] = useState<string | null>(null);
 
   const topClass = [...classPerformance].sort((a, b) => b.averagePercent - a.averagePercent)[0];
 
   const handlePublish = async (examId: string) => {
     setPublishing(examId);
+    setPublishError(null);
     try {
       await onPublish(examId);
+      setConfirmExamId(null);
+    } catch (err) {
+      setPublishError(err instanceof Error ? err.message : "Couldn't publish this result. Try again.");
     } finally {
       setPublishing(null);
-      setConfirmExamId(null);
     }
   };
 
@@ -106,8 +110,9 @@ export default function ResultsAnalytics({ pendingResults, classPerformance, sub
           <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-card-hover">
             <h2 className="font-display text-[15px] font-semibold text-ink">Publish this result?</h2>
             <p className="mt-1.5 text-[13px] text-ink/60">Students in this class will be able to see their score and grade immediately.</p>
+            {publishError && <p className="mt-3 rounded-md bg-crimson-50 px-3 py-2 text-[12.5px] text-crimson-700">{publishError}</p>}
             <div className="mt-4 flex gap-2.5">
-              <button onClick={() => setConfirmExamId(null)} className="flex-1 rounded-lg border border-black/10 py-2.5 text-[13px] font-medium text-ink/70 hover:bg-background-muted">
+              <button onClick={() => { setConfirmExamId(null); setPublishError(null); }} className="flex-1 rounded-lg border border-black/10 py-2.5 text-[13px] font-medium text-ink/70 hover:bg-background-muted">
                 Cancel
               </button>
               <button

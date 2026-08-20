@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import LabBatchesManager from "@/components/admin/LabBatchesManager";
 import { createClient } from "@/lib/supabase/client";
+import { orThrow } from "@/lib/supabaseErrors";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import type { BatchTemplate, LabRoom } from "@/components/admin/types";
 import PageLoading from "@/components/layout/PageLoading";
@@ -35,23 +36,23 @@ export default function AdminLabBatchesPage() {
   }, []);
 
   const handleSaveRoom = async (r: Omit<LabRoom, "id"> & { id?: string }) => {
-    if (r.id) await supabase.from("lab_rooms").update({ name: r.name, capacity: r.capacity }).eq("id", r.id);
-    else await supabase.from("lab_rooms").insert({ name: r.name, capacity: r.capacity });
+    if (r.id) await orThrow(supabase.from("lab_rooms").update({ name: r.name, capacity: r.capacity }).eq("id", r.id));
+    else await orThrow(supabase.from("lab_rooms").insert({ name: r.name, capacity: r.capacity }));
     await loadAll();
   };
   const handleDeleteRoom = async (id: string) => {
-    await supabase.from("lab_rooms").delete().eq("id", id);
+    await orThrow(supabase.from("lab_rooms").delete().eq("id", id));
     await loadAll();
   };
 
   const handleSaveTemplate = async (t: Omit<BatchTemplate, "id"> & { id?: string }) => {
     const payload = { label: t.label, start_time: t.startTime, end_time: t.endTime };
-    if (t.id) await supabase.from("batch_templates").update(payload).eq("id", t.id);
-    else await supabase.from("batch_templates").insert(payload);
+    if (t.id) await orThrow(supabase.from("batch_templates").update(payload).eq("id", t.id));
+    else await orThrow(supabase.from("batch_templates").insert(payload));
     await loadAll();
   };
   const handleDeleteTemplate = async (id: string) => {
-    await supabase.from("batch_templates").delete().eq("id", id);
+    await orThrow(supabase.from("batch_templates").delete().eq("id", id));
     await loadAll();
   };
 

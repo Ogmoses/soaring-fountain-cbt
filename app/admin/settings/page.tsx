@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import SettingsManager from "@/components/admin/SettingsManager";
 import { createClient } from "@/lib/supabase/client";
+import { orThrow } from "@/lib/supabaseErrors";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import type { GradeBand, SchoolProfile } from "@/components/admin/types";
 import PageLoading from "@/components/layout/PageLoading";
@@ -43,16 +44,16 @@ export default function AdminSettingsPage() {
     // SettingsManager — that's fine for a quick demo but bloats the row.
     // For real use, upload the file to Supabase Storage first and save
     // the returned public URL here instead.
-    await supabase.from("school_profile").update({ school_name: p.schoolName, motto: p.motto || null, address: p.address || null, logo_url: p.logoUrl }).eq("id", true);
+    await orThrow(supabase.from("school_profile").update({ school_name: p.schoolName, motto: p.motto || null, address: p.address || null, logo_url: p.logoUrl }).eq("id", true));
     await loadAll();
   };
 
   const handleSaveGradingScale = async (bands: GradeBand[]) => {
     // Small table, rewritten wholesale each save — simpler and safer than
     // diffing client-generated temp ids against real DB rows.
-    await supabase.from("grading_scale").delete().gte("min_score", -999999);
+    await orThrow(supabase.from("grading_scale").delete().gte("min_score", -999999));
     if (bands.length > 0) {
-      await supabase.from("grading_scale").insert(bands.map((b) => ({ min_score: b.minScore, max_score: b.maxScore, grade_letter: b.gradeLetter, remark: b.remark || null })));
+      await orThrow(supabase.from("grading_scale").insert(bands.map((b) => ({ min_score: b.minScore, max_score: b.maxScore, grade_letter: b.gradeLetter, remark: b.remark || null }))));
     }
     await loadAll();
   };

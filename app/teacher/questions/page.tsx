@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import QuestionBankManager from "@/components/teacher/QuestionBankManager";
 import { createClient } from "@/lib/supabase/client";
+import { orThrow } from "@/lib/supabaseErrors";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import type { BankQuestion, SubjectOption } from "@/components/teacher/types";
 import PageLoading from "@/components/layout/PageLoading";
@@ -71,10 +72,12 @@ export default function TeacherQuestionsPage() {
   }, [authUser?.id]);
 
   const syncOptions = async (questionId: string, options: BankQuestion["options"]) => {
-    await supabase.from("question_options").delete().eq("question_id", questionId);
+    await orThrow(supabase.from("question_options").delete().eq("question_id", questionId));
     if (options && options.length > 0) {
-      await supabase.from("question_options").insert(
-        options.map((o, i) => ({ question_id: questionId, option_text: o.text, is_correct: o.isCorrect, order_index: i }))
+      await orThrow(
+        supabase.from("question_options").insert(
+          options.map((o, i) => ({ question_id: questionId, option_text: o.text, is_correct: o.isCorrect, order_index: i }))
+        )
       );
     }
   };

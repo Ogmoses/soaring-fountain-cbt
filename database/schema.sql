@@ -83,8 +83,27 @@ create index idx_users_class on users(class_id);
 -- Helper: read the caller's role/id from their own users row. Defined here
 -- (right after `users` exists) rather than down in §9, since §8's policies
 -- need it too and SQL scripts run top to bottom.
+--
+-- SECURITY DEFINER is not optional here. Without it, this function's own
+-- `select ... from users` is itself subject to users' RLS policies —
+-- including the policy that calls this very function to grant admin
+-- access — which re-invokes this function, which re-queries users, which
+-- re-triggers the policy, forever, until Postgres hits its stack depth
+-- limit. SECURITY DEFINER runs this one internal query with the function
+-- owner's privileges, bypassing RLS for just that check and breaking the
+-- cycle. (This shipped without it for a long stretch — every table whose
+-- policies reference this function was silently broken for admin/teacher
+-- reads and writes alike, masked because the app code wasn't checking the
+-- `error` Supabase returned, just treating a failed call as empty data.)
+-- search_path stays pinned since an unpinned one is a real privilege-
+-- escalation risk on a SECURITY DEFINER function, not just a lint.
 create or replace function current_role_is(target_role user_role)
-returns boolean language sql stable as $$
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
   select exists (
     select 1 from users where id = auth.uid() and role = target_role
   );
@@ -435,17 +454,8 @@ create policy term_subject_results_admin on term_subject_results
 create policy term_subject_results_student_read on term_subject_results
   for select using (student_id = auth.uid() and published = true);
 
--- Pin the helper function's search_path (Supabase lint: function_search_path_mutable) —
--- prevents a search_path-hijacking attack from shadowing `users` with a
--- malicious table of the same name in another schema.
-create or replace function current_role_is(target_role user_role)
-returns boolean language sql stable
-set search_path = public
-as $$
-  select exists (
-    select 1 from users where id = auth.uid() and role = target_role
-  );
-$$;
+-- (current_role_is is defined once, up near the `users` table — see the
+-- comment there for why SECURITY DEFINER matters.)
 
 -- NOTE: extend these policies per-table as the app's access patterns firm up —
 -- these are a secure-by-default starting point, not the full policy set for

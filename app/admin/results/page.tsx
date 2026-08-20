@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import ResultsAnalytics from "@/components/admin/ResultsAnalytics";
 import { createClient } from "@/lib/supabase/client";
+import { orThrow } from "@/lib/supabaseErrors";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import { fetchExamMaxScores } from "@/lib/reportCard";
 import type { ClassPerformance, PendingResult, SubjectPerformance } from "@/components/admin/types";
@@ -97,7 +98,7 @@ export default function AdminResultsPage() {
   }, []);
 
   const handlePublish = async (examId: string) => {
-    await supabase.from("results").update({ published: true }).eq("exam_id", examId);
+    await orThrow(supabase.from("results").update({ published: true }).eq("exam_id", examId));
     await loadAll();
   };
 

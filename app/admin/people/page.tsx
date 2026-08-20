@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import PeopleManager from "@/components/admin/PeopleManager";
 import { createClient } from "@/lib/supabase/client";
+import { orThrow } from "@/lib/supabaseErrors";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import type { ImportRow } from "@/components/admin/BulkImportModal";
 import type { PersonRole, PersonRow } from "@/components/admin/types";
@@ -67,9 +68,9 @@ export default function AdminPeoplePage() {
   }, []);
 
   const syncTeacherSubjects = async (teacherId: string, assignments?: { subjectId: string; classId: string }[]) => {
-    await supabase.from("teacher_subjects").delete().eq("teacher_id", teacherId);
+    await orThrow(supabase.from("teacher_subjects").delete().eq("teacher_id", teacherId));
     if (assignments && assignments.length > 0) {
-      await supabase.from("teacher_subjects").insert(assignments.map((a) => ({ teacher_id: teacherId, subject_id: a.subjectId, class_id: a.classId })));
+      await orThrow(supabase.from("teacher_subjects").insert(assignments.map((a) => ({ teacher_id: teacherId, subject_id: a.subjectId, class_id: a.classId }))));
     }
   };
 

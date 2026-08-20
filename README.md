@@ -261,3 +261,54 @@ and an in-app-browser cookie theory (reproduced in plain Chrome too).
 Current best lead is a stale session cookie from one of the admin
 account's several recreations during this debugging — needs a genuinely
 fresh sign-out/sign-in to confirm or rule out.
+
+## Pass 7: the actual root cause — infinite recursion in current_role_is()
+
+**Found it, definitively, by simulating the exact RLS-bound request the
+app makes** (`set role authenticated` + a forged JWT claim, then running
+the same query) rather than continuing to guess from symptoms. It
+crashed with `stack depth limit exceeded`.
+
+The bug: `current_role_is()` — the helper nearly every admin-facing RLS
+policy calls to check "is this caller a super_admin" — queries `users`
+internally. That internal query is *itself* subject to `users`' own RLS
+policies, one of which (`admin_full_access_users`) calls
+`current_role_is()` to decide access. Evaluating the function invokes
+the function. Forever, until Postgres's stack overflows. This wasn't
+limited to the `users` table — **every table whose policies reference
+`current_role_is()`** hit the same crash, which by this point in the
+build was most of the schema.
+
+Two things compounded it into "empty lists with no visible error"
+instead of an obvious crash:
+- Writes going through the API routes (`/api/admin/people`, the exam-
+  session routes, grading) use the **service-role client**, which
+  bypasses RLS entirely — so those never triggered the recursion and kept
+  working, which is exactly why creating accounts worked while the list
+  showing them back didn't.
+- Nearly every direct `supabase.from(...)` call in the admin/teacher
+  pages destructured only `data`, discarding `error` — so when a query
+  *did* hit the crash, the code treated the failed call as empty data
+  instead of surfacing Postgres's actual error message.
+
+**Both are fixed.** `current_role_is()` is now `SECURITY DEFINER` (the
+standard Postgres fix for exactly this "RLS policy function queries its
+own protected table" pattern), which runs its internal check with the
+function owner's privileges, bypassing RLS for that one check and
+breaking the cycle. Verified by re-running the same simulated request —
+clean result, no crash. Separately, added `lib/supabaseErrors.ts`
+(`orThrow`) and applied it across every write call in `app/admin/**` and
+`app/teacher/**` that wasn't already checking `error`, so a real failure
+shows up as a message in the UI instead of silently doing nothing —
+this exact failure mode is what let the recursion bug hide as long as
+it did.
+
+**Also fixed while investigating:** `/register` had a second, genuine
+bug — mail security scanners (common in schools/enterprises) "click"
+links in emails to scan them for safety, which consumes Supabase's
+one-time invite/recovery token before the real user gets to it. Added a
+manual code-entry fallback (`supabase.auth.verifyOtp`) for when the link
+itself comes back invalid. **Requires a one-time dashboard change this
+code can't make itself**: Supabase → Authentication → Email Templates →
+add `{{ .Token }}` to both the "Invite user" and "Reset Password"
+templates, or there's no code for the fallback form to check against.

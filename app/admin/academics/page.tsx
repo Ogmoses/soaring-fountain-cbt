@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import AcademicsManager from "@/components/admin/AcademicsManager";
 import { createClient } from "@/lib/supabase/client";
+import { orThrow } from "@/lib/supabaseErrors";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import type { ClassRow, SessionRow, SubjectRow, TermRow } from "@/components/admin/types";
 import PageLoading from "@/components/layout/PageLoading";
@@ -64,56 +65,56 @@ export default function AdminAcademicsPage() {
   }, []);
 
   const handleSaveSession = async (s: Omit<SessionRow, "id"> & { id?: string }) => {
-    if (s.isCurrent) await supabase.from("academic_sessions").update({ is_current: false }).eq("is_current", true);
-    if (s.id) await supabase.from("academic_sessions").update({ name: s.name, is_current: s.isCurrent }).eq("id", s.id);
-    else await supabase.from("academic_sessions").insert({ name: s.name, is_current: s.isCurrent });
+    if (s.isCurrent) await orThrow(supabase.from("academic_sessions").update({ is_current: false }).eq("is_current", true));
+    if (s.id) await orThrow(supabase.from("academic_sessions").update({ name: s.name, is_current: s.isCurrent }).eq("id", s.id));
+    else await orThrow(supabase.from("academic_sessions").insert({ name: s.name, is_current: s.isCurrent }));
     await loadAll();
   };
   const handleDeleteSession = async (id: string) => {
-    await supabase.from("academic_sessions").delete().eq("id", id);
+    await orThrow(supabase.from("academic_sessions").delete().eq("id", id));
     await loadAll();
   };
 
   const handleSaveTerm = async (sessionId: string, t: Omit<TermRow, "id" | "sessionId"> & { id?: string }) => {
-    if (t.isCurrent) await supabase.from("terms").update({ is_current: false }).eq("session_id", sessionId).eq("is_current", true);
+    if (t.isCurrent) await orThrow(supabase.from("terms").update({ is_current: false }).eq("session_id", sessionId).eq("is_current", true));
     const payload = { session_id: sessionId, name: t.name, is_current: t.isCurrent, starts_on: t.startsOn || null, ends_on: t.endsOn || null };
-    if (t.id) await supabase.from("terms").update(payload).eq("id", t.id);
-    else await supabase.from("terms").insert(payload);
+    if (t.id) await orThrow(supabase.from("terms").update(payload).eq("id", t.id));
+    else await orThrow(supabase.from("terms").insert(payload));
     await loadAll();
   };
   const handleDeleteTerm = async (id: string) => {
-    await supabase.from("terms").delete().eq("id", id);
+    await orThrow(supabase.from("terms").delete().eq("id", id));
     await loadAll();
   };
 
   const handleSaveClass = async (c: Omit<ClassRow, "id" | "studentCount"> & { id?: string }) => {
-    if (c.id) await supabase.from("classes").update({ name: c.name, level: c.level }).eq("id", c.id);
-    else await supabase.from("classes").insert({ name: c.name, level: c.level });
+    if (c.id) await orThrow(supabase.from("classes").update({ name: c.name, level: c.level }).eq("id", c.id));
+    else await orThrow(supabase.from("classes").insert({ name: c.name, level: c.level }));
     await loadAll();
   };
   const handleDeleteClass = async (id: string) => {
-    await supabase.from("classes").delete().eq("id", id);
+    await orThrow(supabase.from("classes").delete().eq("id", id));
     await loadAll();
   };
 
   const handleSaveSubject = async (s: Omit<SubjectRow, "id"> & { id?: string }) => {
     let subjectId = s.id;
     if (subjectId) {
-      await supabase.from("subjects").update({ name: s.name, code: s.code ?? null }).eq("id", subjectId);
+      await orThrow(supabase.from("subjects").update({ name: s.name, code: s.code ?? null }).eq("id", subjectId));
     } else {
-      const { data: created } = await supabase.from("subjects").insert({ name: s.name, code: s.code ?? null }).select("id").single();
+      const created = await orThrow(supabase.from("subjects").insert({ name: s.name, code: s.code ?? null }).select("id").single());
       subjectId = created?.id;
     }
     if (subjectId) {
-      await supabase.from("class_subjects").delete().eq("subject_id", subjectId);
+      await orThrow(supabase.from("class_subjects").delete().eq("subject_id", subjectId));
       if (s.classIds.length > 0) {
-        await supabase.from("class_subjects").insert(s.classIds.map((classId) => ({ class_id: classId, subject_id: subjectId })));
+        await orThrow(supabase.from("class_subjects").insert(s.classIds.map((classId) => ({ class_id: classId, subject_id: subjectId }))));
       }
     }
     await loadAll();
   };
   const handleDeleteSubject = async (id: string) => {
-    await supabase.from("subjects").delete().eq("id", id);
+    await orThrow(supabase.from("subjects").delete().eq("id", id));
     await loadAll();
   };
 
