@@ -47,6 +47,7 @@ export interface ExamOption {
   id: string;
   title: string;
   subjectName: string;
+  className: string;
 }
 
 interface ClassAnalyticsProps {
@@ -70,7 +71,7 @@ export default function ClassAnalytics({ examOptions, selectedExamId, onExamChan
           className="rounded-lg border border-black/10 px-3.5 py-2.5 text-[13px] outline-none focus:border-crimson-500"
         >
           {examOptions.map((e) => (
-            <option key={e.id} value={e.id}>{e.title} · {e.subjectName}</option>
+            <option key={e.id} value={e.id}>{e.title} · {e.className} · {e.subjectName}</option>
           ))}
         </select>
       </div>

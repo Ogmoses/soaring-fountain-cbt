@@ -28,7 +28,7 @@ export default function TeacherExamBuilderPage() {
         supabase.from("terms").select("id, name").order("is_current", { ascending: false }),
         supabase
           .from("questions")
-          .select("id, subject_id, topic, type, prompt, points, reference_answer, subjects(name)")
+          .select("id, subject_id, class_id, topic, type, prompt, points, reference_answer, subjects(name)")
           .eq("created_by", authUser.id),
       ]);
 
@@ -60,6 +60,8 @@ export default function TeacherExamBuilderPage() {
           id: q.id,
           subjectId: q.subject_id,
           subjectName: q.subjects?.name ?? "",
+          classId: q.class_id,
+          className: "",
           topic: q.topic ?? "",
           type: q.type,
           prompt: q.prompt,

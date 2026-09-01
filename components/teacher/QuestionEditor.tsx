@@ -13,6 +13,7 @@ import { Plus, Trash2, ImagePlus, X, Loader2 } from "lucide-react";
 import {
   QUESTION_TYPE_LABEL,
   type BankQuestion,
+  type ClassOption,
   type QuestionOption,
   type QuestionType,
   type SubjectOption,
@@ -21,8 +22,10 @@ import {
 interface QuestionEditorProps {
   initial?: BankQuestion | null;
   subjects: SubjectOption[];
+  classes: ClassOption[];
   defaultSubjectId?: string;
-  onSave: (question: Omit<BankQuestion, "id" | "updatedAt" | "subjectName"> & { id?: string }) => Promise<void>;
+  defaultClassId?: string;
+  onSave: (question: Omit<BankQuestion, "id" | "updatedAt" | "subjectName" | "className"> & { id?: string }) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -36,8 +39,9 @@ function blankOptionsFor(t: QuestionType): QuestionOption[] {
     : [newOption(), newOption()];
 }
 
-export default function QuestionEditor({ initial, subjects, defaultSubjectId, onSave, onCancel }: QuestionEditorProps) {
+export default function QuestionEditor({ initial, subjects, classes, defaultSubjectId, defaultClassId, onSave, onCancel }: QuestionEditorProps) {
   const [subjectId, setSubjectId] = useState(initial?.subjectId ?? defaultSubjectId ?? subjects[0]?.id ?? "");
+  const [classId, setClassId] = useState(initial?.classId ?? defaultClassId ?? "");
   const [topic, setTopic] = useState(initial?.topic ?? "");
   const [type, setType] = useState<QuestionType>(initial?.type ?? "multiple_choice");
   const [prompt, setPrompt] = useState(initial?.prompt ?? "");
@@ -81,6 +85,7 @@ export default function QuestionEditor({ initial, subjects, defaultSubjectId, on
 
   const validate = (): string | null => {
     if (!subjectId) return "Choose a subject.";
+    if (!classId) return "Choose a class.";
     if (!prompt.trim()) return "Write the question prompt.";
     if (type === "multiple_choice" || type === "true_false") {
       const filled = options.filter((o) => o.text.trim());
@@ -105,6 +110,7 @@ export default function QuestionEditor({ initial, subjects, defaultSubjectId, on
       await onSave({
         id: initial?.id,
         subjectId,
+        classId,
         topic: topic.trim(),
         type,
         prompt: prompt.trim(),
@@ -164,6 +170,21 @@ export default function QuestionEditor({ initial, subjects, defaultSubjectId, on
                 ))}
               </select>
             </label>
+            <label className="block">
+              <span className="mb-1 block text-[12px] font-medium text-ink/60">Class</span>
+              <select
+                value={classId}
+                onChange={(e) => setClassId(e.target.value)}
+                className="w-full rounded-lg border border-black/10 px-3 py-2.5 text-[13px] outline-none focus:border-crimson-500"
+              >
+                <option value="" disabled>Select a class</option>
+                {classes.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <div>
             <label className="block">
               <span className="mb-1 block text-[12px] font-medium text-ink/60">Topic</span>
               <input

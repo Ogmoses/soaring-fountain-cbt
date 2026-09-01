@@ -37,8 +37,8 @@ export default function TeacherAnalyticsPage() {
   useEffect(() => {
     if (!authUser) return;
     (async () => {
-      const { data: examRows } = await supabase.from("exams").select("id, title, subjects(name)").eq("created_by", authUser.id);
-      const options = (examRows ?? []).map((e: any) => ({ id: e.id, title: e.title, subjectName: e.subjects?.name ?? "" }));
+      const { data: examRows } = await supabase.from("exams").select("id, title, subjects(name), classes(name)").eq("created_by", authUser.id);
+      const options = (examRows ?? []).map((e: any) => ({ id: e.id, title: e.title, subjectName: e.subjects?.name ?? "", className: e.classes?.name ?? "" }));
       setExamOptions(options);
       setSelectedExamId(options[0]?.id ?? "");
       setLoading(false);

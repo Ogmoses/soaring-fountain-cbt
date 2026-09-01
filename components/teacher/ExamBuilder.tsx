@@ -97,10 +97,11 @@ export default function ExamBuilder({ subjects, classes, terms, questionBank, in
       questionBank.filter(
         (q) =>
           q.subjectId === form.subjectId &&
+          q.classId === form.classId &&
           !form.questionIds.includes(q.id) &&
           (questionSearch.trim() === "" || q.prompt.toLowerCase().includes(questionSearch.trim().toLowerCase()))
       ),
-    [questionBank, form.subjectId, form.questionIds, questionSearch]
+    [questionBank, form.subjectId, form.classId, form.questionIds, questionSearch]
   );
 
   const selectedQuestions = useMemo(
@@ -229,7 +230,9 @@ export default function ExamBuilder({ subjects, classes, terms, questionBank, in
             </div>
             <div className="max-h-64 space-y-1.5 overflow-y-auto rounded-lg border border-black/5 bg-background-muted p-2">
               {availableQuestions.length === 0 ? (
-                <p className="px-2 py-3 text-center text-[12px] text-ink/40">No more questions for this subject.</p>
+                <p className="px-2 py-3 text-center text-[12px] text-ink/40">
+                  No questions tagged for this class and subject yet — add some from Question Bank, or check whether existing ones still need a class assigned.
+                </p>
               ) : (
                 availableQuestions.map((q) => (
                   <button

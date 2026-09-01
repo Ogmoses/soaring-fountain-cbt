@@ -14,6 +14,8 @@ export interface BankQuestion {
   id: string;
   subjectId: string;
   subjectName: string;
+  classId: string | null;
+  className: string; // "" when unclassified (legacy questions predate this)
   topic: string;
   type: QuestionType;
   prompt: string;

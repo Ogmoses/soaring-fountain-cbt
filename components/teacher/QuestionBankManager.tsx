@@ -7,33 +7,39 @@
  */
 
 import { useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Search, ImageIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, ImageIcon, AlertCircle } from "lucide-react";
 import QuestionEditor from "./QuestionEditor";
-import { QUESTION_TYPE_LABEL, type BankQuestion, type SubjectOption } from "./types";
+import { QUESTION_TYPE_LABEL, type BankQuestion, type ClassOption, type SubjectOption } from "./types";
 
 interface QuestionBankManagerProps {
   subjects: SubjectOption[];
+  classes: ClassOption[];
   questions: BankQuestion[];
-  onCreate: (q: Omit<BankQuestion, "id" | "updatedAt" | "subjectName">) => Promise<void>;
-  onUpdate: (id: string, q: Omit<BankQuestion, "id" | "updatedAt" | "subjectName">) => Promise<void>;
+  onCreate: (q: Omit<BankQuestion, "id" | "updatedAt" | "subjectName" | "className">) => Promise<void>;
+  onUpdate: (id: string, q: Omit<BankQuestion, "id" | "updatedAt" | "subjectName" | "className">) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }
 
-export default function QuestionBankManager({ subjects, questions, onCreate, onUpdate, onDelete }: QuestionBankManagerProps) {
+export default function QuestionBankManager({ subjects, classes, questions, onCreate, onUpdate, onDelete }: QuestionBankManagerProps) {
   const [subjectFilter, setSubjectFilter] = useState<string>("all");
+  const [classFilter, setClassFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [editorState, setEditorState] = useState<"closed" | "new" | BankQuestion>("closed");
   const [deleteTarget, setDeleteTarget] = useState<BankQuestion | null>(null);
 
+  const unclassifiedCount = useMemo(() => questions.filter((q) => !q.classId).length, [questions]);
+
   const filtered = useMemo(() => {
     return questions.filter((q) => {
       if (subjectFilter !== "all" && q.subjectId !== subjectFilter) return false;
+      if (classFilter === "unclassified" && q.classId) return false;
+      if (classFilter !== "all" && classFilter !== "unclassified" && q.classId !== classFilter) return false;
       if (search.trim() && !q.prompt.toLowerCase().includes(search.trim().toLowerCase())) return false;
       return true;
     });
-  }, [questions, subjectFilter, search]);
+  }, [questions, subjectFilter, classFilter, search]);
 
-  const handleSave = async (data: Omit<BankQuestion, "id" | "updatedAt" | "subjectName"> & { id?: string }) => {
+  const handleSave = async (data: Omit<BankQuestion, "id" | "updatedAt" | "subjectName" | "className"> & { id?: string }) => {
     if (data.id) {
       await onUpdate(data.id, data);
       setEditorState("closed");
@@ -80,7 +86,28 @@ export default function QuestionBankManager({ subjects, questions, onCreate, onU
             <option key={s.id} value={s.id}>{s.name}</option>
           ))}
         </select>
+        <select
+          value={classFilter}
+          onChange={(e) => setClassFilter(e.target.value)}
+          className="rounded-lg border border-black/10 px-3 py-2.5 text-[13px] outline-none focus:border-crimson-500"
+        >
+          <option value="all">All classes</option>
+          {classes.map((c) => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+          {unclassifiedCount > 0 && <option value="unclassified">Unclassified ({unclassifiedCount})</option>}
+        </select>
       </div>
+
+      {unclassifiedCount > 0 && classFilter !== "unclassified" && (
+        <button
+          onClick={() => setClassFilter("unclassified")}
+          className="mb-4 flex w-full items-center gap-2 rounded-lg border border-warning/30 bg-warning/10 px-3.5 py-2.5 text-left text-[12.5px] text-ink/75 transition-colors hover:bg-warning/15"
+        >
+          <AlertCircle size={15} className="shrink-0 text-warning" />
+          {unclassifiedCount} question{unclassifiedCount === 1 ? "" : "s"} from before class-tagging {unclassifiedCount === 1 ? "doesn't" : "don't"} have a class yet — tap to review
+        </button>
+      )}
 
       {filtered.length === 0 ? (
         <div className="rounded-lg border border-dashed border-black/10 bg-white px-4 py-10 text-center text-[13px] text-ink/45">
@@ -96,6 +123,11 @@ export default function QuestionBankManager({ subjects, questions, onCreate, onU
                     {QUESTION_TYPE_LABEL[q.type]}
                   </span>
                   <span className="text-[11.5px] text-ink/40">{q.subjectName}{q.topic ? ` · ${q.topic}` : ""}</span>
+                  {q.classId ? (
+                    <span className="rounded-full bg-background-muted px-2 py-0.5 text-[10.5px] font-medium text-ink/55">{q.className}</span>
+                  ) : (
+                    <span className="rounded-full bg-warning/15 px-2 py-0.5 text-[10.5px] font-medium text-warning">Unclassified</span>
+                  )}
                   {q.imageUrl && <ImageIcon size={12} className="text-ink/30" />}
                 </div>
                 <p className="break-words text-[13.5px] text-ink">{q.prompt}</p>
@@ -119,7 +151,9 @@ export default function QuestionBankManager({ subjects, questions, onCreate, onU
           key={editorState === "new" ? "new" : editorState.id}
           initial={editorState === "new" ? null : editorState}
           subjects={subjects}
+          classes={classes}
           defaultSubjectId={subjectFilter !== "all" ? subjectFilter : undefined}
+          defaultClassId={classFilter !== "all" && classFilter !== "unclassified" ? classFilter : undefined}
           onSave={handleSave}
           onCancel={() => setEditorState("closed")}
         />

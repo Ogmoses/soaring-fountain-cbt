@@ -7,7 +7,7 @@ import QuestionBankManager from "@/components/teacher/QuestionBankManager";
 import { createClient } from "@/lib/supabase/client";
 import { orThrow } from "@/lib/supabaseErrors";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
-import type { BankQuestion, SubjectOption } from "@/components/teacher/types";
+import type { BankQuestion, ClassOption, SubjectOption } from "@/components/teacher/types";
 import PageLoading from "@/components/layout/PageLoading";
 
 export default function TeacherQuestionsPage() {
@@ -16,41 +16,52 @@ export default function TeacherQuestionsPage() {
   const supabase = createClient();
 
   const [subjects, setSubjects] = useState<SubjectOption[]>([]);
+  const [classes, setClasses] = useState<ClassOption[]>([]);
   const [questions, setQuestions] = useState<BankQuestion[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadAll = async () => {
     if (!authUser) return;
 
-    const [{ data: subjectRows }, { data: questionRows }] = await Promise.all([
-      supabase.from("teacher_subjects").select("subjects(id, name)").eq("teacher_id", authUser.id),
+    const [{ data: assignmentRows }, { data: questionRows }] = await Promise.all([
+      supabase.from("teacher_subjects").select("subjects(id, name), classes(id, name)").eq("teacher_id", authUser.id),
       supabase
         .from("questions")
-        .select("id, subject_id, topic, type, prompt, image_url, points, reference_answer, updated_at, subjects(name), question_options(id, option_text, is_correct, order_index)")
+        .select("id, subject_id, class_id, topic, type, prompt, image_url, points, reference_answer, updated_at, subjects(name), classes(name), question_options(id, option_text, is_correct, order_index)")
         .eq("created_by", authUser.id)
         .order("updated_at", { ascending: false }),
     ]);
 
     const uniqueSubjects = new Map<string, string>();
-    for (const row of subjectRows ?? []) {
+    const uniqueClasses = new Map<string, string>();
+    for (const row of assignmentRows ?? []) {
       const s = (row as any).subjects;
+      const c = (row as any).classes;
       if (s) uniqueSubjects.set(s.id, s.name);
+      if (c) uniqueClasses.set(c.id, c.name);
     }
 
-    if (uniqueSubjects.size === 0) {
+    if (uniqueSubjects.size === 0 || uniqueClasses.size === 0) {
       // No teacher_subjects assignments yet (e.g. an admin hasn't set them
-      // up) — fall back to every subject rather than leaving the teacher
+      // up) — fall back to everything rather than leaving the teacher
       // completely unable to create a question.
-      const { data: allSubjects } = await supabase.from("subjects").select("id, name").order("name");
+      const [{ data: allSubjects }, { data: allClasses }] = await Promise.all([
+        supabase.from("subjects").select("id, name").order("name"),
+        supabase.from("classes").select("id, name").order("name"),
+      ]);
       for (const s of allSubjects ?? []) uniqueSubjects.set(s.id, s.name);
+      for (const c of allClasses ?? []) uniqueClasses.set(c.id, c.name);
     }
 
     setSubjects([...uniqueSubjects.entries()].map(([id, name]) => ({ id, name })));
+    setClasses([...uniqueClasses.entries()].map(([id, name]) => ({ id, name })));
     setQuestions(
       (questionRows ?? []).map((q: any) => ({
         id: q.id,
         subjectId: q.subject_id,
         subjectName: q.subjects?.name ?? "",
+        classId: q.class_id,
+        className: q.classes?.name ?? "",
         topic: q.topic ?? "",
         type: q.type,
         prompt: q.prompt,
@@ -82,12 +93,13 @@ export default function TeacherQuestionsPage() {
     }
   };
 
-  const handleCreate = async (q: Omit<BankQuestion, "id" | "updatedAt" | "subjectName">) => {
+  const handleCreate = async (q: Omit<BankQuestion, "id" | "updatedAt" | "subjectName" | "className">) => {
     if (!authUser) return;
     const { data: created, error } = await supabase
       .from("questions")
       .insert({
         subject_id: q.subjectId,
+        class_id: q.classId,
         topic: q.topic || null,
         created_by: authUser.id,
         type: q.type,
@@ -103,11 +115,12 @@ export default function TeacherQuestionsPage() {
     await loadAll();
   };
 
-  const handleUpdate = async (id: string, q: Omit<BankQuestion, "id" | "updatedAt" | "subjectName">) => {
+  const handleUpdate = async (id: string, q: Omit<BankQuestion, "id" | "updatedAt" | "subjectName" | "className">) => {
     const { error } = await supabase
       .from("questions")
       .update({
         subject_id: q.subjectId,
+        class_id: q.classId,
         topic: q.topic || null,
         type: q.type,
         prompt: q.prompt,
@@ -131,7 +144,7 @@ export default function TeacherQuestionsPage() {
   return (
     <DashboardLayout role="teacher" pageTitle="Question Bank" userName={authUser?.fullName ?? ""} onLogout={() => signOutAndRedirect(router)}>
       {loading ? <PageLoading /> : (
-        <QuestionBankManager subjects={subjects} questions={questions} onCreate={handleCreate} onUpdate={handleUpdate} onDelete={handleDelete} />
+        <QuestionBankManager subjects={subjects} classes={classes} questions={questions} onCreate={handleCreate} onUpdate={handleUpdate} onDelete={handleDelete} />
       )}
     </DashboardLayout>
   );
