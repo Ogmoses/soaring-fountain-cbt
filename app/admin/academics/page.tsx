@@ -24,7 +24,7 @@ export default function AdminAcademicsPage() {
   const loadAll = async () => {
     const [{ data: sessionRows }, { data: termRows }, { data: classRows }, { data: subjectRows }, { data: studentClassIds }] = await Promise.all([
       supabase.from("academic_sessions").select("id, name, is_current").order("name", { ascending: false }),
-      supabase.from("terms").select("id, session_id, name, is_current, starts_on, ends_on"),
+      supabase.from("terms").select("id, academic_session_id, name, is_current, starts_on, ends_on"),
       supabase.from("classes").select("id, name, level"),
       supabase.from("subjects").select("id, name, code, class_subjects(class_id)"),
       supabase.from("users").select("class_id").eq("role", "student"),
@@ -40,7 +40,7 @@ export default function AdminAcademicsPage() {
     setTerms(
       (termRows ?? []).map((t) => ({
         id: t.id,
-        sessionId: t.session_id,
+        sessionId: t.academic_session_id,
         name: t.name,
         isCurrent: t.is_current,
         startsOn: t.starts_on ?? undefined,
@@ -76,8 +76,8 @@ export default function AdminAcademicsPage() {
   };
 
   const handleSaveTerm = async (sessionId: string, t: Omit<TermRow, "id" | "sessionId"> & { id?: string }) => {
-    if (t.isCurrent) await orThrow(supabase.from("terms").update({ is_current: false }).eq("session_id", sessionId).eq("is_current", true));
-    const payload = { session_id: sessionId, name: t.name, is_current: t.isCurrent, starts_on: t.startsOn || null, ends_on: t.endsOn || null };
+    if (t.isCurrent) await orThrow(supabase.from("terms").update({ is_current: false }).eq("academic_session_id", sessionId).eq("is_current", true));
+    const payload = { academic_session_id: sessionId, name: t.name, is_current: t.isCurrent, starts_on: t.startsOn || null, ends_on: t.endsOn || null };
     if (t.id) await orThrow(supabase.from("terms").update(payload).eq("id", t.id));
     else await orThrow(supabase.from("terms").insert(payload));
     await loadAll();

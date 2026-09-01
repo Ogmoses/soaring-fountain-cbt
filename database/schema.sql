@@ -400,6 +400,72 @@ create policy users_read_own on users
 create policy admin_full_access_users on users
   for all using (current_role_is('super_admin'));
 
+-- exams <-> exam_batches <-> batch_students: same recursion class as
+-- current_role_is() above, but across three tables instead of looping a
+-- single function through itself. exams_student_read reads exam_batches;
+-- exam_batches_manage reads exams; exam_batches_student_read reads
+-- batch_students; batch_students_manage reads exam_batches+exams. Any one
+-- of those, evaluated under RLS, triggers the target table's own
+-- policies — which read back into a table already mid-evaluation —
+-- forever, until Postgres gives up ("infinite recursion detected in
+-- policy for relation ..."). Same fix as current_role_is: wrap every
+-- cross-table read in a SECURITY DEFINER function, so it runs with the
+-- function owner's privileges and bypasses RLS on the table it's
+-- checking, instead of re-entering that table's policies.
+create or replace function current_user_created_exam(target_exam_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from exams where id = target_exam_id and created_by = auth.uid()
+  );
+$$;
+
+create or replace function current_user_assigned_to_exam(target_exam_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from exam_batches eb
+    join batch_students bs on bs.batch_id = eb.id
+    where eb.exam_id = target_exam_id and bs.student_id = auth.uid()
+  );
+$$;
+
+create or replace function current_user_assigned_to_batch(target_batch_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from batch_students where batch_id = target_batch_id and student_id = auth.uid()
+  );
+$$;
+
+create or replace function current_user_owns_batch(target_batch_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from exam_batches eb
+    join exams e on e.id = eb.exam_id
+    where eb.id = target_batch_id and e.created_by = auth.uid()
+  );
+$$;
+
 -- exams: teacher who created it (or admin) manages it; a student can read
 -- an exam once they're assigned to one of its batches.
 create policy exams_manage on exams
@@ -410,11 +476,7 @@ create policy exams_manage on exams
 
 create policy exams_student_read on exams
   for select using (
-    exists (
-      select 1 from exam_batches eb
-      join batch_students bs on bs.batch_id = eb.id
-      where eb.exam_id = exams.id and bs.student_id = auth.uid()
-    )
+    current_user_assigned_to_exam(exams.id)
   );
 
 -- exam_batches: same owning-teacher/admin pattern; students read only the
@@ -422,12 +484,12 @@ create policy exams_student_read on exams
 create policy exam_batches_manage on exam_batches
   for all using (
     current_role_is('super_admin')
-    or exists (select 1 from exams where exams.id = exam_batches.exam_id and exams.created_by = auth.uid())
+    or current_user_created_exam(exam_batches.exam_id)
   );
 
 create policy exam_batches_student_read on exam_batches
   for select using (
-    exists (select 1 from batch_students bs where bs.batch_id = exam_batches.id and bs.student_id = auth.uid())
+    current_user_assigned_to_batch(exam_batches.id)
   );
 
 -- batch_students: the owning teacher/admin assigns students; a student can
@@ -435,10 +497,7 @@ create policy exam_batches_student_read on exam_batches
 create policy batch_students_manage on batch_students
   for all using (
     current_role_is('super_admin')
-    or exists (
-      select 1 from exam_batches eb join exams e on e.id = eb.exam_id
-      where eb.id = batch_students.batch_id and e.created_by = auth.uid()
-    )
+    or current_user_owns_batch(batch_students.batch_id)
   );
 
 create policy batch_students_own_read on batch_students
