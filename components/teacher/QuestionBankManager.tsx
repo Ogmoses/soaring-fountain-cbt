@@ -36,10 +36,13 @@ export default function QuestionBankManager({ subjects, questions, onCreate, onU
   const handleSave = async (data: Omit<BankQuestion, "id" | "updatedAt" | "subjectName"> & { id?: string }) => {
     if (data.id) {
       await onUpdate(data.id, data);
+      setEditorState("closed");
     } else {
       await onCreate(data);
+      // Stays open on create — QuestionEditor resets its own per-question
+      // fields and keeps taking entries instead of forcing a full reopen
+      // for every question in a batch.
     }
-    setEditorState("closed");
   };
 
   return (
@@ -95,7 +98,7 @@ export default function QuestionBankManager({ subjects, questions, onCreate, onU
                   <span className="text-[11.5px] text-ink/40">{q.subjectName}{q.topic ? ` · ${q.topic}` : ""}</span>
                   {q.imageUrl && <ImageIcon size={12} className="text-ink/30" />}
                 </div>
-                <p className="truncate text-[13.5px] text-ink">{q.prompt}</p>
+                <p className="break-words text-[13.5px] text-ink">{q.prompt}</p>
               </div>
               <span className="shrink-0 pt-0.5 text-[12px] font-medium text-ink/40">{q.points} pt{q.points === 1 ? "" : "s"}</span>
               <div className="flex shrink-0 items-center gap-1 pt-0.5">

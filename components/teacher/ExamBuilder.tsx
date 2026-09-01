@@ -21,7 +21,9 @@ import {
   Shuffle,
   Eye,
   Trophy,
+  CheckCircle2,
 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import type { BankQuestion, ClassOption, SubjectOption, TermOption } from "./types";
 
 export interface ExamBatchDraft {
@@ -86,6 +88,7 @@ export default function ExamBuilder({ subjects, classes, terms, questionBank, in
   const [questionSearch, setQuestionSearch] = useState("");
   const [saving, setSaving] = useState<"draft" | "publish" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showPublishedToast, setShowPublishedToast] = useState(false);
 
   const update = <K extends keyof ExamFormData>(key: K, value: ExamFormData[K]) => setForm((f) => ({ ...f, [key]: value }));
 
@@ -147,6 +150,10 @@ export default function ExamBuilder({ subjects, classes, terms, questionBank, in
     setSaving(mode);
     try {
       await (mode === "draft" ? onSaveDraft(form) : onPublish(form));
+      if (mode === "publish") {
+        setShowPublishedToast(true);
+        setTimeout(() => setShowPublishedToast(false), 2800);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't save the exam. Try again.");
     } finally {
@@ -156,6 +163,21 @@ export default function ExamBuilder({ subjects, classes, terms, questionBank, in
 
   return (
     <div className="pb-10">
+      <AnimatePresence>
+        {showPublishedToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="fixed left-1/2 top-4 z-[70] flex -translate-x-1/2 items-center gap-2 rounded-full bg-ink px-4 py-2.5 text-[13px] font-medium text-white shadow-card-hover"
+          >
+            <CheckCircle2 size={16} className="text-cream-100" />
+            Exam published
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <h1 className="font-display text-[18px] font-semibold text-ink sm:text-[20px]">Exam builder</h1>
       <p className="mt-0.5 text-[13px] text-ink/50">Set the rules, pick questions, then schedule lab batches.</p>
 
@@ -376,8 +398,8 @@ function Toggle({ icon: Icon, label, checked, onChange }: { icon: React.ElementT
         className={`relative h-5 w-9 shrink-0 rounded-full transition-colors duration-200 ${checked ? "bg-crimson-600" : "bg-black/15"}`}
       >
         <span
-          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
-            checked ? "translate-x-[18px]" : "translate-x-0.5"
+          className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+            checked ? "translate-x-[16px]" : "translate-x-0"
           }`}
         />
       </button>

@@ -62,6 +62,21 @@ function SidebarContent({ role, userName, onNavigate }: { role: Role; userName: 
   const pathname = usePathname();
   const items = NAV_BY_ROLE[role];
 
+  // Active tab = whichever item's href is the single longest exact-or-
+  // prefix match for the current path. Checking each item independently
+  // (pathname === href || pathname.startsWith(href + "/")) meant a root
+  // link like "/teacher" matched every one of its own sub-pages too, so
+  // Overview stayed lit no matter which page was actually open, on top
+  // of whichever page's own item also (correctly) lit up. Picking the
+  // single most-specific match up front means exactly one item is ever
+  // active.
+  const activeHref = items.reduce<string | null>((best, item) => {
+    const matches = pathname === item.href || pathname?.startsWith(item.href + "/");
+    if (!matches) return best;
+    if (best === null || item.href.length > best.length) return item.href;
+    return best;
+  }, null);
+
   return (
     <div className="flex h-full flex-col bg-white">
       <div className="flex items-center gap-2.5 px-5 py-5">
@@ -76,7 +91,7 @@ function SidebarContent({ role, userName, onNavigate }: { role: Role; userName: 
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
         {items.map(({ label, href, icon: Icon }) => {
-          const active = pathname === href || pathname?.startsWith(href + "/");
+          const active = href === activeHref;
           return (
             <Link
               key={href}

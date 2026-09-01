@@ -34,6 +34,28 @@
  *    and "Reset Password" need `{{ .Token }}` added to the email body
  *    (not just the default {{ .ConfirmationURL }} button), or there's no
  *    code for someone to type here.
+ *
+ * 3. STALE LISTENER (fixed here): the onAuthStateChange listener below
+ *    stayed subscribed for the rest of this page's life, even after we'd
+ *    already given up on it and shown the fallback screen. If a
+ *    DIFFERENT, already-logged-in session on the same device (e.g. an
+ *    admin who'd been testing from this browser earlier) later fired a
+ *    SIGNED_IN event — reliably reproduced by backgrounding the tab and
+ *    returning, which re-triggers Supabase's own session check — this
+ *    page would silently accept it as if it were the original token
+ *    resolving, and jump straight to "set a password" for THAT
+ *    unrelated account. Fixed by unsubscribing the instant we either
+ *    resolve or give up, so nothing can flip the stage after that.
+ *
+ * 4. WRONG DEFAULT ON THE FALLBACK FORM (fixed here): the New account /
+ *    Password reset toggle always defaulted to "New account" regardless
+ *    of which email actually got sent, with nothing on the page hinting
+ *    that it needed checking. verifyOtp() validates a code against
+ *    whichever type you pass it — an invite-issued code doesn't verify
+ *    as a recovery code or vice versa — so a prefetched *recovery* link
+ *    would land here still needing a manual switch before its own code
+ *    would work. Fixed by reading the type off the same URL hash this
+ *    page already inspects, and pre-selecting the matching tab.
  */
 
 import { useEffect, useState, type FormEvent } from "react";
@@ -65,7 +87,8 @@ export default function RegisterPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    const hasToken = typeof window !== "undefined" && /access_token|type=recovery|type=invite/.test(window.location.hash);
+    const hash = typeof window !== "undefined" ? window.location.hash : "";
+    const hasToken = /access_token|type=recovery|type=invite/.test(hash);
 
     if (!hasToken) {
       // No token in this URL at all — offer the code-entry fallback
@@ -74,10 +97,17 @@ export default function RegisterPage() {
       return;
     }
 
+    // Whichever flow this link was actually for, default the fallback
+    // form to match it, so someone whose link got prefetched doesn't
+    // also have to notice and flip a toggle nothing on the page calls
+    // out.
+    if (hash.includes("type=recovery")) setFallbackType("recovery");
+
     let resolved = false;
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       if ((event === "SIGNED_IN" || event === "PASSWORD_RECOVERY") && !resolved) {
         resolved = true;
+        listener.subscription.unsubscribe();
         setEmail(session?.user?.email ?? null);
         setStage("ready");
       }
@@ -85,10 +115,16 @@ export default function RegisterPage() {
 
     // Token was present but never resolved to a session (expired, or —
     // most likely — already consumed by a mail scanner before this
-    // click). Offer the fallback instead of a dead end.
+    // click). Give up and offer the fallback — but critically, stop
+    // listening once we do. Leaving the subscription alive after this
+    // point is what let a later, unrelated auth event hijack the page.
     const timeout = setTimeout(() => {
-      if (!resolved) setStage("needs-fallback");
-    }, 3000);
+      if (!resolved) {
+        resolved = true;
+        listener.subscription.unsubscribe();
+        setStage("needs-fallback");
+      }
+    }, 6000);
 
     return () => {
       listener.subscription.unsubscribe();

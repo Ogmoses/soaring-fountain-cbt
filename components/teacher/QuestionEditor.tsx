@@ -8,7 +8,7 @@
  *   <QuestionEditor key={editing?.id ?? "new"} initial={editing} ... />
  */
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Plus, Trash2, ImagePlus, X, Loader2 } from "lucide-react";
 import {
   QUESTION_TYPE_LABEL,
@@ -30,6 +30,12 @@ function newOption(text = ""): QuestionOption {
   return { id: crypto.randomUUID(), text, isCorrect: false };
 }
 
+function blankOptionsFor(t: QuestionType): QuestionOption[] {
+  return t === "true_false"
+    ? [{ id: "true", text: "True", isCorrect: false }, { id: "false", text: "False", isCorrect: false }]
+    : [newOption(), newOption()];
+}
+
 export default function QuestionEditor({ initial, subjects, defaultSubjectId, onSave, onCancel }: QuestionEditorProps) {
   const [subjectId, setSubjectId] = useState(initial?.subjectId ?? defaultSubjectId ?? subjects[0]?.id ?? "");
   const [topic, setTopic] = useState(initial?.topic ?? "");
@@ -37,21 +43,19 @@ export default function QuestionEditor({ initial, subjects, defaultSubjectId, on
   const [prompt, setPrompt] = useState(initial?.prompt ?? "");
   const [points, setPoints] = useState(initial?.points ?? 1);
   const [imageUrl, setImageUrl] = useState<string | null>(initial?.imageUrl ?? null);
-  const [options, setOptions] = useState<QuestionOption[]>(
-    initial?.options ?? (initial?.type === "true_false"
-      ? [{ id: "true", text: "True", isCorrect: false }, { id: "false", text: "False", isCorrect: false }]
-      : [newOption(), newOption()])
-  );
+  const [options, setOptions] = useState<QuestionOption[]>(initial?.options ?? blankOptionsFor(type));
   const [referenceAnswer, setReferenceAnswer] = useState(initial?.referenceAnswer ?? "");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [savedCount, setSavedCount] = useState(0);
+  const promptRef = useRef<HTMLTextAreaElement>(null);
 
   const handleTypeChange = (next: QuestionType) => {
     setType(next);
     if (next === "true_false") {
-      setOptions([{ id: "true", text: "True", isCorrect: false }, { id: "false", text: "False", isCorrect: false }]);
+      setOptions(blankOptionsFor("true_false"));
     } else if (next === "multiple_choice" && options.length < 2) {
-      setOptions([newOption(), newOption()]);
+      setOptions(blankOptionsFor("multiple_choice"));
     }
   };
 
@@ -109,6 +113,19 @@ export default function QuestionEditor({ initial, subjects, defaultSubjectId, on
         options: type === "multiple_choice" || type === "true_false" ? options.filter((o) => o.text.trim()) : undefined,
         referenceAnswer: type === "fill_blank" || type === "short_theory" ? referenceAnswer.trim() : null,
       });
+      // Editing an existing question: the parent closes the panel, nothing
+      // more to do here. Creating a new one: keep the panel open and reset
+      // just the content fields (prompt, options, image, marking guide) —
+      // subject, topic, question type, and points carry over, since those
+      // are usually the same for the next question in a batch too.
+      if (!initial) {
+        setSavedCount((n) => n + 1);
+        setPrompt("");
+        setOptions(blankOptionsFor(type));
+        setImageUrl(null);
+        setReferenceAnswer("");
+        promptRef.current?.focus();
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't save the question. Try again.");
     } finally {
@@ -120,7 +137,14 @@ export default function QuestionEditor({ initial, subjects, defaultSubjectId, on
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/50 p-4">
       <div className="flex max-h-[90vh] w-full max-w-xl flex-col rounded-lg bg-white shadow-card-hover">
         <div className="flex items-center justify-between border-b border-black/5 px-5 py-4">
-          <h2 className="font-display text-[15px] font-semibold text-ink">{initial ? "Edit question" : "New question"}</h2>
+          <div>
+            <h2 className="font-display text-[15px] font-semibold text-ink">{initial ? "Edit question" : "New question"}</h2>
+            {!initial && savedCount > 0 && (
+              <p className="mt-0.5 text-[12px] font-medium text-crimson-600">
+                {savedCount} saved this session — keep going or tap Done
+              </p>
+            )}
+          </div>
           <button onClick={onCancel} className="rounded-md p-1.5 text-ink/40 hover:bg-background-muted">
             <X size={18} />
           </button>
@@ -172,6 +196,7 @@ export default function QuestionEditor({ initial, subjects, defaultSubjectId, on
           <label className="block">
             <span className="mb-1 block text-[12px] font-medium text-ink/60">Prompt</span>
             <textarea
+              ref={promptRef}
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               rows={3}
@@ -288,7 +313,7 @@ export default function QuestionEditor({ initial, subjects, defaultSubjectId, on
             disabled={saving}
             className="flex-1 rounded-lg border border-black/10 py-2.5 text-[13px] font-medium text-ink/70 hover:bg-background-muted disabled:opacity-50"
           >
-            Cancel
+            {!initial && savedCount > 0 ? "Done" : "Cancel"}
           </button>
           <button
             onClick={handleSubmit}
