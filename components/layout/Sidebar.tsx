@@ -39,7 +39,7 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
   teacher: [
     { label: "Overview", href: "/teacher", icon: LayoutDashboard },
     { label: "Question Bank", href: "/teacher/questions", icon: FileQuestion },
-    { label: "Exam Builder", href: "/teacher/exams", icon: BookOpen },
+    { label: "My Exams", href: "/teacher/exams", icon: BookOpen },
     { label: "Grading Queue", href: "/teacher/grading", icon: ClipboardList },
     { label: "Class Analytics", href: "/teacher/analytics", icon: BarChart3 },
   ],

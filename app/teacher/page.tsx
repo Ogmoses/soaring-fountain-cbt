@@ -125,7 +125,7 @@ export default function TeacherOverviewPage() {
 
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
             <QuickLink href="/teacher/questions" icon={FileQuestion} label="Question Bank" />
-            <QuickLink href="/teacher/exams" icon={BookOpen} label="Exam Builder" />
+            <QuickLink href="/teacher/exams" icon={BookOpen} label="My Exams" />
             <QuickLink href="/teacher/grading" icon={ClipboardList} label="Grading Queue" />
             <QuickLink href="/teacher/analytics" icon={BarChart3} label="Class Analytics" />
           </div>

@@ -3,134 +3,152 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import ExamBuilder, { type ExamFormData } from "@/components/teacher/ExamBuilder";
+import MyExams, { type ExamListItem } from "@/components/teacher/MyExams";
+import ExamRoster, { type RosterStudent, type RosterStatus } from "@/components/teacher/ExamRoster";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
-import type { BankQuestion, ClassOption, SubjectOption, TermOption } from "@/components/teacher/types";
 import PageLoading from "@/components/layout/PageLoading";
 
-export default function TeacherExamBuilderPage() {
+function formatBatchSummary(batches: { starts_at: string; ends_at: string }[]): string | null {
+  if (batches.length === 0) return null;
+  const sorted = [...batches].sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
+  const first = sorted[0];
+  const last = sorted[sorted.length - 1];
+  const dateFmt = (iso: string) => new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  const timeFmt = (iso: string) => new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  return batches.length === 1
+    ? `${dateFmt(first.starts_at)}, ${timeFmt(first.starts_at)}–${timeFmt(first.ends_at)}`
+    : `${batches.length} sittings, ${dateFmt(first.starts_at)}–${dateFmt(last.ends_at)}`;
+}
+
+export default function MyExamsPage() {
   const router = useRouter();
   const authUser = useAuthUser();
   const supabase = createClient();
 
-  const [subjects, setSubjects] = useState<SubjectOption[]>([]);
-  const [classes, setClasses] = useState<ClassOption[]>([]);
-  const [terms, setTerms] = useState<TermOption[]>([]);
-  const [questionBank, setQuestionBank] = useState<BankQuestion[]>([]);
+  const [exams, setExams] = useState<ExamListItem[]>([]);
+  const [classes, setClasses] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [viewingExam, setViewingExam] = useState<{ title: string; className: string; students: RosterStudent[] } | null>(null);
+  const [rosterLoading, setRosterLoading] = useState(false);
+
+  const load = async () => {
+    if (!authUser) return;
+    setError(null);
+
+    const { data: examRows } = await supabase
+      .from("exams")
+      .select("id, title, status, is_terminal, subjects(name), classes(id, name), terms(name), exam_batches(id, starts_at, ends_at)")
+      .eq("created_by", authUser.id)
+      .order("created_at", { ascending: false });
+
+    const rows = examRows ?? [];
+    const examIds = rows.map((e: any) => e.id);
+    const classIds = [...new Set(rows.map((e: any) => e.classes?.id).filter(Boolean))];
+
+    const [{ data: sessionRows }, { data: resultRows }, { data: rosterRows }] = await Promise.all([
+      examIds.length > 0 ? supabase.from("student_exam_sessions").select("exam_id, status").in("exam_id", examIds) : Promise.resolve({ data: [] }),
+      examIds.length > 0 ? supabase.from("results").select("exam_id").in("exam_id", examIds) : Promise.resolve({ data: [] }),
+      classIds.length > 0 ? supabase.from("users").select("class_id").eq("role", "student").eq("is_active", true).in("class_id", classIds) : Promise.resolve({ data: [] }),
+    ]);
+
+    setExams(
+      rows.map((e: any) => {
+        const sessionsForExam = (sessionRows ?? []).filter((s: any) => s.exam_id === e.id);
+        const resultsForExam = (resultRows ?? []).filter((r: any) => r.exam_id === e.id);
+        const batches = e.exam_batches ?? [];
+        const latestEndsAt = batches.length > 0 ? batches.map((b: any) => b.ends_at).sort().slice(-1)[0] : null;
+        return {
+          id: e.id,
+          title: e.title,
+          subjectName: e.subjects?.name ?? "",
+          classId: e.classes?.id ?? "",
+          className: e.classes?.name ?? "",
+          termName: e.terms?.name ?? "",
+          status: e.status,
+          isTerminal: e.is_terminal,
+          batchSummary: formatBatchSummary(batches),
+          latestBatchEndsAt: latestEndsAt,
+          hasStudentActivity: sessionsForExam.length > 0 || resultsForExam.length > 0,
+          totalStudents: (rosterRows ?? []).filter((u: any) => u.class_id === e.classes?.id).length,
+          completedCount: sessionsForExam.filter((s: any) => s.status === "submitted").length,
+        };
+      })
+    );
+    setClasses([...new Map(rows.map((e: any) => [e.classes?.id, e.classes?.name])).entries()].filter(([id]) => id).map(([id, name]) => ({ id, name })));
+    setLoading(false);
+  };
 
   useEffect(() => {
-    if (!authUser) return;
-    (async () => {
-      const [{ data: assignmentRows }, { data: termRows }, { data: questionRows }] = await Promise.all([
-        supabase.from("teacher_subjects").select("subjects(id, name), classes(id, name)").eq("teacher_id", authUser.id),
-        supabase.from("terms").select("id, name").order("is_current", { ascending: false }),
-        supabase
-          .from("questions")
-          .select("id, subject_id, class_id, topic, type, prompt, points, reference_answer, subjects(name)")
-          .eq("created_by", authUser.id),
-      ]);
-
-      const uniqueSubjects = new Map<string, string>();
-      const uniqueClasses = new Map<string, string>();
-      for (const row of assignmentRows ?? []) {
-        const s = (row as any).subjects;
-        const c = (row as any).classes;
-        if (s) uniqueSubjects.set(s.id, s.name);
-        if (c) uniqueClasses.set(c.id, c.name);
-      }
-
-      if (uniqueSubjects.size === 0 || uniqueClasses.size === 0) {
-        // No teacher_subjects assignments yet — fall back to everything
-        // rather than leaving Exam Builder completely unusable.
-        const [{ data: allSubjects }, { data: allClasses }] = await Promise.all([
-          supabase.from("subjects").select("id, name").order("name"),
-          supabase.from("classes").select("id, name").order("name"),
-        ]);
-        for (const s of allSubjects ?? []) uniqueSubjects.set(s.id, s.name);
-        for (const c of allClasses ?? []) uniqueClasses.set(c.id, c.name);
-      }
-
-      setSubjects([...uniqueSubjects.entries()].map(([id, name]) => ({ id, name })));
-      setClasses([...uniqueClasses.entries()].map(([id, name]) => ({ id, name })));
-      setTerms(termRows ?? []);
-      setQuestionBank(
-        (questionRows ?? []).map((q: any) => ({
-          id: q.id,
-          subjectId: q.subject_id,
-          subjectName: q.subjects?.name ?? "",
-          classId: q.class_id,
-          className: "",
-          topic: q.topic ?? "",
-          type: q.type,
-          prompt: q.prompt,
-          points: q.points,
-          referenceAnswer: q.reference_answer,
-          updatedAt: new Date().toISOString(),
-        }))
-      );
-      setLoading(false);
-    })();
+    load();
   }, [authUser?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const persistExam = async (data: ExamFormData, status: "draft" | "published") => {
-    if (!authUser) return;
+  const handleDelete = async (examId: string) => {
+    const { error } = await supabase.from("exams").delete().eq("id", examId);
+    if (error) throw new Error(error.message);
+    await load();
+  };
 
-    const { data: exam, error: examError } = await supabase
-      .from("exams")
-      .insert({
-        title: data.title,
-        subject_id: data.subjectId,
-        class_id: data.classId,
-        term_id: data.termId,
-        created_by: authUser.id,
-        duration_minutes: data.durationMinutes,
-        pass_mark: data.passMark,
-        weight_percent: data.weightPercent,
-        is_terminal: data.isTerminal,
-        shuffle_questions: data.shuffleQuestions,
-        shuffle_options: data.shuffleOptions,
-        show_result_instantly: data.showResultInstantly,
-        status,
-      })
-      .select("id")
-      .single();
-    if (examError || !exam) throw new Error(examError?.message ?? "Couldn't save the exam.");
+  const handleArchive = async (examId: string) => {
+    const { error } = await supabase.from("exams").update({ status: "archived" }).eq("id", examId);
+    if (error) throw new Error(error.message);
+    await load();
+  };
 
-    if (data.questionIds.length > 0) {
-      const { error: eqError } = await supabase
-        .from("exam_questions")
-        .insert(data.questionIds.map((questionId, i) => ({ exam_id: exam.id, question_id: questionId, order_index: i })));
-      if (eqError) throw new Error(eqError.message);
-    }
+  const handleViewRoster = async (examId: string) => {
+    setRosterLoading(true);
+    const exam = exams.find((e) => e.id === examId);
+    if (!exam) { setRosterLoading(false); return; }
 
-    if (data.batches.length > 0) {
-      const { error: batchError } = await supabase.from("exam_batches").insert(
-        data.batches.map((b) => ({
-          exam_id: exam.id,
-          label: b.label,
-          starts_at: new Date(b.startsAt).toISOString(),
-          ends_at: new Date(b.endsAt).toISOString(),
-          lab_room: b.labRoom || null,
-        }))
-      );
-      if (batchError) throw new Error(batchError.message);
-    }
+    const [{ data: rosterRows }, { data: sessionRows }, { data: resultRows }] = await Promise.all([
+      supabase.from("users").select("id, full_name, admission_number").eq("role", "student").eq("class_id", exam.classId).eq("is_active", true),
+      supabase.from("student_exam_sessions").select("student_id, status").eq("exam_id", examId),
+      supabase.from("results").select("student_id, total_score").eq("exam_id", examId),
+    ]);
 
-    router.push("/teacher/exams");
+    const sessionByStudent = new Map((sessionRows ?? []).map((s: any) => [s.student_id, s.status as RosterStatus]));
+    const resultByStudent = new Map((resultRows ?? []).map((r: any) => [r.student_id, r.total_score]));
+
+    const students: RosterStudent[] = (rosterRows ?? []).map((u: any) => ({
+      id: u.id,
+      fullName: u.full_name,
+      admissionNumber: u.admission_number,
+      status: sessionByStudent.get(u.id) ?? "not_started",
+      score: resultByStudent.has(u.id) ? Number(resultByStudent.get(u.id)) : null,
+      maxScore: resultByStudent.has(u.id) ? 100 : null,
+    }));
+
+    setViewingExam({ title: exam.title, className: exam.className, students });
+    setRosterLoading(false);
   };
 
   return (
-    <DashboardLayout role="teacher" pageTitle="Exam Builder" userName={authUser?.fullName ?? ""} onLogout={() => signOutAndRedirect(router)}>
-      {loading ? <PageLoading /> : (
-        <ExamBuilder
-          subjects={subjects}
-          classes={classes}
-          terms={terms}
-          questionBank={questionBank}
-          onSaveDraft={(data) => persistExam(data, "draft")}
-          onPublish={(data) => persistExam(data, "published")}
+    <DashboardLayout role="teacher" pageTitle="My Exams" userName={authUser?.fullName ?? ""} onLogout={() => signOutAndRedirect(router)}>
+      {loading ? (
+        <PageLoading />
+      ) : (
+        <>
+          {error && <p className="mb-4 rounded-lg bg-crimson-50 px-3.5 py-2.5 text-[13px] text-crimson-700">{error}</p>}
+          <MyExams
+            exams={exams}
+            classes={classes}
+            onNew={() => router.push("/teacher/exams/new")}
+            onEdit={(id) => router.push(`/teacher/exams/${id}/edit`)}
+            onViewRoster={handleViewRoster}
+            onDelete={handleDelete}
+            onArchive={handleArchive}
+          />
+        </>
+      )}
+
+      {viewingExam && (
+        <ExamRoster
+          examTitle={viewingExam.title}
+          className={viewingExam.className}
+          students={viewingExam.students}
+          onClose={() => setViewingExam(null)}
         />
       )}
     </DashboardLayout>
