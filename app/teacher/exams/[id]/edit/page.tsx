@@ -9,6 +9,7 @@ import ExamBuilder, { type ExamFormData } from "@/components/teacher/ExamBuilder
 import { createClient } from "@/lib/supabase/client";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import { useTeacherExamFormData } from "@/lib/useTeacherExamFormData";
+import { enrollClassIntoBatches } from "@/lib/enrollBatchStudents";
 import PageLoading from "@/components/layout/PageLoading";
 
 export default function EditExamPage() {
@@ -113,16 +114,20 @@ export default function EditExamPage() {
 
     await supabase.from("exam_batches").delete().eq("exam_id", examId);
     if (data.batches.length > 0) {
-      const { error } = await supabase.from("exam_batches").insert(
-        data.batches.map((b) => ({
-          exam_id: examId,
-          label: b.label,
-          starts_at: new Date(b.startsAt).toISOString(),
-          ends_at: new Date(b.endsAt).toISOString(),
-          lab_room: b.labRoom || null,
-        }))
-      );
+      const { data: insertedBatches, error } = await supabase
+        .from("exam_batches")
+        .insert(
+          data.batches.map((b) => ({
+            exam_id: examId,
+            label: b.label,
+            starts_at: new Date(b.startsAt).toISOString(),
+            ends_at: new Date(b.endsAt).toISOString(),
+            lab_room: b.labRoom || null,
+          }))
+        )
+        .select("id");
       if (error) throw new Error(error.message);
+      await enrollClassIntoBatches(data.classId, (insertedBatches ?? []).map((b) => b.id));
     }
 
     if (status === "published") {

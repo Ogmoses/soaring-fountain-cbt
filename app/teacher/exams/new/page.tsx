@@ -6,6 +6,7 @@ import ExamBuilder, { type ExamFormData } from "@/components/teacher/ExamBuilder
 import { createClient } from "@/lib/supabase/client";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import { useTeacherExamFormData } from "@/lib/useTeacherExamFormData";
+import { enrollClassIntoBatches } from "@/lib/enrollBatchStudents";
 import PageLoading from "@/components/layout/PageLoading";
 
 export default function NewExamPage() {
@@ -46,16 +47,20 @@ export default function NewExamPage() {
     }
 
     if (data.batches.length > 0) {
-      const { error: batchError } = await supabase.from("exam_batches").insert(
-        data.batches.map((b) => ({
-          exam_id: exam.id,
-          label: b.label,
-          starts_at: new Date(b.startsAt).toISOString(),
-          ends_at: new Date(b.endsAt).toISOString(),
-          lab_room: b.labRoom || null,
-        }))
-      );
+      const { data: insertedBatches, error: batchError } = await supabase
+        .from("exam_batches")
+        .insert(
+          data.batches.map((b) => ({
+            exam_id: exam.id,
+            label: b.label,
+            starts_at: new Date(b.startsAt).toISOString(),
+            ends_at: new Date(b.endsAt).toISOString(),
+            lab_room: b.labRoom || null,
+          }))
+        )
+        .select("id");
       if (batchError) throw new Error(batchError.message);
+      await enrollClassIntoBatches(data.classId, (insertedBatches ?? []).map((b) => b.id));
     }
 
     // Publishing shows its own toast inside ExamBuilder before this fires;
