@@ -34,6 +34,7 @@ export interface ExamListItem {
   isTerminal: boolean;
   batchSummary: string | null; // human-readable date/time range, or null if no batches yet
   latestBatchEndsAt: string | null; // ISO, for the upcoming/completed split
+  allStudentsFinished: boolean; // every enrolled student has submitted, expired, or been terminated
   hasStudentActivity: boolean;
   totalStudents: number;
   completedCount: number;
@@ -137,8 +138,8 @@ export default function MyExams({ exams, classes, onNew, onEdit, onViewRoster, o
 
   const now = Date.now();
   const drafts = filtered.filter((e) => e.status === "draft");
-  const upcoming = filtered.filter((e) => e.status === "published" && (!e.latestBatchEndsAt || new Date(e.latestBatchEndsAt).getTime() > now));
-  const completed = filtered.filter((e) => e.status === "published" && e.latestBatchEndsAt && new Date(e.latestBatchEndsAt).getTime() <= now);
+  const upcoming = filtered.filter((e) => e.status === "published" && !e.allStudentsFinished && (!e.latestBatchEndsAt || new Date(e.latestBatchEndsAt).getTime() > now));
+  const completed = filtered.filter((e) => e.status === "published" && (e.allStudentsFinished || (e.latestBatchEndsAt && new Date(e.latestBatchEndsAt).getTime() <= now)));
   const archived = filtered.filter((e) => e.status === "archived");
 
   const handleConfirm = async () => {

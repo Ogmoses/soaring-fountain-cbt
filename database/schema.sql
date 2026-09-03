@@ -400,6 +400,27 @@ create policy users_read_own on users
 create policy admin_full_access_users on users
   for all using (current_role_is('super_admin'));
 
+-- Nothing previously let a teacher read a student's row at all — only
+-- your own row, or everything if you're a super_admin. That silently
+-- broke every teacher-side feature needing a class roster (batch
+-- enrollment, My Exams' completion counts, the student roster view):
+-- an RLS-filtered SELECT just returns zero rows, not an error, so
+-- there was nothing to catch. Scoped narrowly: only role='student'
+-- rows, only for a caller who is themselves a teacher, and only for a
+-- class they're actually assigned via teacher_subjects — with the same
+-- "no assignments yet -> don't lock them out" fallback the app's own
+-- fetch code already uses elsewhere, so a newly created teacher isn't
+-- stuck at zero visibility before an admin assigns them anything.
+create policy teachers_read_own_students on users
+  for select using (
+    role = 'student'
+    and current_role_is('teacher')
+    and (
+      exists (select 1 from teacher_subjects ts where ts.teacher_id = auth.uid() and ts.class_id = users.class_id)
+      or not exists (select 1 from teacher_subjects ts where ts.teacher_id = auth.uid())
+    )
+  );
+
 -- exams <-> exam_batches <-> batch_students: same recursion class as
 -- current_role_is() above, but across three tables instead of looping a
 -- single function through itself. exams_student_read reads exam_batches;

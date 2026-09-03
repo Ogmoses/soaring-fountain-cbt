@@ -40,12 +40,12 @@ export default function EditExamPage() {
       }
 
       const batchIds = (batchRows ?? []).map((b) => b.id);
-      const [{ count: sessionCount }, { count: resultCount }, { count: batchStudentCount }] = await Promise.all([
+      const [sessionRes, resultRes, batchStudentRes] = await Promise.all([
         supabase.from("student_exam_sessions").select("id", { count: "exact", head: true }).eq("exam_id", examId),
         supabase.from("results").select("id", { count: "exact", head: true }).eq("exam_id", examId),
         batchIds.length > 0
-          ? supabase.from("batch_students").select("id", { count: "exact", head: true }).in("batch_id", batchIds)
-          : Promise.resolve({ count: 0 }),
+          ? supabase.from("batch_students").select("student_id", { count: "exact", head: true }).in("batch_id", batchIds)
+          : Promise.resolve({ count: 0, error: null }),
       ]);
       // Once any of these exist, questions/batches/timing are effectively
       // load-bearing for real student data — editing them in place (which
@@ -53,8 +53,16 @@ export default function EditExamPage() {
       // would cascade away sessions, results, or batch assignments that
       // already depend on the old rows. Archiving is the safe path instead
       // of allowing a structural edit here.
-      const hasActivity = (sessionCount ?? 0) > 0 || (resultCount ?? 0) > 0 || (batchStudentCount ?? 0) > 0;
+      //
+      // If any of these three checks itself fails to run, that's treated
+      // as locked rather than as zero — a broken safety check should
+      // fail toward "can't edit this," not silently toward "sure, go
+      // ahead," which is exactly how a genuinely broken query here went
+      // unnoticed before.
+      const checkFailed = !!(sessionRes.error || resultRes.error || batchStudentRes.error);
+      const hasActivity = checkFailed || (sessionRes.count ?? 0) > 0 || (resultRes.count ?? 0) > 0 || (batchStudentRes.count ?? 0) > 0;
       setLocked(hasActivity);
+      if (checkFailed) setLoadError("Couldn't confirm whether students have already engaged with this exam, so editing is disabled to be safe. Try reloading.");
 
       setInitial({
         title: exam.title,

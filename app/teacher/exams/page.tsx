@@ -7,6 +7,7 @@ import MyExams, { type ExamListItem } from "@/components/teacher/MyExams";
 import ExamRoster, { type RosterStudent, type RosterStatus } from "@/components/teacher/ExamRoster";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
+import { fetchExamMaxScores } from "@/lib/reportCard";
 import PageLoading from "@/components/layout/PageLoading";
 
 function formatBatchSummary(batches: { starts_at: string; ends_at: string }[]): string | null {
@@ -60,6 +61,8 @@ export default function MyExamsPage() {
         const resultsForExam = (resultRows ?? []).filter((r: any) => r.exam_id === e.id);
         const batches = e.exam_batches ?? [];
         const latestEndsAt = batches.length > 0 ? batches.map((b: any) => b.ends_at).sort().slice(-1)[0] : null;
+        const totalStudents = (rosterRows ?? []).filter((u: any) => u.class_id === e.classes?.id).length;
+        const finishedCount = sessionsForExam.filter((s: any) => s.status === "submitted" || s.status === "expired" || s.status === "terminated").length;
         return {
           id: e.id,
           title: e.title,
@@ -71,8 +74,9 @@ export default function MyExamsPage() {
           isTerminal: e.is_terminal,
           batchSummary: formatBatchSummary(batches),
           latestBatchEndsAt: latestEndsAt,
+          allStudentsFinished: totalStudents > 0 && finishedCount >= totalStudents,
           hasStudentActivity: sessionsForExam.length > 0 || resultsForExam.length > 0,
-          totalStudents: (rosterRows ?? []).filter((u: any) => u.class_id === e.classes?.id).length,
+          totalStudents,
           completedCount: sessionsForExam.filter((s: any) => s.status === "submitted").length,
         };
       })
@@ -102,11 +106,13 @@ export default function MyExamsPage() {
     const exam = exams.find((e) => e.id === examId);
     if (!exam) { setRosterLoading(false); return; }
 
-    const [{ data: rosterRows }, { data: sessionRows }, { data: resultRows }] = await Promise.all([
+    const [{ data: rosterRows }, { data: sessionRows }, { data: resultRows }, maxScores] = await Promise.all([
       supabase.from("users").select("id, full_name, admission_number").eq("role", "student").eq("class_id", exam.classId).eq("is_active", true),
       supabase.from("student_exam_sessions").select("student_id, status").eq("exam_id", examId),
       supabase.from("results").select("student_id, total_score").eq("exam_id", examId),
+      fetchExamMaxScores(supabase, [examId]),
     ]);
+    const maxScore = maxScores.get(examId) ?? null;
 
     const sessionByStudent = new Map((sessionRows ?? []).map((s: any) => [s.student_id, s.status as RosterStatus]));
     const resultByStudent = new Map((resultRows ?? []).map((r: any) => [r.student_id, r.total_score]));
@@ -117,7 +123,7 @@ export default function MyExamsPage() {
       admissionNumber: u.admission_number,
       status: sessionByStudent.get(u.id) ?? "not_started",
       score: resultByStudent.has(u.id) ? Number(resultByStudent.get(u.id)) : null,
-      maxScore: resultByStudent.has(u.id) ? 100 : null,
+      maxScore: resultByStudent.has(u.id) ? maxScore : null,
     }));
 
     setViewingExam({ title: exam.title, className: exam.className, students });

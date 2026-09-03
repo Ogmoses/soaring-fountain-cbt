@@ -129,13 +129,23 @@ export default function ExamBuilder({ subjects, classes, terms, questionBank, in
   };
   const updateBatch = (id: string, patch: Partial<ExamBatchDraft>) =>
     update("batches", form.batches.map((b) => (b.id === id ? { ...b, ...patch } : b)));
+  const updateBatchStart = (id: string, startsAt: string) =>
+    updateBatch(id, { startsAt, endsAt: addMinutes(startsAt, form.durationMinutes) });
   const removeBatch = (id: string) => update("batches", form.batches.filter((b) => b.id !== id));
+
+  const updateDuration = (minutes: number) => {
+    // Keep every batch's end time in step with the exam's actual duration
+    // instead of letting them silently drift apart — this used to be two
+    // independently-typed fields with nothing keeping them consistent.
+    update("durationMinutes", minutes);
+    update("batches", form.batches.map((b) => (b.startsAt ? { ...b, endsAt: addMinutes(b.startsAt, minutes) } : b)));
+  };
 
   const validate = (): string | null => {
     if (!form.title.trim()) return "Give the exam a title.";
     if (form.questionIds.length === 0) return "Add at least one question.";
     if (form.batches.length === 0) return "Schedule at least one batch.";
-    if (form.batches.some((b) => !b.startsAt || !b.endsAt)) return "Every batch needs a start and end time.";
+    if (form.batches.some((b) => !b.startsAt)) return "Every batch needs a start time.";
     return null;
   };
 
@@ -201,7 +211,7 @@ export default function ExamBuilder({ subjects, classes, terms, questionBank, in
         </div>
 
         <div className="mt-3.5 grid grid-cols-3 gap-3.5">
-          <NumberField label="Duration (min)" value={form.durationMinutes} onChange={(v) => update("durationMinutes", v)} />
+          <NumberField label="Duration (min)" value={form.durationMinutes} onChange={updateDuration} />
           <NumberField label="Pass mark" value={form.passMark} onChange={(v) => update("passMark", v)} />
           <NumberField label="Weight (%)" value={form.weightPercent} onChange={(v) => update("weightPercent", v)} hint="of term grade" />
         </div>
@@ -283,8 +293,13 @@ export default function ExamBuilder({ subjects, classes, terms, questionBank, in
           {form.batches.map((b) => (
             <div key={b.id} className="grid grid-cols-1 gap-2.5 rounded-lg border border-black/5 p-3 sm:grid-cols-[1fr_1fr_1fr_1fr_auto] sm:items-end">
               <TextField label="Label" value={b.label} onChange={(v) => updateBatch(b.id, { label: v })} />
-              <TextField label="Starts" value={b.startsAt} onChange={(v) => updateBatch(b.id, { startsAt: v })} type="datetime-local" />
-              <TextField label="Ends" value={b.endsAt} onChange={(v) => updateBatch(b.id, { endsAt: v })} type="datetime-local" />
+              <TextField label="Starts" value={b.startsAt} onChange={(v) => updateBatchStart(b.id, v)} type="datetime-local" />
+              <div>
+                <span className="mb-1 block text-[12px] font-medium text-ink/60">Ends</span>
+                <p className="rounded-lg border border-black/10 bg-background-muted px-3 py-2.5 text-[13px] text-ink/60">
+                  {b.startsAt ? `${formatEndsAt(b.endsAt)} (${form.durationMinutes} min)` : "Set a start time"}
+                </p>
+              </div>
               <TextField label="Lab room" value={b.labRoom ?? ""} onChange={(v) => updateBatch(b.id, { labRoom: v })} placeholder="Optional" />
               <button onClick={() => removeBatch(b.id)} className="flex items-center justify-center rounded-lg border border-black/10 p-2.5 text-ink/40 hover:bg-crimson-50 hover:text-crimson-700">
                 <Trash2 size={15} />
@@ -386,6 +401,22 @@ function TextField({ label, value, onChange, type = "text", placeholder }: { lab
       />
     </label>
   );
+}
+
+function addMinutes(dateTimeLocal: string, minutes: number): string {
+  if (!dateTimeLocal) return "";
+  const d = new Date(dateTimeLocal);
+  if (isNaN(d.getTime())) return "";
+  d.setMinutes(d.getMinutes() + minutes);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function formatEndsAt(iso: string): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
 function Toggle({ icon: Icon, label, checked, onChange }: { icon: React.ElementType; label: string; checked: boolean; onChange: (v: boolean) => void }) {
