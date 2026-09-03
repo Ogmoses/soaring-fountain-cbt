@@ -6,14 +6,14 @@ import ExamBuilder, { type ExamFormData } from "@/components/teacher/ExamBuilder
 import { createClient } from "@/lib/supabase/client";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import { useTeacherExamFormData } from "@/lib/useTeacherExamFormData";
-import { enrollClassIntoBatches } from "@/lib/enrollBatchStudents";
+import { enrollAssignedStudents } from "@/lib/enrollBatchStudents";
 import PageLoading from "@/components/layout/PageLoading";
 
 export default function NewExamPage() {
   const router = useRouter();
   const authUser = useAuthUser();
   const supabase = createClient();
-  const { subjects, classes, terms, questionBank, loading } = useTeacherExamFormData(authUser?.id);
+  const { subjects, classes, terms, questionBank, studentsByClass, loading } = useTeacherExamFormData(authUser?.id);
 
   const persistExam = async (data: ExamFormData, status: "draft" | "published") => {
     if (!authUser) return;
@@ -60,7 +60,14 @@ export default function NewExamPage() {
         )
         .select("id");
       if (batchError) throw new Error(batchError.message);
-      await enrollClassIntoBatches(data.classId, (insertedBatches ?? []).map((b) => b.id));
+
+      const draftToReal = new Map(data.batches.map((b, i) => [b.id, insertedBatches?.[i]?.id]));
+      const realAssignments: Record<string, string> = {};
+      for (const [studentId, draftBatchId] of Object.entries(data.studentAssignments)) {
+        const realBatchId = draftToReal.get(draftBatchId);
+        if (realBatchId) realAssignments[studentId] = realBatchId;
+      }
+      await enrollAssignedStudents(realAssignments);
     }
 
     // Publishing shows its own toast inside ExamBuilder before this fires;
@@ -81,6 +88,7 @@ export default function NewExamPage() {
           classes={classes}
           terms={terms}
           questionBank={questionBank}
+          studentsByClass={studentsByClass}
           onSaveDraft={(data) => persistExam(data, "draft")}
           onPublish={(data) => persistExam(data, "published")}
         />

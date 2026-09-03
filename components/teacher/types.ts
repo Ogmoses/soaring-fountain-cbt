@@ -41,6 +41,12 @@ export interface TermOption {
   name: string;
 }
 
+export interface StudentOption {
+  id: string;
+  fullName: string;
+  admissionNumber: string | null;
+}
+
 export interface GradingItem {
   id: string; // student_answers.id
   studentName: string;

@@ -100,7 +100,7 @@ export default function TeacherAnalyticsPage() {
         highest: scores.length ? Math.max(...scores) : 0,
         lowest: scores.length ? Math.min(...scores) : 0,
         maxScore,
-        passRate: scores.length ? (scores.filter((s) => s >= passMark).length / scores.length) * 100 : 0,
+        passRate: scores.length ? (scores.filter((s) => maxScore > 0 && (s / maxScore) * 100 >= passMark).length / scores.length) * 100 : 0,
         scoreDistribution: bucketScores(scores, maxScore),
         questionDifficulty,
         students: ranked.map((r: any, i) => ({

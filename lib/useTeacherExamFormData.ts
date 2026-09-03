@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { BankQuestion, ClassOption, SubjectOption, TermOption } from "@/components/teacher/types";
+import type { BankQuestion, ClassOption, StudentOption, SubjectOption, TermOption } from "@/components/teacher/types";
 
 export function useTeacherExamFormData(authUserId: string | undefined) {
   const supabase = createClient();
@@ -10,6 +10,7 @@ export function useTeacherExamFormData(authUserId: string | undefined) {
   const [classes, setClasses] = useState<ClassOption[]>([]);
   const [terms, setTerms] = useState<TermOption[]>([]);
   const [questionBank, setQuestionBank] = useState<BankQuestion[]>([]);
+  const [studentsByClass, setStudentsByClass] = useState<Record<string, StudentOption[]>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,8 +46,25 @@ export function useTeacherExamFormData(authUserId: string | undefined) {
       }
 
       setSubjects([...uniqueSubjects.entries()].map(([id, name]) => ({ id, name })));
-      setClasses([...uniqueClasses.entries()].map(([id, name]) => ({ id, name })));
+      const classList = [...uniqueClasses.entries()].map(([id, name]) => ({ id, name }));
+      setClasses(classList);
       setTerms(termRows ?? []);
+
+      const { data: studentRows } = classList.length > 0
+        ? await supabase
+            .from("users")
+            .select("id, full_name, admission_number, class_id")
+            .eq("role", "student")
+            .eq("is_active", true)
+            .in("class_id", classList.map((c) => c.id))
+        : { data: [] };
+      const grouped: Record<string, StudentOption[]> = {};
+      for (const s of studentRows ?? []) {
+        const list = grouped[s.class_id] ?? (grouped[s.class_id] = []);
+        list.push({ id: s.id, fullName: s.full_name, admissionNumber: s.admission_number });
+      }
+      setStudentsByClass(grouped);
+
       setQuestionBank(
         (questionRows ?? []).map((q: any) => ({
           id: q.id,
@@ -66,5 +84,5 @@ export function useTeacherExamFormData(authUserId: string | undefined) {
     })();
   }, [authUserId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return { subjects, classes, terms, questionBank, loading };
+  return { subjects, classes, terms, questionBank, studentsByClass, loading };
 }

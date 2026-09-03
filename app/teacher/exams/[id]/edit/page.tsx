@@ -9,7 +9,7 @@ import ExamBuilder, { type ExamFormData } from "@/components/teacher/ExamBuilder
 import { createClient } from "@/lib/supabase/client";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import { useTeacherExamFormData } from "@/lib/useTeacherExamFormData";
-import { enrollClassIntoBatches } from "@/lib/enrollBatchStudents";
+import { enrollAssignedStudents } from "@/lib/enrollBatchStudents";
 import PageLoading from "@/components/layout/PageLoading";
 
 export default function EditExamPage() {
@@ -18,7 +18,7 @@ export default function EditExamPage() {
   const examId = params.id;
   const authUser = useAuthUser();
   const supabase = createClient();
-  const { subjects, classes, terms, questionBank, loading: refDataLoading } = useTeacherExamFormData(authUser?.id);
+  const { subjects, classes, terms, questionBank, studentsByClass, loading: refDataLoading } = useTeacherExamFormData(authUser?.id);
 
   const [initial, setInitial] = useState<Partial<ExamFormData> | null>(null);
   const [locked, setLocked] = useState(false);
@@ -135,7 +135,14 @@ export default function EditExamPage() {
         )
         .select("id");
       if (error) throw new Error(error.message);
-      await enrollClassIntoBatches(data.classId, (insertedBatches ?? []).map((b) => b.id));
+
+      const draftToReal = new Map(data.batches.map((b, i) => [b.id, insertedBatches?.[i]?.id]));
+      const realAssignments: Record<string, string> = {};
+      for (const [studentId, draftBatchId] of Object.entries(data.studentAssignments)) {
+        const realBatchId = draftToReal.get(draftBatchId);
+        if (realBatchId) realAssignments[studentId] = realBatchId;
+      }
+      await enrollAssignedStudents(realAssignments);
     }
 
     if (status === "published") {
@@ -175,6 +182,7 @@ export default function EditExamPage() {
           classes={classes}
           terms={terms}
           questionBank={questionBank}
+          studentsByClass={studentsByClass}
           initial={initial ?? undefined}
           onSaveDraft={(data) => persistExam(data, "draft")}
           onPublish={(data) => persistExam(data, "published")}

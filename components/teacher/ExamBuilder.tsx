@@ -9,7 +9,7 @@
  * `exam_questions` rows in the chosen order, and upsert `exam_batches`.
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Plus,
   Trash2,
@@ -22,9 +22,11 @@ import {
   Eye,
   Trophy,
   CheckCircle2,
+  Users,
+  Wand2,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import type { BankQuestion, ClassOption, SubjectOption, TermOption } from "./types";
+import type { BankQuestion, ClassOption, StudentOption, SubjectOption, TermOption } from "./types";
 
 export interface ExamBatchDraft {
   id: string;
@@ -49,6 +51,11 @@ export interface ExamFormData {
   isTerminal: boolean;
   questionIds: string[];
   batches: ExamBatchDraft[];
+  /** studentId -> the ExamBatchDraft.id they're sitting. Auto-distributed
+   *  evenly whenever the roster or batch list changes, and freely
+   *  overridable per student — this is what actually decides who ends up
+   *  in batch_students for which batch, not just "everyone in the class." */
+  studentAssignments: Record<string, string>;
 }
 
 interface ExamBuilderProps {
@@ -56,6 +63,7 @@ interface ExamBuilderProps {
   classes: ClassOption[];
   terms: TermOption[];
   questionBank: BankQuestion[];
+  studentsByClass: Record<string, StudentOption[]>;
   initial?: Partial<ExamFormData>;
   onSaveDraft: (data: ExamFormData) => Promise<void>;
   onPublish: (data: ExamFormData) => Promise<void>;
@@ -75,9 +83,10 @@ const DEFAULTS: ExamFormData = {
   isTerminal: false,
   questionIds: [],
   batches: [],
+  studentAssignments: {},
 };
 
-export default function ExamBuilder({ subjects, classes, terms, questionBank, initial, onSaveDraft, onPublish }: ExamBuilderProps) {
+export default function ExamBuilder({ subjects, classes, terms, questionBank, studentsByClass, initial, onSaveDraft, onPublish }: ExamBuilderProps) {
   const [form, setForm] = useState<ExamFormData>({
     ...DEFAULTS,
     subjectId: subjects[0]?.id ?? "",
@@ -141,7 +150,41 @@ export default function ExamBuilder({ subjects, classes, terms, questionBank, in
     update("batches", form.batches.map((b) => (b.startsAt ? { ...b, endsAt: addMinutes(b.startsAt, minutes) } : b)));
   };
 
-  const validate = (): string | null => {
+  const roster = studentsByClass[form.classId] ?? [];
+
+  const splitEvenly = (): Record<string, string> => {
+    const batchIds = form.batches.map((b) => b.id);
+    const next: Record<string, string> = {};
+    roster.forEach((s, i) => {
+      if (batchIds.length > 0) next[s.id] = batchIds[i % batchIds.length];
+    });
+    return next;
+  };
+
+  // Keeps every currently-enrolled student pointed at a real batch: fills
+  // in anyone new or whose assigned batch got deleted (round-robin), and
+  // drops students who left the roster (e.g. class was changed). Never
+  // touches a manual assignment that's still valid, so picking a batch
+  // for one student doesn't get overwritten by this running again.
+  useEffect(() => {
+    const batchIds = form.batches.map((b) => b.id);
+    setForm((f) => {
+      const next: Record<string, string> = {};
+      let changed = false;
+      roster.forEach((s, i) => {
+        const current = f.studentAssignments[s.id];
+        if (current && batchIds.includes(current)) {
+          next[s.id] = current;
+        } else if (batchIds.length > 0) {
+          next[s.id] = batchIds[i % batchIds.length];
+          changed = true;
+        }
+      });
+      if (Object.keys(f.studentAssignments).length !== Object.keys(next).length) changed = true;
+      return changed ? { ...f, studentAssignments: next } : f;
+    });
+  }, [form.classId, form.batches.map((b) => b.id).join(",")]); // eslint-disable-line react-hooks/exhaustive-deps
+
     if (!form.title.trim()) return "Give the exam a title.";
     if (form.questionIds.length === 0) return "Add at least one question.";
     if (form.batches.length === 0) return "Schedule at least one batch.";
@@ -313,6 +356,41 @@ export default function ExamBuilder({ subjects, classes, terms, questionBank, in
         >
           <CalendarClock size={14} /> Add batch
         </button>
+
+        {form.batches.length > 1 && roster.length > 0 && (
+          <div className="mt-5 border-t border-black/5 pt-4">
+            <div className="mb-2.5 flex items-center justify-between">
+              <p className="flex items-center gap-1.5 text-[12.5px] font-semibold text-ink/70">
+                <Users size={14} /> Who sits which batch
+              </p>
+              <button
+                onClick={() => update("studentAssignments", splitEvenly())}
+                className="flex items-center gap-1 text-[12px] font-medium text-crimson-600 hover:underline"
+              >
+                <Wand2 size={12} /> Split evenly
+              </button>
+            </div>
+            <div className="space-y-1.5">
+              {roster.map((s) => (
+                <div key={s.id} className="flex items-center justify-between gap-3 rounded-lg border border-black/5 px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-[13px] text-ink">{s.fullName}</p>
+                    {s.admissionNumber && <p className="text-[11px] text-ink/40">{s.admissionNumber}</p>}
+                  </div>
+                  <select
+                    value={form.studentAssignments[s.id] ?? ""}
+                    onChange={(e) => update("studentAssignments", { ...form.studentAssignments, [s.id]: e.target.value })}
+                    className="shrink-0 rounded-md border border-black/10 px-2 py-1.5 text-[12.5px] outline-none focus:border-crimson-500"
+                  >
+                    {form.batches.map((b) => (
+                      <option key={b.id} value={b.id}>{b.label}</option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </SectionCard>
 
       {error && <p className="mt-4 rounded-md bg-crimson-50 px-3.5 py-2.5 text-[13px] text-crimson-700">{error}</p>}
