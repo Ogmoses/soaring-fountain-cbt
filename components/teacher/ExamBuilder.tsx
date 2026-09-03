@@ -185,6 +185,7 @@ export default function ExamBuilder({ subjects, classes, terms, questionBank, st
     });
   }, [form.classId, form.batches.map((b) => b.id).join(",")]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const validate = (): string | null => {
     if (!form.title.trim()) return "Give the exam a title.";
     if (form.questionIds.length === 0) return "Add at least one question.";
     if (form.batches.length === 0) return "Schedule at least one batch.";
