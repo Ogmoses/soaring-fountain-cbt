@@ -10,6 +10,7 @@ interface NavbarProps {
   userPhotoUrl?: string | null;
   notificationCount?: number;
   onMenuClick: () => void;
+  onViewProfile: () => void;
   onLogout: () => void;
 }
 
@@ -19,6 +20,7 @@ export default function Navbar({
   userPhotoUrl,
   notificationCount = 0,
   onMenuClick,
+  onViewProfile,
   onLogout,
 }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -78,8 +80,18 @@ export default function Navbar({
                   className="absolute right-0 z-40 mt-2 w-44 overflow-hidden rounded-lg border border-black/5 bg-white shadow-card-hover"
                 >
                   <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onViewProfile();
+                    }}
+                    className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[13px] font-medium text-ink/70 transition-colors duration-200 hover:bg-background-muted"
+                  >
+                    <UserIcon size={15} />
+                    Profile
+                  </button>
+                  <button
                     onClick={onLogout}
-                    className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[13px] font-medium text-crimson-700 transition-colors duration-200 hover:bg-crimson-50"
+                    className="flex w-full items-center gap-2 border-t border-black/5 px-3.5 py-2.5 text-left text-[13px] font-medium text-crimson-700 transition-colors duration-200 hover:bg-crimson-50"
                   >
                     <LogOut size={15} />
                     Log out

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import Sidebar, { type Role } from "./Sidebar";
 import Navbar from "./Navbar";
 
@@ -22,6 +23,7 @@ export default function DashboardLayout({
   children,
 }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const router = useRouter();
 
   return (
     <div className="flex min-h-screen bg-background-muted">
@@ -33,6 +35,7 @@ export default function DashboardLayout({
           userName={userName}
           userPhotoUrl={userPhotoUrl}
           onMenuClick={() => setSidebarOpen(true)}
+          onViewProfile={() => router.push("/profile")}
           onLogout={onLogout}
         />
 
