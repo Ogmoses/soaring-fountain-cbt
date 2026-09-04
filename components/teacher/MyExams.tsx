@@ -86,9 +86,11 @@ function ExamRow({ exam, onEdit, onViewRoster, onRequestDelete }: {
         <button onClick={onEdit} className="rounded-md p-2 text-ink/50 hover:bg-background-muted" title="Edit">
           <Pencil size={15} />
         </button>
-        <button onClick={onRequestDelete} className="rounded-md p-2 text-ink/50 hover:bg-crimson-50 hover:text-crimson-600" title={exam.hasStudentActivity ? "Archive" : "Delete"}>
-          {exam.hasStudentActivity ? <Archive size={15} /> : <Trash2 size={15} />}
-        </button>
+        {exam.status !== "archived" && (
+          <button onClick={onRequestDelete} className="rounded-md p-2 text-ink/50 hover:bg-crimson-50 hover:text-crimson-600" title={exam.hasStudentActivity ? "Archive" : "Delete"}>
+            {exam.hasStudentActivity ? <Archive size={15} /> : <Trash2 size={15} />}
+          </button>
+        )}
       </div>
     </div>
   );

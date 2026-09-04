@@ -22,6 +22,7 @@ export default function EditExamPage() {
 
   const [initial, setInitial] = useState<Partial<ExamFormData> | null>(null);
   const [locked, setLocked] = useState(false);
+  const [resetBatches, setResetBatches] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadingExam, setLoadingExam] = useState(true);
 
@@ -60,8 +61,13 @@ export default function EditExamPage() {
       // ahead," which is exactly how a genuinely broken query here went
       // unnoticed before.
       const checkFailed = !!(sessionRes.error || resultRes.error || batchStudentRes.error);
-      const hasActivity = checkFailed || (sessionRes.count ?? 0) > 0 || (resultRes.count ?? 0) > 0 || (batchStudentRes.count ?? 0) > 0;
-      setLocked(hasActivity);
+      const hasActivity = (sessionRes.count ?? 0) > 0 || (resultRes.count ?? 0) > 0 || (batchStudentRes.count ?? 0) > 0;
+      const archived = exam.status === "archived";
+      // A broken safety check fails toward "can't edit this," not toward
+      // "sure, go ahead" — same reasoning as before, just no longer
+      // conflated with the archived case below.
+      setLocked(checkFailed || (hasActivity && !archived));
+      setResetBatches(!checkFailed && hasActivity && archived);
       if (checkFailed) setLoadError("Couldn't confirm whether students have already engaged with this exam, so editing is disabled to be safe. Try reloading.");
 
       setInitial({
@@ -77,13 +83,20 @@ export default function EditExamPage() {
         showResultInstantly: exam.show_result_instantly,
         isTerminal: exam.is_terminal,
         questionIds: (eqRows ?? []).map((r) => r.question_id),
-        batches: (batchRows ?? []).map((b) => ({
-          id: b.id,
-          label: b.label,
-          startsAt: b.starts_at,
-          endsAt: b.ends_at,
-          labRoom: b.lab_room ?? undefined,
-        })),
+        // Replacing exam_questions is always safe — nothing references it
+        // by foreign key — so the question set carries over normally even
+        // when the batch schedule can't. Only exam_batches is where
+        // sessions/results/batch_students actually cascade from.
+        batches:
+          !checkFailed && hasActivity && archived
+            ? []
+            : (batchRows ?? []).map((b) => ({
+                id: b.id,
+                label: b.label,
+                startsAt: b.starts_at,
+                endsAt: b.ends_at,
+                labRoom: b.lab_room ?? undefined,
+              })),
       });
       setLoadingExam(false);
     })();
@@ -110,8 +123,8 @@ export default function EditExamPage() {
       .eq("id", examId);
     if (examError) throw new Error(examError.message);
 
-    // Replacing wholesale is only reached when locked === false, i.e. we've
-    // already confirmed nothing depends on the existing rows yet.
+    // Nothing references exam_questions by foreign key, so replacing it
+    // wholesale is always safe regardless of student activity.
     await supabase.from("exam_questions").delete().eq("exam_id", examId);
     if (data.questionIds.length > 0) {
       const { error } = await supabase
@@ -120,7 +133,15 @@ export default function EditExamPage() {
       if (error) throw new Error(error.message);
     }
 
-    await supabase.from("exam_batches").delete().eq("exam_id", examId);
+    // exam_batches is different: sessions and batch_students cascade from
+    // it directly, so deleting existing rows is only safe when this page
+    // already confirmed nothing depends on them (locked === false and
+    // resetBatches === false). When resetBatches is true, the edit page
+    // loaded an empty batch list to begin with — everything in data.batches
+    // here is new, so there's nothing old to delete and this only inserts.
+    if (!resetBatches) {
+      await supabase.from("exam_batches").delete().eq("exam_id", examId);
+    }
     if (data.batches.length > 0) {
       const { data: insertedBatches, error } = await supabase
         .from("exam_batches")
@@ -165,7 +186,7 @@ export default function EditExamPage() {
           <AlertTriangle size={22} className="mx-auto text-warning" />
           <h1 className="mt-2 font-display text-[15px] font-semibold text-ink">This exam can't be edited directly</h1>
           <p className="mt-1.5 text-[13px] leading-relaxed text-ink/60">
-            Students have already been assigned to it, started it, or finished it, so changing its questions or schedule now could disrupt or lose their work. View who's involved, or archive it and build a fresh copy instead.
+            Students have already been assigned to it, started it, or finished it, so changing its questions or schedule now could disrupt or lose their work. View who's involved, or archive it from My Exams — once archived you can come back here to edit it and set up a new round.
           </p>
           <div className="mt-4 flex justify-center gap-2.5">
             <Link
@@ -177,6 +198,12 @@ export default function EditExamPage() {
           </div>
         </div>
       ) : (
+        <>
+          {resetBatches && (
+            <div className="mx-auto mb-4 max-w-2xl rounded-lg border border-black/10 bg-background-muted px-4 py-3 text-[12.5px] leading-relaxed text-ink/65">
+              This exam's earlier sittings had real students in them, so that schedule is kept exactly as it happened rather than being editable here — it stays visible in Students on My Exams. The batch list below starts empty: add a new one to set up this round, then Publish when ready.
+            </div>
+          )}
         <ExamBuilder
           subjects={subjects}
           classes={classes}
@@ -187,6 +214,7 @@ export default function EditExamPage() {
           onSaveDraft={(data) => persistExam(data, "draft")}
           onPublish={(data) => persistExam(data, "published")}
         />
+        </>
       )}
     </DashboardLayout>
   );
