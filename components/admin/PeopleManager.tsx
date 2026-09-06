@@ -41,12 +41,13 @@ export default function PeopleManager({
   const [editorState, setEditorState] = useState<"closed" | "new" | PersonRow>("closed");
   const [importOpen, setImportOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<PersonRow | null>(null);
-  const [createdCredential, setCreatedCredential] = useState<{ name: string; credential: string } | null>(null);
+  const [createdStudent, setCreatedStudent] = useState<{ name: string; studentId: string } | null>(null);
   const [invitedTeacher, setInvitedTeacher] = useState<{ name: string; email: string } | null>(null);
 
   const classNameById = (id?: string) => classOptions.find((c) => c.id === id)?.name ?? "No class";
 
   const handleResendAccess = async (person: PersonRow) => {
+    if (!person.email) return; // students have no email to resend to
     await onResendAccess(person.email);
     setInvitedTeacher({ name: person.fullName, email: person.email });
   };
@@ -62,8 +63,8 @@ export default function PeopleManager({
       await onUpdate(tab, person.id, person);
     } else {
       const result = await onCreate(tab, person);
-      if (result?.credential) setCreatedCredential({ name: person.fullName, credential: result.credential });
-      else if (result?.invited) setInvitedTeacher({ name: person.fullName, email: person.email });
+      if (tab === "student" && person.admissionNumber) setCreatedStudent({ name: person.fullName, studentId: person.admissionNumber });
+      else if (result?.invited) setInvitedTeacher({ name: person.fullName, email: person.email ?? "" });
     }
     setEditorState("closed");
   };
@@ -130,8 +131,7 @@ export default function PeopleManager({
               <div className="min-w-0 flex-1">
                 <p className={`truncate text-[13.5px] font-medium ${p.isActive ? "text-ink" : "text-ink/40"}`}>{p.fullName}</p>
                 <p className="truncate text-[12px] text-ink/50">
-                  {p.email}
-                  {p.role === "student" ? ` · ${classNameById(p.classId)} · ${p.admissionNumber}` : ` · ${p.staffId}${p.subjectNames?.length ? ` · ${p.subjectNames.join(", ")}` : ""}`}
+                  {p.role === "student" ? `${classNameById(p.classId)} · ${p.admissionNumber}` : `${p.email} · ${p.staffId}${p.subjectNames?.length ? ` · ${p.subjectNames.join(", ")}` : ""}`}
                 </p>
               </div>
               {!p.isActive && <span className="w-fit shrink-0 rounded-full bg-background-muted px-2 py-0.5 text-[11px] font-medium text-ink/50">Inactive</span>}
@@ -207,21 +207,21 @@ export default function PeopleManager({
         </div>
       )}
 
-      {createdCredential && (
+      {createdStudent && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/50 p-4">
           <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-card-hover">
             <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-crimson-50 text-crimson-700">
               <KeyRound size={18} />
             </div>
             <h2 className="font-display text-[15px] font-semibold text-ink">Account created</h2>
-            <p className="mt-1.5 text-[13px] text-ink/60">
-              Share this PIN with {createdCredential.name} — it won't be shown again.
+            <p className="mt-1.5 text-[13px] leading-relaxed text-ink/60">
+              No password to hand over — {createdStudent.name} signs in with their full name (not case-sensitive) and their student ID:
             </p>
-            <p className="mt-3 rounded-md bg-background-muted px-3 py-2.5 text-center font-mono text-[20px] font-semibold tracking-[0.3em] text-ink">
-              {createdCredential.credential}
+            <p className="mt-3 rounded-md bg-background-muted px-3 py-2.5 text-center font-mono text-[15px] font-semibold text-ink">
+              {createdStudent.studentId}
             </p>
             <button
-              onClick={() => setCreatedCredential(null)}
+              onClick={() => setCreatedStudent(null)}
               className="mt-4 w-full rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-white hover:bg-crimson-700"
             >
               Done

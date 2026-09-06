@@ -62,12 +62,14 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Waves, Eye, EyeOff, Loader2, AlertCircle, KeyRound } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { useSchoolProfile } from "@/lib/useSchoolProfile";
 
 type Stage = "checking" | "needs-fallback" | "ready";
 
 export default function RegisterPage() {
   const router = useRouter();
   const supabase = createClient();
+  const school = useSchoolProfile();
 
   const [stage, setStage] = useState<Stage>("checking");
   const [email, setEmail] = useState<string | null>(null);
@@ -275,10 +277,14 @@ export default function RegisterPage() {
     <div className="flex min-h-screen items-center justify-center bg-cream-100 px-4 font-sans">
       <div className="w-full max-w-sm rounded-lg bg-white p-7 shadow-card-hover sm:p-8">
         <div className="mb-6 flex flex-col items-center text-center">
-          <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-crimson-600 text-white">
-            <Waves size={22} strokeWidth={2.25} />
-          </div>
-          <h1 className="font-display text-[17px] font-semibold text-ink">Welcome to Soaring Fountain</h1>
+          {school.logoUrl ? (
+            <img src={school.logoUrl} alt="" className="mb-3 h-11 w-11 rounded-lg object-cover" />
+          ) : (
+            <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-crimson-600 text-white">
+              <Waves size={22} strokeWidth={2.25} />
+            </div>
+          )}
+          <h1 className="font-display text-[17px] font-semibold text-ink">Welcome to {school.name}</h1>
           <p className="mt-1 text-[12.5px] text-ink/50">Set a password for {email}</p>
         </div>
 

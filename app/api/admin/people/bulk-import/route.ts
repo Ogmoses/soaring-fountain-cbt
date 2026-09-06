@@ -1,25 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { deriveStudentPassword, studentInternalEmail } from "@/lib/studentCredential";
 
 /**
  * POST /api/admin/people/bulk-import
  * body: { role: "student" | "teacher", rows: ImportRow[] }
  *
- * One row failing (duplicate email, etc.) shouldn't sink the other 40 in
- * the file — every row gets its own try/catch, and the response reports
+ * One row failing (duplicate ID, etc.) shouldn't sink the other 40 in the
+ * file — every row gets its own try/catch, and the response reports
  * exactly which ones failed and why instead of an all-or-nothing result.
  *
- * Same split as the single-account route: students get a 4-digit PIN
- * back; teachers get an actual invite email sent per row and no
- * credential at all — importing 40 teachers means 40 invite emails going
- * out, which needs Supabase's email sending actually configured for a
- * batch that size (see the route.ts note on this).
+ * Same split as the single-account route: students log in with name +
+ * student ID alone (see lib/studentCredential.ts), so there's no
+ * credential to generate or report per row, and no email needed from the
+ * CSV at all. Teachers get an actual invite email sent per row — importing
+ * 40 teachers means 40 invite emails going out, which needs Supabase's
+ * email sending actually configured for a batch that size.
  */
-
-function generateStudentPin(): string {
-  return String(Math.floor(1000 + Math.random() * 9000));
-}
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -35,42 +33,58 @@ export async function POST(req: NextRequest) {
 
   const admin = createAdminClient();
   const redirectTo = `${req.nextUrl.origin}/register`;
-  const results: { email: string; ok: boolean; error?: string; credential?: string; invited?: boolean }[] = [];
+  // "identifier" is whichever field actually names the row in the results
+  // list — a student's own student ID (they have no email at all now), or
+  // a teacher's email (still how they're invited).
+  const results: { identifier: string; ok: boolean; error?: string; invited?: boolean }[] = [];
 
   for (const row of rows) {
+    const identifier = role === "student" ? (row.admissionNumber ?? row.fullName) : row.email;
     try {
       let authUserId: string;
-      let credential: string | undefined;
 
       if (role === "student") {
-        credential = generateStudentPin();
-        const { data: created, error: authError } = await admin.auth.admin.createUser({ email: row.email, password: credential, email_confirm: true });
+        const email = studentInternalEmail(row.admissionNumber);
+        const password = deriveStudentPassword(row.fullName, row.admissionNumber);
+        const { data: created, error: authError } = await admin.auth.admin.createUser({ email, password, email_confirm: true });
         if (authError || !created.user) throw new Error(authError?.message ?? "Couldn't create the account.");
         authUserId = created.user.id;
+
+        const { error: profileError } = await admin.from("users").insert({
+          id: authUserId,
+          role,
+          full_name: row.fullName,
+          email,
+          admission_number: row.admissionNumber || null,
+          class_id: row.classId || null,
+          is_active: true,
+        });
+        if (profileError) {
+          await admin.auth.admin.deleteUser(authUserId);
+          throw new Error(profileError.message);
+        }
       } else {
         const { data: invited, error: inviteError } = await admin.auth.admin.inviteUserByEmail(row.email, { redirectTo });
         if (inviteError || !invited.user) throw new Error(inviteError?.message ?? "Couldn't send the invite email.");
         authUserId = invited.user.id;
+
+        const { error: profileError } = await admin.from("users").insert({
+          id: authUserId,
+          role,
+          full_name: row.fullName,
+          email: row.email,
+          staff_id: row.staffId || null,
+          is_active: true,
+        });
+        if (profileError) {
+          await admin.auth.admin.deleteUser(authUserId);
+          throw new Error(profileError.message);
+        }
       }
 
-      const { error: profileError } = await admin.from("users").insert({
-        id: authUserId,
-        role,
-        full_name: row.fullName,
-        email: row.email,
-        admission_number: role === "student" ? row.admissionNumber || null : null,
-        staff_id: role === "teacher" ? row.staffId || null : null,
-        class_id: role === "student" ? row.classId || null : null,
-        is_active: true,
-      });
-      if (profileError) {
-        await admin.auth.admin.deleteUser(authUserId);
-        throw new Error(profileError.message);
-      }
-
-      results.push({ email: row.email, ok: true, credential, invited: role !== "student" });
+      results.push({ identifier, ok: true, invited: role !== "student" });
     } catch (err) {
-      results.push({ email: row.email, ok: false, error: err instanceof Error ? err.message : "Unknown error" });
+      results.push({ identifier, ok: false, error: err instanceof Error ? err.message : "Unknown error" });
     }
   }
 

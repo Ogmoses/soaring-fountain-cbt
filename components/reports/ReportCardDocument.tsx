@@ -106,7 +106,7 @@ export default function ReportCardDocument({ data }: { data: ReportCardData }) {
               <Text style={styles.infoValue}>{data.studentName}</Text>
             </View>
             <View style={styles.infoLine}>
-              <Text style={styles.infoLabel}>Admission no.</Text>
+              <Text style={styles.infoLabel}>Student ID</Text>
               <Text style={styles.infoValue}>{data.admissionNumber}</Text>
             </View>
             <View style={styles.infoLine}>

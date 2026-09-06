@@ -3,25 +3,27 @@
 import { useRouter } from "next/navigation";
 import LoginForm from "@/components/auth/LoginForm";
 import { createClient } from "@/lib/supabase/client";
+import { deriveStudentPassword } from "@/lib/studentCredential";
 
 export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  const handleStudentLogin = async (admissionNumber: string, pin: string) => {
-    // Admission numbers aren't emails, and Supabase Auth signs in by email —
+  const handleStudentLogin = async (fullName: string, studentId: string) => {
+    // Student IDs aren't emails, and Supabase Auth signs in by email —
     // resolve it server-side first (see the route for why this can't just
     // be a browser-side RLS-guarded query: there's no session yet).
     const res = await fetch("/api/auth/resolve-student-email", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ admissionNumber }),
+      body: JSON.stringify({ studentId }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error ?? "We couldn't find that admission number.");
+    if (!res.ok) throw new Error(data.error ?? "We couldn't find that student ID.");
 
-    const { error } = await supabase.auth.signInWithPassword({ email: data.email, password: pin });
-    if (error) throw new Error("Incorrect PIN. Try again.");
+    const password = deriveStudentPassword(fullName, studentId);
+    const { error } = await supabase.auth.signInWithPassword({ email: data.email, password });
+    if (error) throw new Error("Your name and student ID didn't match what's on file. Double-check both and try again.");
     router.push("/student");
   };
 

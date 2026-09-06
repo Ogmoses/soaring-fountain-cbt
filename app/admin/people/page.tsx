@@ -84,7 +84,7 @@ export default function AdminPeoplePage() {
     if (!res.ok) throw new Error(data.error ?? "Couldn't create that account.");
     if (role === "teacher") await syncTeacherSubjects(data.id, person.assignments);
     await loadAll();
-    return { credential: data.credential as string | undefined, invited: data.invited as boolean | undefined };
+    return { invited: data.invited as boolean | undefined };
   };
 
   const handleUpdate = async (role: PersonRole, id: string, person: Omit<PersonRow, "id" | "isActive" | "subjectNames">) => {
@@ -136,7 +136,7 @@ export default function AdminPeoplePage() {
       // TODO: surface which specific rows failed (data.results) in the UI
       // instead of one summary line — BulkImportModal's contract only takes
       // a thrown Error today.
-      throw new Error(`Imported ${data.successCount} of ${rows.length}. ${data.failureCount} failed — likely duplicate emails.`);
+      throw new Error(`Imported ${data.successCount} of ${rows.length}. ${data.failureCount} failed — likely a duplicate ${role === "student" ? "student ID" : "email"}.`);
     }
   };
 

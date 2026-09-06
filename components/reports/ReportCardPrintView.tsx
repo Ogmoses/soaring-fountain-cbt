@@ -67,7 +67,7 @@ export default function ReportCardPrintView({ data, pdfUrl }: ReportCardPrintVie
         <div className="mt-5 flex items-start justify-between gap-4">
           <dl className="space-y-1.5 text-[12.5px]">
             <InfoRow label="Student name" value={data.studentName} />
-            <InfoRow label="Admission no." value={data.admissionNumber} />
+            <InfoRow label="Student ID" value={data.admissionNumber} />
             <InfoRow label="Class" value={data.className} />
             <InfoRow label="Position in class" value={`${data.positionInClass} of ${data.classSize}`} />
           </dl>

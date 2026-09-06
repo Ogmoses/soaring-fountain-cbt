@@ -35,12 +35,16 @@ export default function PersonEditor({ role, initial, classOptions, subjectOptio
   const removeAssignment = (i: number) => setAssignments((prev) => prev.filter((_, idx) => idx !== i));
 
   const handleSubmit = async () => {
-    if (!fullName.trim() || !email.trim()) {
-      setError("Name and email are required.");
+    if (!fullName.trim()) {
+      setError("Name is required.");
+      return;
+    }
+    if (role !== "student" && !email.trim()) {
+      setError("Email is required.");
       return;
     }
     if (role === "student" && !admissionNumber.trim()) {
-      setError("Add an admission number.");
+      setError("Add a student ID.");
       return;
     }
     if (role === "teacher" && !staffId.trim()) {
@@ -54,7 +58,7 @@ export default function PersonEditor({ role, initial, classOptions, subjectOptio
         id: initial?.id,
         role,
         fullName: fullName.trim(),
-        email: email.trim(),
+        email: role === "student" ? undefined : email.trim(),
         admissionNumber: role === "student" ? admissionNumber.trim() : undefined,
         staffId: role === "teacher" ? staffId.trim() : undefined,
         classId: role === "student" ? classId : undefined,
@@ -81,11 +85,13 @@ export default function PersonEditor({ role, initial, classOptions, subjectOptio
 
         <div className="flex-1 space-y-3.5 overflow-y-auto px-5 py-4">
           <Field label="Full name" value={fullName} onChange={setFullName} placeholder="e.g. Chidinma Okafor" />
-          <Field label="Email" value={email} onChange={setEmail} placeholder="name@soaringfountain.edu" type="email" />
+          {role !== "student" && (
+            <Field label="Email" value={email} onChange={setEmail} placeholder="name@soaringfountain.edu" type="email" />
+          )}
 
           {role === "student" ? (
             <>
-              <Field label="Admission number" value={admissionNumber} onChange={setAdmissionNumber} placeholder="e.g. SFGS/2023/0142" />
+              <Field label="Student ID" value={admissionNumber} onChange={setAdmissionNumber} placeholder="e.g. SFGS/2023/0142" />
               <label className="block">
                 <span className="mb-1 block text-[12px] font-medium text-ink/60">Class</span>
                 <select

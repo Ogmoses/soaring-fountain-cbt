@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSchoolProfile } from "@/lib/useSchoolProfile";
 import {
   LayoutDashboard,
   Users,
@@ -77,15 +78,21 @@ function SidebarContent({ role, userName, onNavigate }: { role: Role; userName: 
     return best;
   }, null);
 
+  const school = useSchoolProfile();
+
   return (
     <div className="flex h-full flex-col bg-white">
       <div className="flex items-center gap-2.5 px-5 py-5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-crimson-600 text-cream-50">
-          <Waves size={18} strokeWidth={2.25} />
-        </div>
-        <div className="leading-tight">
-          <p className="font-display text-[13.5px] font-semibold text-ink">Soaring Fountain</p>
-          <p className="text-[11px] text-ink/50">Group of Schools</p>
+        {school.logoUrl ? (
+          <img src={school.logoUrl} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover" />
+        ) : (
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-crimson-600 text-cream-50">
+            <Waves size={18} strokeWidth={2.25} />
+          </div>
+        )}
+        <div className="min-w-0 leading-tight">
+          <p className="truncate font-display text-[13.5px] font-semibold text-ink">{school.name}</p>
+          {school.motto && <p className="truncate text-[11px] text-ink/50">{school.motto}</p>}
         </div>
       </div>
 

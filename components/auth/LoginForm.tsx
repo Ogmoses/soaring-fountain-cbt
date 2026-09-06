@@ -1,29 +1,33 @@
 "use client";
 
 /**
- * Login — Soaring Fountain Group of Schools
+ * Login
  *
- * Students authenticate with Admission Number + PIN (fast entry on shared
- * lab computers). Teachers/Admins authenticate with Email + Password via
- * Supabase Auth. Wire `onStudentLogin` / `onStaffLogin` to your auth calls —
- * this component only owns form state and validation.
+ * Students authenticate with just their full name and student ID — no
+ * separate password to remember or lose (fast entry on shared lab
+ * computers, and nothing for a young student to forget). Teachers/Admins
+ * authenticate with Email + Password via Supabase Auth. Wire
+ * `onStudentLogin` / `onStaffLogin` to your auth calls — this component
+ * only owns form state and validation.
  */
 
 import { useState, type FormEvent } from "react";
 import { motion } from "framer-motion";
 import { Waves, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
+import { useSchoolProfile } from "@/lib/useSchoolProfile";
 
 type Mode = "student" | "staff";
 
 interface LoginFormProps {
-  onStudentLogin: (admissionNumber: string, pin: string) => Promise<void>;
+  onStudentLogin: (fullName: string, studentId: string) => Promise<void>;
   onStaffLogin: (email: string, password: string) => Promise<void>;
 }
 
 export default function LoginForm({ onStudentLogin, onStaffLogin }: LoginFormProps) {
+  const school = useSchoolProfile();
   const [mode, setMode] = useState<Mode>("student");
-  const [admissionNumber, setAdmissionNumber] = useState("");
-  const [pin, setPin] = useState("");
+  const [studentName, setStudentName] = useState("");
+  const [studentId, setStudentId] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showSecret, setShowSecret] = useState(false);
@@ -36,11 +40,11 @@ export default function LoginForm({ onStudentLogin, onStaffLogin }: LoginFormPro
     setLoading(true);
     try {
       if (mode === "student") {
-        if (!admissionNumber.trim() || !pin.trim()) {
-          setError("Enter your admission number and PIN.");
+        if (!studentName.trim() || !studentId.trim()) {
+          setError("Enter your full name and student ID.");
           return;
         }
-        await onStudentLogin(admissionNumber.trim(), pin.trim());
+        await onStudentLogin(studentName.trim(), studentId.trim());
       } else {
         if (!email.trim() || !password.trim()) {
           setError("Enter your email and password.");
@@ -64,11 +68,15 @@ export default function LoginForm({ onStudentLogin, onStaffLogin }: LoginFormPro
         className="w-full max-w-sm rounded-lg bg-white p-7 shadow-card-hover sm:p-8"
       >
         <div className="mb-6 flex flex-col items-center text-center">
-          <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-crimson-600 text-white">
-            <Waves size={22} strokeWidth={2.25} />
-          </div>
-          <h1 className="font-display text-[17px] font-semibold text-ink">Soaring Fountain</h1>
-          <p className="text-[12.5px] text-ink/50">Group of Schools — CBT Portal</p>
+          {school.logoUrl ? (
+            <img src={school.logoUrl} alt="" className="mb-3 h-11 w-11 rounded-lg object-cover" />
+          ) : (
+            <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-crimson-600 text-white">
+              <Waves size={22} strokeWidth={2.25} />
+            </div>
+          )}
+          <h1 className="font-display text-[17px] font-semibold text-ink">{school.name}</h1>
+          <p className="text-[12.5px] text-ink/50">{school.motto ? school.motto : "CBT Portal"}</p>
         </div>
 
         {/* Mode toggle */}
@@ -93,26 +101,8 @@ export default function LoginForm({ onStudentLogin, onStaffLogin }: LoginFormPro
         <form onSubmit={handleSubmit} className="space-y-3.5">
           {mode === "student" ? (
             <>
-              <Field
-                label="Admission number"
-                value={admissionNumber}
-                onChange={setAdmissionNumber}
-                placeholder="e.g. SFGS/2023/0142"
-                autoFocus
-              />
-              <Field
-                label="PIN"
-                value={pin}
-                onChange={setPin}
-                placeholder="4–6 digit PIN"
-                type={showSecret ? "text" : "password"}
-                inputMode="numeric"
-                trailingIcon={
-                  <button type="button" onClick={() => setShowSecret((v) => !v)} className="text-ink/40 hover:text-ink/60">
-                    {showSecret ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                }
-              />
+              <Field label="Full name" value={studentName} onChange={setStudentName} placeholder="As it appears on your class list" autoFocus />
+              <Field label="Student ID" value={studentId} onChange={setStudentId} placeholder="e.g. SFGS/2023/0142" />
             </>
           ) : (
             <>
@@ -151,7 +141,7 @@ export default function LoginForm({ onStudentLogin, onStaffLogin }: LoginFormPro
 
         {mode === "student" && (
           <p className="mt-4 text-center text-[11.5px] text-ink/45">
-            Forgotten your PIN? Ask your class teacher to reset it.
+            Not sure of your student ID? Ask your class teacher.
           </p>
         )}
       </motion.div>

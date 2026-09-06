@@ -41,11 +41,21 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!authUser) return;
     (async () => {
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("users")
-        .select("email, admission_number, classes(name)")
+        .select("email, admission_number, class_id")
         .eq("id", authUser.id)
         .single();
+      if (profileError) {
+        setLoading(false);
+        return;
+      }
+
+      let className: string | null = null;
+      if (profile?.class_id) {
+        const { data: classRow } = await supabase.from("classes").select("name").eq("id", profile.class_id).single();
+        className = classRow?.name ?? null;
+      }
 
       let assignments: { subjectName: string; className: string }[] = [];
       if (authUser.role === "teacher") {
@@ -57,9 +67,9 @@ export default function ProfilePage() {
       }
 
       setDetails({
-        email: (profile as any)?.email ?? null,
-        admissionNumber: (profile as any)?.admission_number ?? null,
-        className: (profile as any)?.classes?.name ?? null,
+        email: profile?.email ?? null,
+        admissionNumber: profile?.admission_number ?? null,
+        className,
         assignments,
       });
       setLoading(false);
@@ -95,22 +105,26 @@ export default function ProfilePage() {
 
             {authUser.role === "student" && (
               <>
-                <ProfileRow icon={Hash} label="Admission number" value={details?.admissionNumber ?? "—"} />
+                <ProfileRow icon={Hash} label="Student ID" value={details?.admissionNumber ?? "—"} />
                 <ProfileRow icon={GraduationCap} label="Class" value={details?.className ?? "—"} />
               </>
             )}
 
             {authUser.role === "teacher" && (
               <div className="px-4 py-3.5">
-                <p className="mb-2 flex items-center gap-2 text-[12px] font-medium text-ink/50">
+                <p className="mb-2.5 flex items-center gap-2 text-[12px] font-medium text-ink/50">
                   <BookOpen size={14} /> Subjects &amp; classes
                 </p>
                 {details && details.assignments.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="overflow-hidden rounded-lg border border-black/5">
                     {details.assignments.map((a, i) => (
-                      <span key={i} className="rounded-full bg-background-muted px-2.5 py-1 text-[12px] text-ink/70">
-                        {a.subjectName} · {a.className}
-                      </span>
+                      <div
+                        key={i}
+                        className={`flex items-center justify-between px-3.5 py-2.5 text-[13px] ${i > 0 ? "border-t border-black/5" : ""}`}
+                      >
+                        <span className="text-ink">{a.subjectName}</span>
+                        <span className="rounded-full bg-background-muted px-2.5 py-1 text-[11.5px] font-medium text-ink/60">{a.className}</span>
+                      </div>
                     ))}
                   </div>
                 ) : (

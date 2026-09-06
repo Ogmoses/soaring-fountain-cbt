@@ -5,7 +5,7 @@
  * validation before anything is written, then import only the valid rows.
  *
  * Expected columns (header row, any order):
- *   students → full_name, email, admission_number, class
+ *   students → full_name, student_id, class   (admission_number also accepted; no email needed — students log in with name + student ID)
  *   teachers → full_name, email, staff_id, subjects   (subjects: "Math;English")
  */
 
@@ -16,7 +16,7 @@ import type { PersonRole } from "./types";
 
 export interface ImportRow {
   fullName: string;
-  email: string;
+  email?: string;
   admissionNumber?: string;
   staffId?: string;
   classId?: string;
@@ -49,17 +49,17 @@ export default function BulkImportModal({ role, classOptions, subjectOptions, on
     const fullName = raw["full_name"] ?? raw["name"] ?? "";
     const email = raw["email"] ?? "";
     if (!fullName.trim()) return { raw, data: null, error: "Missing full_name" };
-    if (!email.trim() || !email.includes("@")) return { raw, data: null, error: "Missing or invalid email" };
 
     if (role === "student") {
-      const admissionNumber = raw["admission_number"] ?? raw["admission number"] ?? "";
+      const admissionNumber = raw["student_id"] ?? raw["student id"] ?? raw["admission_number"] ?? raw["admission number"] ?? "";
       const className = raw["class"] ?? "";
-      if (!admissionNumber.trim()) return { raw, data: null, error: "Missing admission_number" };
+      if (!admissionNumber.trim()) return { raw, data: null, error: "Missing student_id" };
       const matchedClass = classOptions.find((c) => c.name.toLowerCase() === className.trim().toLowerCase());
       if (!matchedClass) return { raw, data: null, error: `Unrecognized class "${className}"` };
-      return { raw, data: { fullName, email, admissionNumber, classId: matchedClass.id }, error: null };
+      return { raw, data: { fullName, admissionNumber, classId: matchedClass.id }, error: null };
     }
 
+    if (!email.trim() || !email.includes("@")) return { raw, data: null, error: "Missing or invalid email" };
     const staffId = raw["staff_id"] ?? raw["staff id"] ?? "";
     if (!staffId.trim()) return { raw, data: null, error: "Missing staff_id" };
     const subjectNames = (raw["subjects"] ?? "")
@@ -87,7 +87,7 @@ export default function BulkImportModal({ role, classOptions, subjectOptions, on
   };
 
   const downloadTemplate = () => {
-    const header = role === "student" ? "full_name,email,admission_number,class" : "full_name,email,staff_id,subjects";
+    const header = role === "student" ? "full_name,student_id,class" : "full_name,email,staff_id,subjects";
     const example =
       role === "student"
         ? "Chidinma Okafor,chidinma@example.com,SFGS/2024/0201,JSS1"
@@ -128,7 +128,7 @@ export default function BulkImportModal({ role, classOptions, subjectOptions, on
           {!parsed ? (
             <div className="space-y-3.5">
               <p className="text-[13px] text-ink/60">
-                Upload a CSV with columns {role === "student" ? "full_name, email, admission_number, class" : "full_name, email, staff_id, subjects"}.
+                Upload a CSV with columns {role === "student" ? "full_name, student_id, class" : "full_name, email, staff_id, subjects"}.
               </p>
               <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed border-black/15 px-4 py-8 text-center hover:border-black/25">
                 <Upload size={22} className="text-ink/35" />

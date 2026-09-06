@@ -325,10 +325,12 @@ create policy staff_read_batch_templates on batch_templates
 create policy admin_write_batch_templates on batch_templates
   for all using (current_role_is('super_admin'));
 
--- anyone signed in can read the letterhead (report cards, branding); only
--- an admin can change it.
+-- Name/motto/logo show on the login and register pages too, not just
+-- once someone's already signed in — a school's own branding isn't
+-- sensitive the way any of the real school-records tables are, so this
+-- is deliberately public rather than gated on auth.uid().
 create policy anyone_read_school_profile on school_profile
-  for select using (auth.uid() is not null);
+  for select using (true);
 create policy admin_write_school_profile on school_profile
   for update using (current_role_is('super_admin'));
 

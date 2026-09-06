@@ -11,7 +11,7 @@ export interface PersonRow {
   id: string;
   role: PersonRole;
   fullName: string;
-  email: string;
+  email?: string;
   admissionNumber?: string; // students
   staffId?: string; // teachers
   classId?: string; // students: current class (FK -> classes.id)
