@@ -70,7 +70,10 @@ export default function ExamLaunchpad({ studentName, availableExams, upcomingBat
     return () => clearInterval(t);
   }, []);
 
-  const firstName = studentName.split(" ")[0];
+  // Names are entered surname-first per the school's convention (e.g. "OG
+  // Moses" — surname "OG", given name "Moses"), so the one to greet with
+  // is the last word, not the first.
+  const firstName = studentName.trim().split(/\s+/).pop() ?? studentName;
 
   return (
     <div className="space-y-8 pb-10">

@@ -8,6 +8,7 @@
 import { useState } from "react";
 import { X, Loader2, Plus, Trash2 } from "lucide-react";
 import type { PersonRole, PersonRow, TeacherAssignment } from "./types";
+import { useSchoolProfile, schoolAcronym, schoolSlug } from "@/lib/useSchoolProfile";
 
 interface PersonEditorProps {
   role: PersonRole;
@@ -19,6 +20,7 @@ interface PersonEditorProps {
 }
 
 export default function PersonEditor({ role, initial, classOptions, subjectOptions, onSave, onCancel }: PersonEditorProps) {
+  const school = useSchoolProfile();
   const [fullName, setFullName] = useState(initial?.fullName ?? "");
   const [email, setEmail] = useState(initial?.email ?? "");
   const [admissionNumber, setAdmissionNumber] = useState(initial?.admissionNumber ?? "");
@@ -86,12 +88,12 @@ export default function PersonEditor({ role, initial, classOptions, subjectOptio
         <div className="flex-1 space-y-3.5 overflow-y-auto px-5 py-4">
           <Field label="Full name" value={fullName} onChange={setFullName} placeholder="e.g. Chidinma Okafor" />
           {role !== "student" && (
-            <Field label="Email" value={email} onChange={setEmail} placeholder="name@soaringfountain.edu" type="email" />
+            <Field label="Email" value={email} onChange={setEmail} placeholder={`name@${schoolSlug(school.name)}.edu`} type="email" />
           )}
 
           {role === "student" ? (
             <>
-              <Field label="Student ID" value={admissionNumber} onChange={setAdmissionNumber} placeholder="e.g. SFGS/2023/0142" />
+              <Field label="Student ID" value={admissionNumber} onChange={setAdmissionNumber} placeholder={`e.g. ${schoolAcronym(school.name)}/${new Date().getFullYear()}/0142`} />
               <label className="block">
                 <span className="mb-1 block text-[12px] font-medium text-ink/60">Class</span>
                 <select
@@ -107,7 +109,7 @@ export default function PersonEditor({ role, initial, classOptions, subjectOptio
             </>
           ) : (
             <>
-              <Field label="Staff ID" value={staffId} onChange={setStaffId} placeholder="e.g. SFGS-T-014" />
+              <Field label="Staff ID" value={staffId} onChange={setStaffId} placeholder={`e.g. ${schoolAcronym(school.name)}-T-014`} />
               <div>
                 <span className="mb-1.5 block text-[12px] font-medium text-ink/60">Teaches — subject &amp; class</span>
                 <div className="space-y-2">

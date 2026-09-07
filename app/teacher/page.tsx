@@ -90,7 +90,7 @@ export default function TeacherOverviewPage() {
         <PageLoading />
       ) : (
         <div className="pb-10">
-          <h1 className="font-display text-[18px] font-semibold text-ink sm:text-[20px]">Welcome back{authUser?.fullName ? `, ${authUser.fullName.split(" ")[0]}` : ""}</h1>
+          <h1 className="font-display text-[18px] font-semibold text-ink sm:text-[20px]">Welcome back{authUser?.fullName ? `, ${authUser.fullName.trim().split(/\s+/).pop()}` : ""}</h1>
           <p className="mt-0.5 text-[13px] text-ink/50">{new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</p>
 
           <div className="mt-5 grid grid-cols-3 gap-3">

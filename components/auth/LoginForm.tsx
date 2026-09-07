@@ -14,7 +14,7 @@
 import { useState, type FormEvent } from "react";
 import { motion } from "framer-motion";
 import { Waves, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
-import { useSchoolProfile } from "@/lib/useSchoolProfile";
+import { useSchoolProfile, schoolAcronym, schoolSlug } from "@/lib/useSchoolProfile";
 
 type Mode = "student" | "staff";
 
@@ -101,12 +101,12 @@ export default function LoginForm({ onStudentLogin, onStaffLogin }: LoginFormPro
         <form onSubmit={handleSubmit} className="space-y-3.5">
           {mode === "student" ? (
             <>
-              <Field label="Full name" value={studentName} onChange={setStudentName} placeholder="As it appears on your class list" autoFocus />
-              <Field label="Student ID" value={studentId} onChange={setStudentId} placeholder="e.g. SFGS/2023/0142" />
+              <Field label="Full name" value={studentName} onChange={setStudentName} placeholder="e.g. Chidinma Okafor" autoFocus />
+              <Field label="Student ID" value={studentId} onChange={setStudentId} placeholder={`e.g. ${schoolAcronym(school.name)}/${new Date().getFullYear()}/0142`} />
             </>
           ) : (
             <>
-              <Field label="Email" value={email} onChange={setEmail} placeholder="you@soaringfountain.edu" type="email" autoFocus />
+              <Field label="Email" value={email} onChange={setEmail} placeholder={`you@${schoolSlug(school.name)}.edu`} type="email" autoFocus />
               <Field
                 label="Password"
                 value={password}

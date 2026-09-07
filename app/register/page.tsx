@@ -62,7 +62,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Waves, Eye, EyeOff, Loader2, AlertCircle, KeyRound } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { useSchoolProfile } from "@/lib/useSchoolProfile";
+import { useSchoolProfile, schoolSlug } from "@/lib/useSchoolProfile";
 
 type Stage = "checking" | "needs-fallback" | "ready";
 
@@ -230,7 +230,7 @@ export default function RegisterPage() {
                 type="email"
                 value={fallbackEmail}
                 onChange={(e) => setFallbackEmail(e.target.value)}
-                placeholder="you@soaringfountain.edu"
+                placeholder={`you@${schoolSlug(school.name)}.edu`}
                 autoFocus
                 className="w-full rounded-lg border border-black/10 px-3.5 py-2.5 text-[13.5px] outline-none focus:border-crimson-500"
               />

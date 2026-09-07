@@ -101,7 +101,7 @@ export default function ProfilePage() {
           </div>
 
           <div className="mt-5 divide-y divide-black/5 rounded-lg border border-black/5 bg-white shadow-card">
-            {details?.email && <ProfileRow icon={Mail} label="Email" value={details.email} />}
+            {authUser.role !== "student" && details?.email && <ProfileRow icon={Mail} label="Email" value={details.email} />}
 
             {authUser.role === "student" && (
               <>

@@ -91,7 +91,7 @@ function SidebarContent({ role, userName, onNavigate }: { role: Role; userName: 
           </div>
         )}
         <div className="min-w-0 leading-tight">
-          <p className="truncate font-display text-[13.5px] font-semibold text-ink">{school.name}</p>
+          <p className="font-display text-[13.5px] font-semibold leading-snug text-ink">{school.name}</p>
           {school.motto && <p className="truncate text-[11px] text-ink/50">{school.motto}</p>}
         </div>
       </div>

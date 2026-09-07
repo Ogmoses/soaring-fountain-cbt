@@ -13,6 +13,7 @@ import { useMemo, useState } from "react";
 import { Upload, Download, CheckCircle2, XCircle, Loader2, X } from "lucide-react";
 import { parseCSVToObjects } from "./csv";
 import type { PersonRole } from "./types";
+import { useSchoolProfile, schoolAcronym } from "@/lib/useSchoolProfile";
 
 export interface ImportRow {
   fullName: string;
@@ -38,6 +39,7 @@ interface BulkImportModalProps {
 }
 
 export default function BulkImportModal({ role, classOptions, subjectOptions, onImport, onClose }: BulkImportModalProps) {
+  const school = useSchoolProfile();
   const [parsed, setParsed] = useState<ParsedRow[] | null>(null);
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -90,8 +92,8 @@ export default function BulkImportModal({ role, classOptions, subjectOptions, on
     const header = role === "student" ? "full_name,student_id,class" : "full_name,email,staff_id,subjects";
     const example =
       role === "student"
-        ? "Chidinma Okafor,chidinma@example.com,SFGS/2024/0201,JSS1"
-        : "Mrs. Adeyemi,adeyemi@example.com,SFGS-T-014,Mathematics;Further Mathematics";
+        ? `Chidinma Okafor,${schoolAcronym(school.name)}/${new Date().getFullYear()}/0201,JSS1`
+        : `Mrs. Adeyemi,adeyemi@example.com,${schoolAcronym(school.name)}-T-014,Mathematics;Further Mathematics`;
     const blob = new Blob([`${header}\n${example}\n`], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
