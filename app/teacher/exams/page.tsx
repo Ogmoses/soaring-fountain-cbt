@@ -142,6 +142,7 @@ export default function MyExamsPage() {
             classes={classes}
             onNew={() => router.push("/teacher/exams/new")}
             onEdit={(id) => router.push(`/teacher/exams/${id}/edit`)}
+            onReuse={(id) => router.push(`/teacher/exams/new?duplicateFrom=${id}`)}
             onViewRoster={handleViewRoster}
             onDelete={handleDelete}
             onArchive={handleArchive}

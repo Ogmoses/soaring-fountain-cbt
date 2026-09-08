@@ -18,7 +18,7 @@
  */
 
 import { useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Archive, Users, Loader2, FileEdit, CalendarClock, CheckCircle2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Archive, Users, Loader2, FileEdit, CalendarClock, CheckCircle2, Copy } from "lucide-react";
 import type { ClassOption } from "./types";
 
 export type ExamListStatus = "draft" | "published" | "archived";
@@ -45,14 +45,16 @@ interface MyExamsProps {
   classes: ClassOption[];
   onNew: () => void;
   onEdit: (examId: string) => void;
+  onReuse: (examId: string) => void;
   onViewRoster: (examId: string) => void;
   onDelete: (examId: string) => Promise<void>;
   onArchive: (examId: string) => Promise<void>;
 }
 
-function ExamRow({ exam, onEdit, onViewRoster, onRequestDelete }: {
+function ExamRow({ exam, onEdit, onReuse, onViewRoster, onRequestDelete }: {
   exam: ExamListItem;
   onEdit: () => void;
+  onReuse: () => void;
   onViewRoster: () => void;
   onRequestDelete: () => void;
 }) {
@@ -83,9 +85,15 @@ function ExamRow({ exam, onEdit, onViewRoster, onRequestDelete }: {
             <Users size={14} /> Students
           </button>
         )}
-        <button onClick={onEdit} className="rounded-md p-2 text-ink/50 hover:bg-background-muted" title="Edit">
-          <Pencil size={15} />
-        </button>
+        {exam.hasStudentActivity ? (
+          <button onClick={onReuse} className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[12px] font-medium text-ink/60 hover:bg-background-muted" title="Duplicate into a new exam">
+            <Copy size={14} /> Reuse
+          </button>
+        ) : (
+          <button onClick={onEdit} className="rounded-md p-2 text-ink/50 hover:bg-background-muted" title="Edit">
+            <Pencil size={15} />
+          </button>
+        )}
         {exam.status !== "archived" && (
           <button onClick={onRequestDelete} className="rounded-md p-2 text-ink/50 hover:bg-crimson-50 hover:text-crimson-600" title={exam.hasStudentActivity ? "Archive" : "Delete"}>
             {exam.hasStudentActivity ? <Archive size={15} /> : <Trash2 size={15} />}
@@ -102,6 +110,7 @@ function Section({ title, icon: Icon, exams, emptyHint, ...rowProps }: {
   exams: ExamListItem[];
   emptyHint: string;
   onEdit: (id: string) => void;
+  onReuse: (id: string) => void;
   onViewRoster: (id: string) => void;
   onRequestDelete: (exam: ExamListItem) => void;
 }) {
@@ -117,6 +126,7 @@ function Section({ title, icon: Icon, exams, emptyHint, ...rowProps }: {
             key={exam.id}
             exam={exam}
             onEdit={() => rowProps.onEdit(exam.id)}
+            onReuse={() => rowProps.onReuse(exam.id)}
             onViewRoster={() => rowProps.onViewRoster(exam.id)}
             onRequestDelete={() => rowProps.onRequestDelete(exam)}
           />
@@ -127,7 +137,7 @@ function Section({ title, icon: Icon, exams, emptyHint, ...rowProps }: {
   );
 }
 
-export default function MyExams({ exams, classes, onNew, onEdit, onViewRoster, onDelete, onArchive }: MyExamsProps) {
+export default function MyExams({ exams, classes, onNew, onEdit, onReuse, onViewRoster, onDelete, onArchive }: MyExamsProps) {
   const [classFilter, setClassFilter] = useState<string>("all");
   const [confirmTarget, setConfirmTarget] = useState<ExamListItem | null>(null);
   const [busy, setBusy] = useState(false);
@@ -158,7 +168,7 @@ export default function MyExams({ exams, classes, onNew, onEdit, onViewRoster, o
     }
   };
 
-  const rowProps = { onEdit, onViewRoster, onRequestDelete: setConfirmTarget };
+  const rowProps = { onEdit, onReuse, onViewRoster, onRequestDelete: setConfirmTarget };
 
   return (
     <div className="pb-10">

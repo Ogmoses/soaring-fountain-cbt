@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import ExamBuilder, { type ExamFormData } from "@/components/teacher/ExamBuilder";
@@ -14,6 +15,43 @@ export default function NewExamPage() {
   const authUser = useAuthUser();
   const supabase = createClient();
   const { subjects, classes, terms, questionBank, studentsByClass, loading } = useTeacherExamFormData(authUser?.id);
+
+  // "Reuse" on an exam with real activity duplicates it into a fresh one
+  // here rather than editing in place — everything about the exam
+  // carries over (title, settings, questions) except the schedule, since
+  // a duplicate is inherently a new round that needs its own batch(es).
+  const [duplicateInitial, setDuplicateInitial] = useState<Partial<ExamFormData> | undefined>(undefined);
+  const [loadingDuplicate, setLoadingDuplicate] = useState(false);
+
+  useEffect(() => {
+    const duplicateFromId = new URLSearchParams(window.location.search).get("duplicateFrom");
+    if (!duplicateFromId) return;
+    setLoadingDuplicate(true);
+    (async () => {
+      const [{ data: exam }, { data: eqRows }] = await Promise.all([
+        supabase.from("exams").select("*").eq("id", duplicateFromId).single(),
+        supabase.from("exam_questions").select("question_id, order_index").eq("exam_id", duplicateFromId).order("order_index"),
+      ]);
+      if (exam) {
+        setDuplicateInitial({
+          title: `${exam.title} (Copy)`,
+          subjectId: exam.subject_id,
+          classId: exam.class_id,
+          termId: exam.term_id,
+          durationMinutes: exam.duration_minutes,
+          passMark: exam.pass_mark,
+          weightPercent: exam.weight_percent,
+          shuffleQuestions: exam.shuffle_questions,
+          shuffleOptions: exam.shuffle_options,
+          showResultInstantly: exam.show_result_instantly,
+          isTerminal: exam.is_terminal,
+          questionIds: (eqRows ?? []).map((r) => r.question_id),
+          batches: [],
+        });
+      }
+      setLoadingDuplicate(false);
+    })();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const persistExam = async (data: ExamFormData, status: "draft" | "published") => {
     if (!authUser) return;
@@ -82,13 +120,14 @@ export default function NewExamPage() {
 
   return (
     <DashboardLayout role="teacher" pageTitle="New exam" userName={authUser?.fullName ?? ""} onLogout={() => signOutAndRedirect(router)}>
-      {loading ? <PageLoading /> : (
+      {loading || loadingDuplicate ? <PageLoading /> : (
         <ExamBuilder
           subjects={subjects}
           classes={classes}
           terms={terms}
           questionBank={questionBank}
           studentsByClass={studentsByClass}
+          initial={duplicateInitial}
           onSaveDraft={(data) => persistExam(data, "draft")}
           onPublish={(data) => persistExam(data, "published")}
         />
