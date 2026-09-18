@@ -13,12 +13,30 @@
  * fixes the mail-scanner "invalid or expired" problem.
  */
 
-import { useState, type FormEvent } from "react";
+import { Suspense, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Waves, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useSchoolProfile } from "@/lib/useSchoolProfile";
 
+// Same reason as /set-password: useSearchParams() on a statically-rendered
+// page needs a Suspense boundary or `npm run build` fails.
 export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <ResetPasswordInner />
+    </Suspense>
+  );
+}
+
+function PageLoading() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-cream-100">
+      <Loader2 size={20} className="animate-spin text-crimson-600" />
+    </div>
+  );
+}
+
+function ResetPasswordInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const school = useSchoolProfile();

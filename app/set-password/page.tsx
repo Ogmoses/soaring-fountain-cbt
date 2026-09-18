@@ -13,12 +13,33 @@
  * to consume.
  */
 
-import { useState, type FormEvent } from "react";
+import { Suspense, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Waves, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useSchoolProfile } from "@/lib/useSchoolProfile";
 
+// Next.js requires useSearchParams() to sit inside a Suspense boundary on a
+// statically-rendered page, or the production build fails outright (not
+// just a lint warning — `npm run build` exits non-zero). The actual page
+// content lives in SetPasswordInner below; this default export just
+// supplies the boundary Next.js requires around it.
 export default function SetPasswordPage() {
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <SetPasswordInner />
+    </Suspense>
+  );
+}
+
+function PageLoading() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-cream-100">
+      <Loader2 size={20} className="animate-spin text-crimson-600" />
+    </div>
+  );
+}
+
+function SetPasswordInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const school = useSchoolProfile();
