@@ -312,3 +312,34 @@ itself comes back invalid. **Requires a one-time dashboard change this
 code can't make itself**: Supabase → Authentication → Email Templates →
 add `{{ .Token }}` to both the "Invite user" and "Reset Password"
 templates, or there's no code for the fallback form to check against.
+
+## Pass 5: replaced the invite/reset flow entirely with custom tokens
+
+The scanner-eats-the-token problem above was worked around, not fixed —
+it still relied on Supabase Auth's invite/recovery links, which are
+consumed the instant they're *opened*, scanner or not. Replaced that whole
+mechanism:
+
+- New `access_tokens` table (`database/migrations/002_access_tokens.sql`)
+  stores a hashed, single-use token per purpose (`invite` / `reset`) with
+  its own expiry. See `lib/accessTokens.ts`.
+- The token is only ever consumed when a password is actually submitted
+  (`app/api/auth/set-password`, `app/api/auth/reset-password`) — never on
+  page load. Opening the link does nothing, so a scanner opening it first
+  no longer matters at all. No dashboard email-template change needed
+  anymore, and the old manual code-entry fallback is gone since there's
+  nothing left for it to work around.
+- Teacher accounts are created directly (`admin.auth.admin.createUser`
+  with a random, never-shared password) instead of via
+  `inviteUserByEmail`; the real invite email is sent by us, via SMTP
+  (`lib/mailer.ts`, provider-agnostic — configured for SendGrid via
+  `SMTP_*` env vars, see `.env.example`), using our own branded template
+  (`lib/emailTemplates.ts`).
+- `resetPasswordForEmail` in `resend-access` is replaced the same way —
+  issues a fresh `reset`-purpose token and emails it directly.
+- `/register` (with its race-condition/stale-listener/fallback-tab fixes
+  from earlier passes) is removed entirely, replaced by two simpler,
+  purpose-specific pages: `/set-password` (new teacher) and
+  `/reset-password` (existing teacher, admin-triggered). Neither needs any
+  of the `onAuthStateChange` / hash-fragment handling `/register` needed,
+  because there's no Supabase Auth session-from-URL step left to race.

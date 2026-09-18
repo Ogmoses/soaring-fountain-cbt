@@ -1,19 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { issueAccessToken } from "@/lib/accessTokens";
+import { sendMail } from "@/lib/mailer";
+import { resetEmailHtml } from "@/lib/emailTemplates";
+import { getSchoolNameServer } from "@/lib/schoolProfileServer";
 
 /**
  * POST /api/admin/people/resend-access
  * body: { email: string }
  *
- * For an account that already exists (password forgotten, invite email
- * never arrived, or — like this one — the person genuinely doesn't
- * remember what they set). `inviteUserByEmail` only works for brand-new,
- * unconfirmed users; this uses `resetPasswordForEmail` instead, which
- * works regardless of whether the account already has a password, and
- * sends a real email through the same Supabase mailer. Lands on the same
- * /register page as a first-time invite — it just calls
- * `auth.updateUser({ password })` either way, so one page handles both.
+ * For a teacher account that already exists — invite never arrived,
+ * password forgotten, or the admin just wants to force a reset. Issues a
+ * fresh "reset" access token (see lib/accessTokens.ts) and emails a link to
+ * /reset-password. Any previous unused reset token for this account is
+ * invalidated as part of issuing the new one, so only the latest email's
+ * link is ever live.
  */
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -26,9 +28,23 @@ export async function POST(req: NextRequest) {
   if (!email?.trim()) return NextResponse.json({ error: "email is required." }, { status: 400 });
 
   const admin = createAdminClient();
-  const redirectTo = `${req.nextUrl.origin}/register`;
-  const { error } = await admin.auth.resetPasswordForEmail(email, { redirectTo });
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const { data: user, error: lookupError } = await admin.from("users").select("id, full_name").eq("email", email.trim()).single();
+  if (lookupError || !user) {
+    return NextResponse.json({ error: "No account found with that email." }, { status: 404 });
+  }
+
+  try {
+    const { token, expiresInHours } = await issueAccessToken(admin, { userId: user.id, purpose: "reset" });
+    const schoolName = await getSchoolNameServer(admin);
+    const link = `${req.nextUrl.origin}/reset-password?token=${token}`;
+    await sendMail({
+      to: email.trim(),
+      subject: `Reset your password — ${schoolName}`,
+      html: resetEmailHtml({ schoolName, fullName: user.full_name, link, expiresInHours }),
+    });
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Couldn't send the email." }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true });
 }

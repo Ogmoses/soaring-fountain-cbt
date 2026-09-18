@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { deriveStudentPassword, studentInternalEmail } from "@/lib/studentCredential";
+import { issueAccessToken } from "@/lib/accessTokens";
+import { sendMail } from "@/lib/mailer";
+import { inviteEmailHtml } from "@/lib/emailTemplates";
+import { getSchoolNameServer } from "@/lib/schoolProfileServer";
 
 /**
  * Admin-only account management for students and teachers.
@@ -11,13 +16,14 @@ import { deriveStudentPassword, studentInternalEmail } from "@/lib/studentCreden
  *            generate or share, so the email a student account uses is
  *            just internal plumbing for Supabase Auth, synthesized from
  *            their student ID rather than collected from the admin.
- *            Teachers: no password is set here at all. Supabase sends a
- *            real invite email; the teacher clicks it, lands on /register,
- *            and sets their own password. Requires Supabase's email
- *            sending to actually be configured — the built-in sender
- *            works for testing but is rate-limited; a school-scale rollout
- *            wants real SMTP configured (Supabase dashboard → Auth →
- *            Emails), or invites will bounce or land in spam.
+ *            Teachers: the auth user is created directly with a random,
+ *            never-shared password (locking the account, not handing it
+ *            out), then a custom access token (see lib/accessTokens.ts) is
+ *            emailed via our own SMTP — not Supabase's invite email — so
+ *            the teacher sets their own real password at /set-password.
+ *            This sidesteps Supabase Auth's invite links, which get
+ *            silently consumed by school mail-scanners before the teacher
+ *            ever clicks them.
  *   PATCH  — update profile fields, or toggle is_active.
  *   DELETE — deletes the Supabase Auth user, which cascades to their
  *            `users` row (see `users.id references auth.users(id) on delete
@@ -61,13 +67,17 @@ export async function POST(req: NextRequest) {
     }
     authUserId = created.user.id;
   } else {
-    // Teacher (or another admin): invite by email, no password set here.
-    const redirectTo = `${req.nextUrl.origin}/register`;
-    const { data: invited, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, { redirectTo });
-    if (inviteError || !invited.user) {
-      return NextResponse.json({ error: inviteError?.message ?? "Couldn't send the invite email." }, { status: 500 });
+    // Teacher (or another admin): create the auth user directly with a
+    // random password nobody is ever shown — it's immediately unusable,
+    // just a placeholder Supabase Auth requires. The teacher's real
+    // password gets set at /set-password, once we successfully email them
+    // a token below.
+    const lockedPassword = crypto.randomBytes(24).toString("base64url");
+    const { data: created, error: authError } = await admin.auth.admin.createUser({ email, password: lockedPassword, email_confirm: true });
+    if (authError || !created.user) {
+      return NextResponse.json({ error: authError?.message ?? "Couldn't create the account." }, { status: 500 });
     }
-    authUserId = invited.user.id;
+    authUserId = created.user.id;
   }
 
   const { error: profileError } = await admin.from("users").insert({
@@ -86,7 +96,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: profileError.message }, { status: 500 });
   }
 
-  return NextResponse.json({ id: authUserId, invited: role !== "student" });
+  if (role === "student") {
+    return NextResponse.json({ id: authUserId, invited: false });
+  }
+
+  // Teacher: send the invite email now. If this fails, roll back the whole
+  // account rather than leaving an admin thinking an invite went out when
+  // it didn't — a retry from scratch is simpler than a half-created
+  // account with no way in.
+  try {
+    const { token, expiresInHours } = await issueAccessToken(admin, { userId: authUserId, purpose: "invite" });
+    const schoolName = await getSchoolNameServer(admin);
+    const link = `${req.nextUrl.origin}/set-password?token=${token}`;
+    await sendMail({
+      to: email,
+      subject: `Set up your account at ${schoolName}`,
+      html: inviteEmailHtml({ schoolName, fullName, link, expiresInHours }),
+    });
+  } catch (err) {
+    await admin.auth.admin.deleteUser(authUserId);
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Couldn't send the invite email." }, { status: 500 });
+  }
+
+  return NextResponse.json({ id: authUserId, invited: true });
 }
 
 export async function PATCH(req: NextRequest) {
