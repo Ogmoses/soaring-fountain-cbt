@@ -21,16 +21,24 @@ interface ExamMeta {
   is_terminal: boolean;
 }
 
-/** Sum of a question bank's points for one exam — `exams` doesn't cache a max_score column. */
+/**
+ * Max score for each exam, read straight off `exams.max_score` — a column
+ * the database keeps in sync itself (see migration 004) whenever questions
+ * are added, removed, or repointed. Deliberately not computed here by
+ * joining into `exam_questions` -> `questions`: a student reading their
+ * own score needs this number, but students (correctly) have no RLS
+ * access to the `questions` table itself, which also holds each
+ * question's answer key. That mismatch used to throw mid-render — the
+ * nested `questions` field came back `null` under RLS, and `.points` on
+ * `null` crashed with no try/catch around it, which hung the whole page
+ * on its loading spinner forever with no error shown. Reading a plain
+ * column on `exams` (which students already have row-level access to)
+ * sidesteps needing any table permission that couldn't safely be granted.
+ */
 export async function fetchExamMaxScores(supabase: SupabaseClient, examIds: string[]): Promise<Map<string, number>> {
   if (examIds.length === 0) return new Map();
-  const { data } = await supabase.from("exam_questions").select("exam_id, questions(points)").in("exam_id", examIds);
-  const totals = new Map<string, number>();
-  for (const row of data ?? []) {
-    const points = (row as any).questions.points as number;
-    totals.set(row.exam_id, (totals.get(row.exam_id) ?? 0) + points);
-  }
-  return totals;
+  const { data } = await supabase.from("exams").select("id, max_score").in("id", examIds);
+  return new Map((data ?? []).map((row) => [row.id, row.max_score ?? 0]));
 }
 
 /**

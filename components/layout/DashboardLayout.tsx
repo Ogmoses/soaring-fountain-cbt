@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar, { type Role } from "./Sidebar";
 import Navbar from "./Navbar";
+import ConnectionBanner from "./ConnectionBanner";
 
 interface DashboardLayoutProps {
   role: Role;
@@ -30,6 +31,7 @@ export default function DashboardLayout({
       <Sidebar role={role} userName={userName} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex min-h-screen flex-1 flex-col">
+        <ConnectionBanner />
         <Navbar
           title={pageTitle}
           userName={userName}

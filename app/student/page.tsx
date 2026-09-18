@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import { fetchExamMaxScores } from "@/lib/reportCard";
 import PageLoading from "@/components/layout/PageLoading";
+import ErrorState from "@/components/layout/ErrorState";
 
 export default function StudentHomePage() {
   const router = useRouter();
@@ -22,85 +23,112 @@ export default function StudentHomePage() {
   const [upcomingBatches, setUpcomingBatches] = useState<UpcomingBatch[]>([]);
   const [pastResults, setPastResults] = useState<PastResult[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     if (!authUser) return;
+    let cancelled = false;
+
     (async () => {
-      const now = new Date();
+      setLoading(true);
+      setLoadError(null);
+      try {
+        const now = new Date();
 
-      const [{ data: batchRows }, { data: sessionRows }, { data: resultRows }] = await Promise.all([
-        supabase
-          .from("batch_students")
-          .select("exam_batches(id, label, starts_at, ends_at, exams(id, title, duration_minutes, subjects(name)))")
-          .eq("student_id", authUser.id),
-        supabase.from("student_exam_sessions").select("exam_id, status").eq("student_id", authUser.id),
-        supabase
-          .from("results")
-          .select("exam_id, total_score, grade_letter, exams(id, title, subjects(name), terms(name))")
-          .eq("student_id", authUser.id)
-          .eq("published", true),
-      ]);
+        const [{ data: batchRows }, { data: sessionRows }, { data: resultRows }] = await Promise.all([
+          supabase
+            .from("batch_students")
+            .select("exam_batches(id, label, starts_at, ends_at, exams(id, title, duration_minutes, subjects(name)))")
+            .eq("student_id", authUser.id),
+          supabase.from("student_exam_sessions").select("exam_id, status").eq("student_id", authUser.id),
+          supabase
+            .from("results")
+            .select("exam_id, total_score, grade_letter, exams(id, title, subjects(name), terms(name))")
+            .eq("student_id", authUser.id)
+            .eq("published", true),
+        ]);
 
-      const sessionStatusByExam = new Map((sessionRows ?? []).map((s) => [s.exam_id, s.status]));
+        const sessionStatusByExam = new Map((sessionRows ?? []).map((s) => [s.exam_id, s.status]));
 
-      const available: AvailableExam[] = [];
-      const upcoming: UpcomingBatch[] = [];
+        const available: AvailableExam[] = [];
+        const upcoming: UpcomingBatch[] = [];
 
-      for (const row of batchRows ?? []) {
-        const b = (row as any).exam_batches;
-        if (!b || !b.exams) continue;
-        const startsAt = new Date(b.starts_at);
-        const endsAt = new Date(b.ends_at);
-        const status = sessionStatusByExam.get(b.exams.id);
-        if (status === "submitted") continue; // already done — no longer relevant to the launchpad
+        for (const row of batchRows ?? []) {
+          const b = (row as any).exam_batches;
+          if (!b || !b.exams) continue;
+          const startsAt = new Date(b.starts_at);
+          const endsAt = new Date(b.ends_at);
+          const status = sessionStatusByExam.get(b.exams.id);
+          if (status === "submitted") continue; // already done — no longer relevant to the launchpad
 
-        if (now >= startsAt && now <= endsAt) {
-          available.push({
-            examId: b.exams.id,
-            batchId: b.id,
-            title: b.exams.title,
-            subjectName: b.exams.subjects?.name ?? "",
-            durationMinutes: b.exams.duration_minutes,
-            batchLabel: b.label,
-            batchStartsAt: b.starts_at,
-            batchEndsAt: b.ends_at,
-            alreadyInProgress: status === "active",
-          });
-        } else if (now < startsAt) {
-          upcoming.push({
-            id: b.id,
-            examTitle: b.exams.title,
-            subjectName: b.exams.subjects?.name ?? "",
-            batchLabel: b.label,
-            startsAt: b.starts_at,
-          });
+          if (now >= startsAt && now <= endsAt) {
+            available.push({
+              examId: b.exams.id,
+              batchId: b.id,
+              title: b.exams.title,
+              subjectName: b.exams.subjects?.name ?? "",
+              durationMinutes: b.exams.duration_minutes,
+              batchLabel: b.label,
+              batchStartsAt: b.starts_at,
+              batchEndsAt: b.ends_at,
+              alreadyInProgress: status === "active",
+            });
+          } else if (now < startsAt) {
+            upcoming.push({
+              id: b.id,
+              examTitle: b.exams.title,
+              subjectName: b.exams.subjects?.name ?? "",
+              batchLabel: b.label,
+              startsAt: b.starts_at,
+            });
+          }
         }
+
+        const examIds = [...new Set((resultRows ?? []).map((r) => r.exam_id))];
+        const maxScores = await fetchExamMaxScores(supabase, examIds);
+
+        if (cancelled) return;
+        setAvailableExams(available);
+        setUpcomingBatches(upcoming);
+        setPastResults(
+          (resultRows ?? []).map((r: any) => ({
+            id: r.exam_id,
+            examTitle: r.exams?.title ?? "",
+            subjectName: r.exams?.subjects?.name ?? "",
+            termName: r.exams?.terms?.name ?? "",
+            totalScore: r.total_score,
+            maxScore: maxScores.get(r.exam_id) ?? 0,
+            gradeLetter: r.grade_letter,
+            takenAt: new Date().toISOString(), // `results` doesn't store a submitted-at timestamp of its own
+          }))
+        );
+      } catch (err) {
+        // Whatever the cause — a real bug, a dropped connection mid-fetch,
+        // anything — this page used to just sit on "Loading…" forever
+        // with no feedback at all. A caught error and a retry button beats
+        // a spinner that never resolves.
+        if (!cancelled) {
+          setLoadError(err instanceof Error ? err.message : "Couldn't load your exams. Check your connection and try again.");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-
-      const examIds = [...new Set((resultRows ?? []).map((r) => r.exam_id))];
-      const maxScores = await fetchExamMaxScores(supabase, examIds);
-
-      setAvailableExams(available);
-      setUpcomingBatches(upcoming);
-      setPastResults(
-        (resultRows ?? []).map((r: any) => ({
-          id: r.exam_id,
-          examTitle: r.exams?.title ?? "",
-          subjectName: r.exams?.subjects?.name ?? "",
-          termName: r.exams?.terms?.name ?? "",
-          totalScore: r.total_score,
-          maxScore: maxScores.get(r.exam_id) ?? 0,
-          gradeLetter: r.grade_letter,
-          takenAt: new Date().toISOString(), // `results` doesn't store a submitted-at timestamp of its own
-        }))
-      );
-      setLoading(false);
     })();
-  }, [authUser?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authUser?.id, retryCount]);
 
   return (
     <DashboardLayout role="student" pageTitle="Exam Launchpad" userName={authUser?.fullName ?? ""} onLogout={() => signOutAndRedirect(router)}>
-      {loading ? <PageLoading /> : (
+      {loading ? (
+        <PageLoading />
+      ) : loadError ? (
+        <ErrorState message={loadError} onRetry={() => setRetryCount((c) => c + 1)} />
+      ) : (
         <ExamLaunchpad
           studentName={authUser?.fullName ?? ""}
           availableExams={availableExams}
