@@ -7,17 +7,19 @@
  */
 
 import { useState } from "react";
-import { Plus, Trash2, Loader2, ImagePlus, X, Save } from "lucide-react";
+import { Plus, Trash2, Loader2, ImagePlus, X, Save, Check } from "lucide-react";
 import type { GradeBand, SchoolProfile } from "./types";
+import { THEMES, DEFAULT_THEME_KEY, themeCssVars, getTheme } from "@/lib/themes";
 
 interface SettingsManagerProps {
   profile: SchoolProfile;
   gradingScale: GradeBand[];
   onSaveProfile: (profile: SchoolProfile) => Promise<void>;
   onSaveGradingScale: (bands: GradeBand[]) => Promise<void>;
+  onSaveTheme: (themeKey: string) => Promise<void>;
 }
 
-export default function SettingsManager({ profile, gradingScale, onSaveProfile, onSaveGradingScale }: SettingsManagerProps) {
+export default function SettingsManager({ profile, gradingScale, onSaveProfile, onSaveGradingScale, onSaveTheme }: SettingsManagerProps) {
   return (
     <div className="max-w-2xl space-y-6 pb-10">
       <div>
@@ -25,8 +27,73 @@ export default function SettingsManager({ profile, gradingScale, onSaveProfile, 
         <p className="mt-0.5 text-[13px] text-ink/50">School profile and the grading scale used across results and report cards.</p>
       </div>
       <ProfileSection profile={profile} onSave={onSaveProfile} />
+      <ThemeSection currentThemeKey={profile.themeKey} onSave={onSaveTheme} />
       <GradingScaleSection bands={gradingScale} onSave={onSaveGradingScale} />
     </div>
+  );
+}
+
+function ThemeSection({ currentThemeKey, onSave }: { currentThemeKey?: string; onSave: (themeKey: string) => Promise<void> }) {
+  const [selected, setSelected] = useState(currentThemeKey ?? DEFAULT_THEME_KEY);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setSaved(false);
+    try {
+      await onSave(selected);
+      // Applies immediately to this tab, so the change is visible without
+      // waiting for a reload — every other visitor picks it up on their
+      // next page load, since app/layout.tsx reads it fresh server-side
+      // each time.
+      const styleTag = document.getElementById("theme-vars-override") ?? (() => {
+        const el = document.createElement("style");
+        el.id = "theme-vars-override";
+        document.head.appendChild(el);
+        return el;
+      })();
+      styleTag.textContent = `:root { ${themeCssVars(getTheme(selected))} }`;
+      setSaved(true);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <SectionCard title="Site theme" subtitle="Sets the accent color used for buttons, links, and highlights across the whole site — for everyone, not just you">
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+        {THEMES.map((theme) => {
+          const isSelected = selected === theme.key;
+          return (
+            <button
+              key={theme.key}
+              onClick={() => {
+                setSelected(theme.key);
+                setSaved(false);
+              }}
+              className={`relative overflow-hidden rounded-lg border-2 p-2.5 text-left transition-colors ${
+                isSelected ? "border-crimson-600" : "border-transparent hover:border-black/10"
+              }`}
+              style={{ backgroundColor: "#fff" }}
+            >
+              <div className="mb-2 flex h-9 w-full overflow-hidden rounded-md">
+                <div className="w-1/2" style={{ backgroundColor: theme.base }} />
+                <div className="w-1/2" style={{ backgroundColor: theme.bright }} />
+              </div>
+              <p className="text-[11.5px] font-medium text-ink">{theme.name}</p>
+              {isSelected && (
+                <div className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-crimson-600 text-white">
+                  <Check size={12} strokeWidth={3} />
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <SaveButton onClick={handleSave} saving={saving} saved={saved} label="Apply theme" />
+    </SectionCard>
   );
 }
 
@@ -212,7 +279,7 @@ function TextField({ label, value, onChange, placeholder }: { label: string; val
   );
 }
 
-function SaveButton({ onClick, saving, saved }: { onClick: () => void; saving: boolean; saved: boolean }) {
+function SaveButton({ onClick, saving, saved, label = "Save changes" }: { onClick: () => void; saving: boolean; saved: boolean; label?: string }) {
   return (
     <button
       onClick={onClick}
@@ -220,7 +287,7 @@ function SaveButton({ onClick, saving, saved }: { onClick: () => void; saving: b
       className="mt-4 flex items-center gap-1.5 rounded-lg bg-crimson-600 px-4 py-2.5 text-[13px] font-semibold text-white transition-colors duration-200 hover:bg-crimson-700 disabled:opacity-70"
     >
       {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-      {saving ? "Saving…" : saved ? "Saved" : "Save changes"}
+      {saving ? "Saving…" : saved ? "Saved" : label}
     </button>
   );
 }

@@ -8,9 +8,10 @@ import { createClient } from "@/lib/supabase/client";
 import { orThrow } from "@/lib/supabaseErrors";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import type { GradeBand, SchoolProfile } from "@/components/admin/types";
+import { DEFAULT_THEME_KEY } from "@/lib/themes";
 import PageLoading from "@/components/layout/PageLoading";
 
-const EMPTY_PROFILE: SchoolProfile = { schoolName: "", motto: "", address: "", logoUrl: null };
+const EMPTY_PROFILE: SchoolProfile = { schoolName: "", motto: "", address: "", logoUrl: null, themeKey: DEFAULT_THEME_KEY };
 
 export default function AdminSettingsPage() {
   const router = useRouter();
@@ -23,12 +24,18 @@ export default function AdminSettingsPage() {
 
   const loadAll = async () => {
     const [{ data: profileRow }, { data: scaleRows }] = await Promise.all([
-      supabase.from("school_profile").select("school_name, motto, address, logo_url").eq("id", true).single(),
+      supabase.from("school_profile").select("school_name, motto, address, logo_url, theme_key").eq("id", true).single(),
       supabase.from("grading_scale").select("id, min_score, max_score, grade_letter, remark").order("min_score", { ascending: false }),
     ]);
 
     if (profileRow) {
-      setProfile({ schoolName: profileRow.school_name, motto: profileRow.motto ?? "", address: profileRow.address ?? "", logoUrl: profileRow.logo_url });
+      setProfile({
+        schoolName: profileRow.school_name,
+        motto: profileRow.motto ?? "",
+        address: profileRow.address ?? "",
+        logoUrl: profileRow.logo_url,
+        themeKey: profileRow.theme_key ?? DEFAULT_THEME_KEY,
+      });
     }
     setScale((scaleRows ?? []).map((r) => ({ id: r.id, minScore: r.min_score, maxScore: r.max_score, gradeLetter: r.grade_letter, remark: r.remark ?? "" })));
     setLoading(false);
@@ -48,6 +55,11 @@ export default function AdminSettingsPage() {
     await loadAll();
   };
 
+  const handleSaveTheme = async (themeKey: string) => {
+    await orThrow(supabase.from("school_profile").update({ theme_key: themeKey }).eq("id", true));
+    await loadAll();
+  };
+
   const handleSaveGradingScale = async (bands: GradeBand[]) => {
     // Small table, rewritten wholesale each save — simpler and safer than
     // diffing client-generated temp ids against real DB rows.
@@ -61,7 +73,7 @@ export default function AdminSettingsPage() {
   return (
     <DashboardLayout role="super_admin" pageTitle="Settings" userName={authUser?.fullName ?? ""} onLogout={() => signOutAndRedirect(router)}>
       {loading ? <PageLoading /> : (
-        <SettingsManager profile={profile} gradingScale={scale} onSaveProfile={handleSaveProfile} onSaveGradingScale={handleSaveGradingScale} />
+        <SettingsManager profile={profile} gradingScale={scale} onSaveProfile={handleSaveProfile} onSaveGradingScale={handleSaveGradingScale} onSaveTheme={handleSaveTheme} />
       )}
     </DashboardLayout>
   );

@@ -107,6 +107,7 @@ export interface SchoolProfile {
   motto?: string;
   address?: string;
   logoUrl?: string | null;
+  themeKey?: string;
 }
 
 export interface GradeBand {

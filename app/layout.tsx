@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { createClient } from "@/lib/supabase/server";
+import { getTheme, themeCssVars } from "@/lib/themes";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -28,9 +30,28 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Reads the school's chosen theme server-side, before the very first
+  // paint, and overrides the CSS variables globals.css sets by default —
+  // so every visitor (logged in or not, e.g. on the login page) sees the
+  // right accent color immediately, with no flash of the wrong theme
+  // while a client-side fetch resolves. school_profile is publicly
+  // readable (see database/schema.sql's anyone_read_school_profile
+  // policy), so this works the same for a signed-out visitor as anyone
+  // else. If the fetch fails for any reason, the defaults baked into
+  // globals.css apply instead — never a broken/blank style.
+  let themeVars = "";
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.from("school_profile").select("theme_key").eq("id", true).single();
+    themeVars = themeCssVars(getTheme(data?.theme_key));
+  } catch {
+    // Fall through to globals.css's static defaults.
+  }
+
   return (
     <html lang="en" className={`${inter.variable} ${plusJakarta.variable}`}>
+      <head>{themeVars && <style dangerouslySetInnerHTML={{ __html: `:root { ${themeVars} }` }} />}</head>
       <body className="font-sans antialiased">{children}</body>
     </html>
   );

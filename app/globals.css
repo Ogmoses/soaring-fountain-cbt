@@ -2,6 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Default (Deep Rich Red) theme values — a static fallback only.
+     app/layout.tsx overrides these server-side, before first paint, with
+     whatever's actually saved in school_profile.theme_key, so an admin's
+     chosen theme is what every visitor actually sees. These defaults
+     exist purely so nothing looks broken in the rare case that fetch
+     fails outright (see app/layout.tsx). Values are "R G B" channel
+     triples, not hex, because Tailwind's rgb(var(--x) / <alpha-value>)
+     opacity trick requires that format. */
+  --color-crimson-50: 253 242 241;
+  --color-crimson-100: 251 225 222;
+  --color-crimson-200: 245 186 179;
+  --color-crimson-300: 236 140 128;
+  --color-crimson-400: 222 90 73;
+  --color-crimson-500: 194 46 28;
+  --color-crimson-600: 171 21 9;
+  --color-crimson-700: 138 17 8;
+  --color-crimson-800: 105 13 6;
+  --color-crimson-900: 72 9 4;
+}
+
 html,
 body {
   background-color: #fff7d3;
