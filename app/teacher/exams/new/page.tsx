@@ -44,6 +44,7 @@ export default function NewExamPage() {
           shuffleQuestions: exam.shuffle_questions,
           shuffleOptions: exam.shuffle_options,
           showResultInstantly: exam.show_result_instantly,
+          allowReview: exam.allow_review,
           isTerminal: exam.is_terminal,
           questionIds: (eqRows ?? []).map((r) => r.question_id),
           batches: [],
@@ -71,6 +72,7 @@ export default function NewExamPage() {
         shuffle_questions: data.shuffleQuestions,
         shuffle_options: data.shuffleOptions,
         show_result_instantly: data.showResultInstantly,
+        allow_review: data.allowReview,
         status,
       })
       .select("id")

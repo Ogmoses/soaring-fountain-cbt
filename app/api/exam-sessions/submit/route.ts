@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
   if (!session || session.student_id !== auth.user.id) return NextResponse.json({ error: "Session not found." }, { status: 404 });
   if (session.status !== "active") return NextResponse.json({ error: "This exam has already been submitted." }, { status: 409 });
 
-  const { data: exam } = await admin.from("exams").select("show_result_instantly").eq("id", session.exam_id).single();
+  const { data: exam } = await admin.from("exams").select("show_result_instantly, allow_review").eq("id", session.exam_id).single();
 
   // ---- Fetch grading data: each question's type/points/correct answer ----
   const { data: examQuestions } = await admin
@@ -115,5 +115,13 @@ export async function POST(req: NextRequest) {
     maxScore,
     hasPendingTheory,
     showResultInstantly: !!exam?.show_result_instantly && !hasPendingTheory,
+    // Independent of showResultInstantly — a teacher can hide the score
+    // until later but still let a student eventually review answers, or
+    // show the score immediately without revealing which were correct.
+    // The review page itself (app/api/exam-sessions/review) additionally
+    // gates on every batch of the exam having ended, so this flag alone
+    // doesn't leak whether review is *actually* available yet — just
+    // whether the teacher intends to allow it at all.
+    allowReview: !!exam?.allow_review,
   });
 }

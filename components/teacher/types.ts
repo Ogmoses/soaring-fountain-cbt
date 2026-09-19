@@ -59,6 +59,21 @@ export interface GradingItem {
   feedback?: string;
 }
 
+export interface StudentReviewQuestion {
+  questionId: string;
+  type: QuestionType;
+  prompt: string;
+  maxPoints: number;
+  pointsAwarded: number | null;
+  isFlagged: boolean;
+  // multiple_choice / true_false
+  options?: { id: string; text: string; isCorrect: boolean }[];
+  selectedOptionId?: string | null;
+  // fill_blank / short_theory
+  referenceAnswer?: string | null;
+  freeTextAnswer?: string | null;
+}
+
 export const QUESTION_TYPE_LABEL: Record<QuestionType, string> = {
   multiple_choice: "Multiple choice",
   true_false: "True / False",

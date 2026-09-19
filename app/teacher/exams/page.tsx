@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import MyExams, { type ExamListItem } from "@/components/teacher/MyExams";
 import ExamRoster, { type RosterStudent, type RosterStatus } from "@/components/teacher/ExamRoster";
+import StudentReview from "@/components/teacher/StudentReview";
+import type { StudentReviewQuestion } from "@/components/teacher/types";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import { fetchExamMaxScores } from "@/lib/reportCard";
@@ -32,8 +34,16 @@ export default function MyExamsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [viewingExam, setViewingExam] = useState<{ title: string; className: string; students: RosterStudent[] } | null>(null);
+  const [viewingExam, setViewingExam] = useState<{ examId: string; title: string; className: string; students: RosterStudent[] } | null>(null);
   const [rosterLoading, setRosterLoading] = useState(false);
+  const [reviewingStudent, setReviewingStudent] = useState<{
+    studentName: string;
+    examTitle: string;
+    totalScore: number;
+    maxScore: number;
+    questions: StudentReviewQuestion[];
+  } | null>(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
 
   const load = async () => {
     if (!authUser) return;
@@ -126,8 +136,76 @@ export default function MyExamsPage() {
       maxScore: resultByStudent.has(u.id) ? maxScore : null,
     }));
 
-    setViewingExam({ title: exam.title, className: exam.className, students });
+    setViewingExam({ examId, title: exam.title, className: exam.className, students });
     setRosterLoading(false);
+  };
+
+  /**
+   * Pulls one student's full attempt for review: every question they were
+   * asked, in the order they saw them, with their answer, the correct
+   * answer, points awarded, and whether they flagged it during the exam
+   * (student_answers.is_flagged — captured at submit time, but nothing
+   * previously showed it anywhere in the teacher UI).
+   */
+  const handleSelectStudent = async (studentId: string) => {
+    if (!viewingExam) return;
+    setReviewLoading(true);
+
+    const student = viewingExam.students.find((s) => s.id === studentId);
+
+    const [{ data: session }, { data: examQuestions }] = await Promise.all([
+      supabase
+        .from("student_exam_sessions")
+        .select("id")
+        .eq("exam_id", viewingExam.examId)
+        .eq("student_id", studentId)
+        .single(),
+      supabase
+        .from("exam_questions")
+        .select("order_index, questions(id, type, prompt, points, reference_answer, question_options(id, option_text, is_correct, order_index))")
+        .eq("exam_id", viewingExam.examId)
+        .order("order_index"),
+    ]);
+
+    if (!session) {
+      setReviewLoading(false);
+      return;
+    }
+
+    const { data: answerRows } = await supabase
+      .from("student_answers")
+      .select("question_id, selected_option_id, free_text_answer, is_flagged, points_awarded")
+      .eq("session_id", session.id);
+
+    const answerByQuestion = new Map((answerRows ?? []).map((a: any) => [a.question_id, a]));
+
+    const questions: StudentReviewQuestion[] = (examQuestions ?? []).map((eq: any) => {
+      const q = eq.questions;
+      const answer = answerByQuestion.get(q.id);
+      return {
+        questionId: q.id,
+        type: q.type,
+        prompt: q.prompt,
+        maxPoints: q.points,
+        pointsAwarded: answer?.points_awarded ?? null,
+        isFlagged: answer?.is_flagged ?? false,
+        options: (q.question_options ?? [])
+          .sort((a: any, b: any) => a.order_index - b.order_index)
+          .map((o: any) => ({ id: o.id, text: o.option_text, isCorrect: o.is_correct })),
+        selectedOptionId: answer?.selected_option_id ?? null,
+        referenceAnswer: q.reference_answer,
+        freeTextAnswer: answer?.free_text_answer ?? null,
+      };
+    });
+
+    setReviewingStudent({
+      studentName: student?.fullName ?? "Student",
+      examTitle: viewingExam.title,
+      totalScore: student?.score ?? 0,
+      maxScore: student?.maxScore ?? 0,
+      questions,
+    });
+    setReviewLoading(false);
   };
 
   return (
@@ -156,6 +234,18 @@ export default function MyExamsPage() {
           className={viewingExam.className}
           students={viewingExam.students}
           onClose={() => setViewingExam(null)}
+          onSelectStudent={handleSelectStudent}
+        />
+      )}
+
+      {reviewingStudent && (
+        <StudentReview
+          studentName={reviewingStudent.studentName}
+          examTitle={reviewingStudent.examTitle}
+          totalScore={reviewingStudent.totalScore}
+          maxScore={reviewingStudent.maxScore}
+          questions={reviewingStudent.questions}
+          onClose={() => setReviewingStudent(null)}
         />
       )}
     </DashboardLayout>

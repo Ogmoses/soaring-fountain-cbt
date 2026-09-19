@@ -7,7 +7,7 @@
  * class is just whichever one this exam belongs to.
  */
 
-import { X, CheckCircle2, Circle, Clock, AlertTriangle } from "lucide-react";
+import { X, CheckCircle2, Circle, Clock, AlertTriangle, ChevronRight } from "lucide-react";
 
 export type RosterStatus = "not_started" | "active" | "submitted" | "expired" | "terminated";
 
@@ -25,6 +25,8 @@ interface ExamRosterProps {
   className: string;
   students: RosterStudent[];
   onClose: () => void;
+  /** Only meaningful for "submitted" students — there's nothing to review before that. */
+  onSelectStudent?: (studentId: string) => void;
 }
 
 const STATUS_META: Record<RosterStatus, { label: string; icon: React.ElementType; color: string }> = {
@@ -37,7 +39,7 @@ const STATUS_META: Record<RosterStatus, { label: string; icon: React.ElementType
 
 const GROUP_ORDER: RosterStatus[] = ["submitted", "active", "not_started", "expired", "terminated"];
 
-export default function ExamRoster({ examTitle, className, students, onClose }: ExamRosterProps) {
+export default function ExamRoster({ examTitle, className, students, onClose, onSelectStudent }: ExamRosterProps) {
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/50 p-4">
       <div className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-lg bg-white shadow-card-hover">
@@ -68,17 +70,36 @@ export default function ExamRoster({ examTitle, className, students, onClose }: 
                   <div className="divide-y divide-black/5 rounded-lg border border-black/5">
                     {group
                       .sort((a, b) => a.fullName.localeCompare(b.fullName))
-                      .map((s) => (
-                        <div key={s.id} className="flex items-center justify-between gap-3 px-3.5 py-2.5">
-                          <div>
-                            <p className="text-[13px] font-medium text-ink">{s.fullName}</p>
-                            {s.admissionNumber && <p className="text-[11px] text-ink/40">{s.admissionNumber}</p>}
+                      .map((s) => {
+                        const clickable = status === "submitted" && onSelectStudent;
+                        const Row = (
+                          <>
+                            <div>
+                              <p className="text-[13px] font-medium text-ink">{s.fullName}</p>
+                              {s.admissionNumber && <p className="text-[11px] text-ink/40">{s.admissionNumber}</p>}
+                            </div>
+                            <div className="flex shrink-0 items-center gap-1.5">
+                              {s.score !== null && s.maxScore !== null && (
+                                <span className="text-[12.5px] font-semibold tabular-nums text-ink/70">{s.score}/{s.maxScore}</span>
+                              )}
+                              {clickable && <ChevronRight size={14} className="text-ink/30" />}
+                            </div>
+                          </>
+                        );
+                        return clickable ? (
+                          <button
+                            key={s.id}
+                            onClick={() => onSelectStudent!(s.id)}
+                            className="flex w-full items-center justify-between gap-3 px-3.5 py-2.5 text-left hover:bg-background-muted"
+                          >
+                            {Row}
+                          </button>
+                        ) : (
+                          <div key={s.id} className="flex items-center justify-between gap-3 px-3.5 py-2.5">
+                            {Row}
                           </div>
-                          {s.score !== null && s.maxScore !== null && (
-                            <span className="shrink-0 text-[12.5px] font-semibold tabular-nums text-ink/70">{s.score}/{s.maxScore}</span>
-                          )}
-                        </div>
-                      ))}
+                        );
+                      })}
                   </div>
                 </div>
               );

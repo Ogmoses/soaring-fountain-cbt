@@ -82,15 +82,84 @@ export default function TeacherQuestionsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authUser?.id]);
 
-  const syncOptions = async (questionId: string, options: BankQuestion["options"]) => {
-    await orThrow(supabase.from("question_options").delete().eq("question_id", questionId));
-    if (options && options.length > 0) {
+  /**
+   * Updates a question's options to match the editor's final state,
+   * without ever deleting-then-reinserting the whole set.
+   *
+   * The old version did exactly that on every single save — delete all
+   * existing options, insert the new ones fresh — regardless of whether
+   * options had changed at all. That's what broke: `question_options.id`
+   * is what `student_answers.selected_option_id` points to, so the moment
+   * any option had ever been answered by a student, deleting it hit a
+   * foreign key constraint and failed the entire save — even when the
+   * teacher only wanted to change the question's class, nothing to do
+   * with options.
+   *
+   * This instead updates existing options in place (same id, so any
+   * student_answers referencing them stay valid), only inserts options
+   * that are genuinely new, and only deletes options that were actually
+   * removed — and if one of those removals is itself blocked by the same
+   * constraint (a student already answered with it), it's left in place
+   * rather than failing the save, with a note returned so the caller can
+   * tell the teacher what happened.
+   */
+  const syncOptions = async (
+    questionId: string,
+    options: BankQuestion["options"],
+    previousOptions: BankQuestion["options"] | undefined
+  ): Promise<string | null> => {
+    const previousIds = new Set((previousOptions ?? []).map((o) => o.id));
+    const nextOptions = options ?? [];
+    const nextIds = new Set(nextOptions.map((o) => o.id));
+
+    const toUpdate = nextOptions.filter((o) => previousIds.has(o.id));
+    const toInsert = nextOptions.filter((o) => !previousIds.has(o.id));
+    const toDelete = (previousOptions ?? []).filter((o) => !nextIds.has(o.id));
+
+    await Promise.all(
+      toUpdate.map((o) =>
+        orThrow(
+          supabase
+            .from("question_options")
+            .update({ option_text: o.text, is_correct: o.isCorrect, order_index: nextOptions.indexOf(o) })
+            .eq("id", o.id)
+        )
+      )
+    );
+
+    if (toInsert.length > 0) {
       await orThrow(
         supabase.from("question_options").insert(
-          options.map((o, i) => ({ question_id: questionId, option_text: o.text, is_correct: o.isCorrect, order_index: i }))
+          toInsert.map((o) => ({
+            question_id: questionId,
+            option_text: o.text,
+            is_correct: o.isCorrect,
+            order_index: nextOptions.indexOf(o),
+          }))
         )
       );
     }
+
+    let keptCount = 0;
+    for (const o of toDelete) {
+      const { error } = await supabase.from("question_options").delete().eq("id", o.id);
+      if (error) {
+        if (error.code === "23503") {
+          // Foreign key violation — a student's answer points at this
+          // option. Keeping it (rather than failing the save) means the
+          // teacher's other edits still go through; it just means this
+          // one option can't be fully retired while that history exists.
+          keptCount += 1;
+        } else {
+          throw new Error(error.message);
+        }
+      }
+    }
+
+    if (keptCount === 0) return null;
+    return `Kept ${keptCount} option${keptCount === 1 ? "" : "s"} that couldn't be removed because a student has already answered with ${
+      keptCount === 1 ? "it" : "them"
+    }.`;
   };
 
   const handleCreate = async (q: Omit<BankQuestion, "id" | "updatedAt" | "subjectName" | "className">) => {
@@ -111,7 +180,7 @@ export default function TeacherQuestionsPage() {
       .select("id")
       .single();
     if (error || !created) throw new Error(error?.message ?? "Couldn't save the question.");
-    if (q.options) await syncOptions(created.id, q.options);
+    if (q.options) await syncOptions(created.id, q.options, []);
     await loadAll();
   };
 
@@ -131,8 +200,10 @@ export default function TeacherQuestionsPage() {
       })
       .eq("id", id);
     if (error) throw new Error(error.message);
-    await syncOptions(id, q.options);
+    const previous = questions.find((qq) => qq.id === id);
+    const warning = await syncOptions(id, q.options, previous?.options);
     await loadAll();
+    return warning ? { warning } : undefined;
   };
 
   const handleDelete = async (id: string) => {

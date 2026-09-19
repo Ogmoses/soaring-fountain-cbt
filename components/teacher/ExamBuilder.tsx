@@ -47,6 +47,11 @@ export interface ExamFormData {
   shuffleQuestions: boolean;
   shuffleOptions: boolean;
   showResultInstantly: boolean;
+  /** Lets a student, once the exam is over, see which of their answers
+   *  were right or wrong — not just their total score. Independent of
+   *  showResultInstantly: a teacher can show the score immediately but
+   *  only unlock the full breakdown later, or the reverse. */
+  allowReview: boolean;
   /** True for the term's single Terminal Exam; false for CA/CBT-style contributors. Drives the report card's CA-vs-Terminal split. */
   isTerminal: boolean;
   questionIds: string[];
@@ -80,6 +85,7 @@ const DEFAULTS: ExamFormData = {
   shuffleQuestions: true,
   shuffleOptions: true,
   showResultInstantly: false,
+  allowReview: false,
   isTerminal: false,
   questionIds: [],
   batches: [],
@@ -190,6 +196,11 @@ export default function ExamBuilder({ subjects, classes, terms, questionBank, st
     if (form.questionIds.length === 0) return "Add at least one question.";
     if (form.batches.length === 0) return "Schedule at least one batch.";
     if (form.batches.some((b) => !b.startsAt)) return "Every batch needs a start time.";
+    // A pass mark of 0 (or blank, which NumberField's Number("") turns into
+    // 0) makes every score "pass" by definition — score% >= 0 is always
+    // true — which silently pins Class Analytics' pass rate at 100% no
+    // matter what students actually score. Nothing previously caught this.
+    if (!form.passMark || form.passMark <= 0 || form.passMark > 100) return "Set a pass mark between 1 and 100.";
     return null;
   };
 
@@ -264,6 +275,7 @@ export default function ExamBuilder({ subjects, classes, terms, questionBank, st
           <Toggle icon={Shuffle} label="Shuffle question order per student" checked={form.shuffleQuestions} onChange={(v) => update("shuffleQuestions", v)} />
           <Toggle icon={Shuffle} label="Shuffle option order per student" checked={form.shuffleOptions} onChange={(v) => update("shuffleOptions", v)} />
           <Toggle icon={Eye} label="Show result instantly after submission" checked={form.showResultInstantly} onChange={(v) => update("showResultInstantly", v)} />
+          <Toggle icon={CheckCircle2} label="Let students review which answers were correct" checked={form.allowReview} onChange={(v) => update("allowReview", v)} />
           <Toggle icon={Trophy} label="This is the term's Terminal Exam (not a CA/CBT)" checked={form.isTerminal} onChange={(v) => update("isTerminal", v)} />
         </div>
       </SectionCard>

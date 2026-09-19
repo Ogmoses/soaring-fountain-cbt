@@ -81,6 +81,7 @@ export default function EditExamPage() {
         shuffleQuestions: exam.shuffle_questions,
         shuffleOptions: exam.shuffle_options,
         showResultInstantly: exam.show_result_instantly,
+        allowReview: exam.allow_review,
         isTerminal: exam.is_terminal,
         questionIds: (eqRows ?? []).map((r) => r.question_id),
         // Replacing exam_questions is always safe — nothing references it

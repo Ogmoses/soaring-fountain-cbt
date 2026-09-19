@@ -30,6 +30,7 @@ function StudentExamContent() {
   const [session, setSession] = useState<{ sessionId: string; exam: ExamData; existingAnswers: AnswersMap } | null>(null);
   const [submissionResult, setSubmissionResult] = useState<{
     showResultInstantly: boolean;
+    allowReview: boolean;
     objectiveScore: number;
     maxScore: number;
   } | null>(null);
@@ -92,6 +93,7 @@ function StudentExamContent() {
     // exam's setting.
     setSubmissionResult({
       showResultInstantly: !!data.showResultInstantly,
+      allowReview: !!data.allowReview,
       objectiveScore: data.objectiveScore ?? 0,
       maxScore: data.maxScore ?? 0,
     });
@@ -141,6 +143,14 @@ function StudentExamContent() {
         <button onClick={() => router.push("/student")} className="mt-3 rounded-lg bg-crimson-600 px-4 py-2.5 text-[13px] font-semibold text-white hover:bg-crimson-700">
           Back to Exam Launchpad
         </button>
+        {submissionResult.allowReview && (
+          <button
+            onClick={() => router.push(`/student/exam/${params.examId}/review`)}
+            className="rounded-lg border border-black/10 px-4 py-2.5 text-[13px] font-medium text-ink/70 hover:bg-black/5"
+          >
+            Review your answers
+          </button>
+        )}
       </div>
     );
   }

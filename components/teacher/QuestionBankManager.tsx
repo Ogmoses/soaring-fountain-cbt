@@ -16,7 +16,7 @@ interface QuestionBankManagerProps {
   classes: ClassOption[];
   questions: BankQuestion[];
   onCreate: (q: Omit<BankQuestion, "id" | "updatedAt" | "subjectName" | "className">) => Promise<void>;
-  onUpdate: (id: string, q: Omit<BankQuestion, "id" | "updatedAt" | "subjectName" | "className">) => Promise<void>;
+  onUpdate: (id: string, q: Omit<BankQuestion, "id" | "updatedAt" | "subjectName" | "className">) => Promise<{ warning?: string } | void>;
   onDelete: (id: string) => Promise<void>;
 }
 
@@ -26,6 +26,7 @@ export default function QuestionBankManager({ subjects, classes, questions, onCr
   const [search, setSearch] = useState("");
   const [editorState, setEditorState] = useState<"closed" | "new" | BankQuestion>("closed");
   const [deleteTarget, setDeleteTarget] = useState<BankQuestion | null>(null);
+  const [saveWarning, setSaveWarning] = useState<string | null>(null);
 
   const unclassifiedCount = useMemo(() => questions.filter((q) => !q.classId).length, [questions]);
 
@@ -41,8 +42,9 @@ export default function QuestionBankManager({ subjects, classes, questions, onCr
 
   const handleSave = async (data: Omit<BankQuestion, "id" | "updatedAt" | "subjectName" | "className"> & { id?: string }) => {
     if (data.id) {
-      await onUpdate(data.id, data);
+      const result = await onUpdate(data.id, data);
       setEditorState("closed");
+      setSaveWarning(result?.warning ?? null);
     } else {
       await onCreate(data);
       // Stays open on create — QuestionEditor resets its own per-question
@@ -98,6 +100,16 @@ export default function QuestionBankManager({ subjects, classes, questions, onCr
           {unclassifiedCount > 0 && <option value="unclassified">Unclassified ({unclassifiedCount})</option>}
         </select>
       </div>
+
+      {saveWarning && (
+        <div className="mb-4 flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 px-3.5 py-2.5 text-[12.5px] text-ink/75">
+          <AlertCircle size={15} className="mt-0.5 shrink-0 text-warning" />
+          <span className="flex-1">{saveWarning}</span>
+          <button onClick={() => setSaveWarning(null)} className="text-ink/40 hover:text-ink/60">
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {unclassifiedCount > 0 && classFilter !== "unclassified" && (
         <button
