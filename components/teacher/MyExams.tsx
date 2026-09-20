@@ -59,43 +59,43 @@ function ExamRow({ exam, onEdit, onReuse, onViewRoster, onRequestDelete }: {
   onRequestDelete: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-black/5 bg-white px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 rounded-lg border border-black/5 dark:border-white/10 bg-white dark:bg-[#1A1C20] px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-1.5">
-          <p className="truncate text-[13.5px] font-medium text-ink">{exam.title || "Untitled exam"}</p>
+          <p className="truncate text-[13.5px] font-medium text-ink dark:text-white">{exam.title || "Untitled exam"}</p>
           {exam.isTerminal && (
-            <span className="shrink-0 rounded-full bg-crimson-50 px-1.5 py-0.5 text-[10px] font-semibold text-crimson-600">Terminal</span>
+            <span className="shrink-0 rounded-full bg-crimson-50 dark:bg-crimson-600/15 px-1.5 py-0.5 text-[10px] font-semibold text-crimson-600">Terminal</span>
           )}
         </div>
-        <p className="mt-0.5 text-[12px] text-ink/50">
+        <p className="mt-0.5 text-[12px] text-ink/50 dark:text-white/50">
           {exam.className} · {exam.subjectName} · {exam.termName}
           {exam.batchSummary && <> · {exam.batchSummary}</>}
         </p>
         {exam.status === "published" && exam.totalStudents > 0 && (
-          <p className="mt-1 text-[11.5px] text-ink/40">{exam.completedCount}/{exam.totalStudents} completed</p>
+          <p className="mt-1 text-[11.5px] text-ink/40 dark:text-white/40">{exam.completedCount}/{exam.totalStudents} completed</p>
         )}
       </div>
       <div className="flex shrink-0 items-center gap-1.5">
         {exam.status === "published" && (
           <button
             onClick={onViewRoster}
-            className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[12px] font-medium text-ink/60 hover:bg-background-muted"
+            className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[12px] font-medium text-ink/60 dark:text-white/60 hover:bg-background-muted dark:hover:bg-white/5"
             title="View students"
           >
             <Users size={14} /> Students
           </button>
         )}
         {exam.hasStudentActivity ? (
-          <button onClick={onReuse} className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[12px] font-medium text-ink/60 hover:bg-background-muted" title="Duplicate into a new exam">
+          <button onClick={onReuse} className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[12px] font-medium text-ink/60 dark:text-white/60 hover:bg-background-muted dark:hover:bg-white/5" title="Duplicate into a new exam">
             <Copy size={14} /> Reuse
           </button>
         ) : (
-          <button onClick={onEdit} className="rounded-md p-2 text-ink/50 hover:bg-background-muted" title="Edit">
+          <button onClick={onEdit} className="rounded-md p-2 text-ink/50 dark:text-white/50 hover:bg-background-muted dark:hover:bg-white/5" title="Edit">
             <Pencil size={15} />
           </button>
         )}
         {exam.status !== "archived" && (
-          <button onClick={onRequestDelete} className="rounded-md p-2 text-ink/50 hover:bg-crimson-50 hover:text-crimson-600" title={exam.hasStudentActivity ? "Archive" : "Delete"}>
+          <button onClick={onRequestDelete} className="rounded-md p-2 text-ink/50 dark:text-white/50 hover:bg-crimson-50 dark:hover:bg-crimson-600/15 hover:text-crimson-600" title={exam.hasStudentActivity ? "Archive" : "Delete"}>
             {exam.hasStudentActivity ? <Archive size={15} /> : <Trash2 size={15} />}
           </button>
         )}
@@ -117,7 +117,7 @@ function Section({ title, icon: Icon, exams, emptyHint, ...rowProps }: {
   if (exams.length === 0) return null;
   return (
     <div className="mb-6">
-      <h2 className="mb-2.5 flex items-center gap-1.5 text-[12.5px] font-semibold uppercase tracking-wide text-ink/45">
+      <h2 className="mb-2.5 flex items-center gap-1.5 text-[12.5px] font-semibold uppercase tracking-wide text-ink/45 dark:text-white/45">
         <Icon size={13} /> {title} ({exams.length})
       </h2>
       <div className="space-y-2">
@@ -132,7 +132,7 @@ function Section({ title, icon: Icon, exams, emptyHint, ...rowProps }: {
           />
         ))}
       </div>
-      {exams.length === 0 && <p className="text-[12.5px] text-ink/40">{emptyHint}</p>}
+      {exams.length === 0 && <p className="text-[12.5px] text-ink/40 dark:text-white/40">{emptyHint}</p>}
     </div>
   );
 }
@@ -174,8 +174,8 @@ export default function MyExams({ exams, classes, onNew, onEdit, onReuse, onView
     <div className="pb-10">
       <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h1 className="font-display text-[18px] font-semibold text-ink sm:text-[20px]">My exams</h1>
-          <p className="mt-0.5 text-[12.5px] text-ink/50">{exams.length} total across your classes</p>
+          <h1 className="font-display text-[18px] font-semibold text-ink dark:text-white sm:text-[20px]">My exams</h1>
+          <p className="mt-0.5 text-[12.5px] text-ink/50 dark:text-white/50">{exams.length} total across your classes</p>
         </div>
         <button
           onClick={onNew}
@@ -189,7 +189,7 @@ export default function MyExams({ exams, classes, onNew, onEdit, onReuse, onView
         <select
           value={classFilter}
           onChange={(e) => setClassFilter(e.target.value)}
-          className="mb-5 rounded-lg border border-black/10 px-3 py-2.5 text-[13px] outline-none focus:border-crimson-500"
+          className="mb-5 rounded-lg border border-black/10 dark:border-white/15 px-3 py-2.5 text-[13px] outline-none focus:border-crimson-500"
         >
           <option value="all">All classes</option>
           {classes.map((c) => (
@@ -199,8 +199,8 @@ export default function MyExams({ exams, classes, onNew, onEdit, onReuse, onView
       )}
 
       {filtered.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-black/10 py-14 text-center">
-          <p className="text-[13px] text-ink/50">No exams yet.</p>
+        <div className="rounded-lg border border-dashed border-black/10 dark:border-white/15 py-14 text-center">
+          <p className="text-[13px] text-ink/50 dark:text-white/50">No exams yet.</p>
           <button onClick={onNew} className="mt-2 text-[13px] font-medium text-crimson-600 hover:underline">
             Build your first one
           </button>
@@ -216,11 +216,11 @@ export default function MyExams({ exams, classes, onNew, onEdit, onReuse, onView
 
       {confirmTarget && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/50 p-4">
-          <div className="w-full max-w-sm rounded-lg bg-white p-5 shadow-card-hover">
-            <h2 className="font-display text-[15px] font-semibold text-ink">
+          <div className="w-full max-w-sm rounded-lg bg-white dark:bg-[#1A1C20] p-5 shadow-card-hover">
+            <h2 className="font-display text-[15px] font-semibold text-ink dark:text-white">
               {confirmTarget.hasStudentActivity ? "Archive this exam?" : "Delete this exam?"}
             </h2>
-            <p className="mt-2 text-[13px] leading-relaxed text-ink/60">
+            <p className="mt-2 text-[13px] leading-relaxed text-ink/60 dark:text-white/60">
               {confirmTarget.hasStudentActivity
                 ? `${confirmTarget.completedCount} of ${confirmTarget.totalStudents} students have already started or finished "${confirmTarget.title}" — deleting would destroy their submitted work, so this archives it instead. Archived exams are hidden from these lists but nothing is lost, and results stay intact.`
                 : `"${confirmTarget.title}" has no student activity yet, so this permanently deletes it — its questions and any scheduled batches go with it. This can't be undone.`}
@@ -230,7 +230,7 @@ export default function MyExams({ exams, classes, onNew, onEdit, onReuse, onView
               <button
                 onClick={() => setConfirmTarget(null)}
                 disabled={busy}
-                className="flex-1 rounded-lg border border-black/10 py-2.5 text-[13px] font-medium text-ink/70 hover:bg-background-muted disabled:opacity-50"
+                className="flex-1 rounded-lg border border-black/10 dark:border-white/15 py-2.5 text-[13px] font-medium text-ink/70 dark:text-white/70 hover:bg-background-muted dark:hover:bg-white/5 disabled:opacity-50"
               >
                 Cancel
               </button>

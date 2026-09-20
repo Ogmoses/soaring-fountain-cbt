@@ -27,7 +27,7 @@ export default function DashboardLayout({
   const router = useRouter();
 
   return (
-    <div className="flex min-h-screen bg-background-muted">
+    <div className="flex min-h-screen bg-background-muted dark:bg-[#101114]">
       <Sidebar role={role} userName={userName} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex min-h-screen flex-1 flex-col">

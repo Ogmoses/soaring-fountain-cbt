@@ -1,6 +1,6 @@
 @tailwind base;
 @tailwind components;
-@tailwind utilities; 
+@tailwind utilities;
 
 :root {
   /* Default (Deep Rich Red) theme values — a static fallback only.
@@ -37,4 +37,15 @@ body {
   overflow-x: hidden;
   overflow-y: visible;
   max-width: 100vw;
+}
+
+/* Dark mode — phase 1 (see lib/colorScheme.ts): only the shared chrome
+   (DashboardLayout, Navbar, Sidebar, the profile page, and small shared
+   components like ErrorState/PageLoading) has matching dark: classes so
+   far. Page-specific content elsewhere in the app doesn't yet, and stays
+   on its light-mode colors even with the `dark` class active — that's
+   expected for now, not a bug, until later passes extend it further. */
+html.dark,
+html.dark body {
+  background-color: #101114;
 }

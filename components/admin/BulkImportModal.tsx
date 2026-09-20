@@ -118,10 +118,10 @@ export default function BulkImportModal({ role, classOptions, subjectOptions, on
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/50 p-4">
-      <div className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-lg bg-white shadow-card-hover">
-        <div className="flex items-center justify-between border-b border-black/5 px-5 py-4">
-          <h2 className="font-display text-[15px] font-semibold text-ink">Bulk import {role === "student" ? "students" : "teachers"}</h2>
-          <button onClick={onClose} className="rounded-md p-1.5 text-ink/40 hover:bg-background-muted">
+      <div className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-lg bg-white dark:bg-[#1A1C20] shadow-card-hover">
+        <div className="flex items-center justify-between border-b border-black/5 dark:border-white/10 px-5 py-4">
+          <h2 className="font-display text-[15px] font-semibold text-ink dark:text-white">Bulk import {role === "student" ? "students" : "teachers"}</h2>
+          <button onClick={onClose} className="rounded-md p-1.5 text-ink/40 dark:text-white/40 hover:bg-background-muted dark:hover:bg-white/5">
             <X size={18} />
           </button>
         </div>
@@ -129,18 +129,18 @@ export default function BulkImportModal({ role, classOptions, subjectOptions, on
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {!parsed ? (
             <div className="space-y-3.5">
-              <p className="text-[13px] text-ink/60">
+              <p className="text-[13px] text-ink/60 dark:text-white/60">
                 Upload a CSV with columns {role === "student" ? "full_name, student_id, class" : "full_name, email, staff_id, subjects"}.
               </p>
               <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed border-black/15 px-4 py-8 text-center hover:border-black/25">
-                <Upload size={22} className="text-ink/35" />
-                <span className="text-[13px] font-medium text-ink/60">Choose a .csv file</span>
+                <Upload size={22} className="text-ink/35 dark:text-white/35" />
+                <span className="text-[13px] font-medium text-ink/60 dark:text-white/60">Choose a .csv file</span>
                 <input type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
               </label>
-              <button onClick={downloadTemplate} className="flex items-center gap-1.5 text-[12.5px] font-medium text-crimson-700 hover:text-crimson-800">
+              <button onClick={downloadTemplate} className="flex items-center gap-1.5 text-[12.5px] font-medium text-crimson-700 dark:text-crimson-500 hover:text-crimson-800">
                 <Download size={13} /> Download a template
               </button>
-              {error && <p className="rounded-md bg-crimson-50 px-3 py-2 text-[12.5px] text-crimson-700">{error}</p>}
+              {error && <p className="rounded-md bg-crimson-50 dark:bg-crimson-600/15 px-3 py-2 text-[12.5px] text-crimson-700 dark:text-crimson-500">{error}</p>}
             </div>
           ) : (
             <div>
@@ -159,7 +159,7 @@ export default function BulkImportModal({ role, classOptions, subjectOptions, on
                   <div
                     key={i}
                     className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-[12.5px] ${
-                      row.data ? "bg-background-muted text-ink/70" : "bg-crimson-50 text-crimson-700"
+                      row.data ? "bg-background-muted dark:bg-white/5 text-ink/70 dark:text-white/70" : "bg-crimson-50 dark:bg-crimson-600/15 text-crimson-700 dark:text-crimson-500"
                     }`}
                   >
                     {row.data ? <CheckCircle2 size={14} className="shrink-0" /> : <XCircle size={14} className="shrink-0" />}
@@ -168,16 +168,16 @@ export default function BulkImportModal({ role, classOptions, subjectOptions, on
                   </div>
                 ))}
               </div>
-              <button onClick={() => setParsed(null)} className="mt-3 text-[12.5px] font-medium text-ink/50 hover:text-ink/70">
+              <button onClick={() => setParsed(null)} className="mt-3 text-[12.5px] font-medium text-ink/50 dark:text-white/50 hover:text-ink/70 dark:hover:text-white/70">
                 Choose a different file
               </button>
-              {error && <p className="mt-3 rounded-md bg-crimson-50 px-3 py-2 text-[12.5px] text-crimson-700">{error}</p>}
+              {error && <p className="mt-3 rounded-md bg-crimson-50 dark:bg-crimson-600/15 px-3 py-2 text-[12.5px] text-crimson-700 dark:text-crimson-500">{error}</p>}
             </div>
           )}
         </div>
 
-        <div className="flex gap-2.5 border-t border-black/5 px-5 py-4">
-          <button onClick={onClose} disabled={importing} className="flex-1 rounded-lg border border-black/10 py-2.5 text-[13px] font-medium text-ink/70 hover:bg-background-muted disabled:opacity-50">
+        <div className="flex gap-2.5 border-t border-black/5 dark:border-white/10 px-5 py-4">
+          <button onClick={onClose} disabled={importing} className="flex-1 rounded-lg border border-black/10 dark:border-white/15 py-2.5 text-[13px] font-medium text-ink/70 dark:text-white/70 hover:bg-background-muted dark:hover:bg-white/5 disabled:opacity-50">
             Cancel
           </button>
           <button

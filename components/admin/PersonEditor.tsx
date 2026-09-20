@@ -75,12 +75,12 @@ export default function PersonEditor({ role, initial, classOptions, subjectOptio
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/50 p-4">
-      <div className="flex max-h-[90vh] w-full max-w-md flex-col rounded-lg bg-white shadow-card-hover">
-        <div className="flex items-center justify-between border-b border-black/5 px-5 py-4">
-          <h2 className="font-display text-[15px] font-semibold text-ink">
+      <div className="flex max-h-[90vh] w-full max-w-md flex-col rounded-lg bg-white dark:bg-[#1A1C20] shadow-card-hover">
+        <div className="flex items-center justify-between border-b border-black/5 dark:border-white/10 px-5 py-4">
+          <h2 className="font-display text-[15px] font-semibold text-ink dark:text-white">
             {initial ? "Edit" : "New"} {role === "student" ? "student" : "teacher"}
           </h2>
-          <button onClick={onCancel} className="rounded-md p-1.5 text-ink/40 hover:bg-background-muted">
+          <button onClick={onCancel} className="rounded-md p-1.5 text-ink/40 dark:text-white/40 hover:bg-background-muted dark:hover:bg-white/5">
             <X size={18} />
           </button>
         </div>
@@ -95,11 +95,11 @@ export default function PersonEditor({ role, initial, classOptions, subjectOptio
             <>
               <Field label="Student ID" value={admissionNumber} onChange={setAdmissionNumber} placeholder={`e.g. ${schoolAcronym(school.name)}/${new Date().getFullYear()}/0142`} />
               <label className="block">
-                <span className="mb-1 block text-[12px] font-medium text-ink/60">Class</span>
+                <span className="mb-1 block text-[12px] font-medium text-ink/60 dark:text-white/60">Class</span>
                 <select
                   value={classId}
                   onChange={(e) => setClassId(e.target.value)}
-                  className="w-full rounded-lg border border-black/10 px-3 py-2.5 text-[13px] outline-none focus:border-crimson-500"
+                  className="w-full rounded-lg border border-black/10 dark:border-white/15 px-3 py-2.5 text-[13px] outline-none focus:border-crimson-500"
                 >
                   {classOptions.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
@@ -111,14 +111,14 @@ export default function PersonEditor({ role, initial, classOptions, subjectOptio
             <>
               <Field label="Staff ID" value={staffId} onChange={setStaffId} placeholder={`e.g. ${schoolAcronym(school.name)}-T-014`} />
               <div>
-                <span className="mb-1.5 block text-[12px] font-medium text-ink/60">Teaches — subject &amp; class</span>
+                <span className="mb-1.5 block text-[12px] font-medium text-ink/60 dark:text-white/60">Teaches — subject &amp; class</span>
                 <div className="space-y-2">
                   {assignments.map((a, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <select
                         value={a.subjectId}
                         onChange={(e) => updateAssignment(i, { subjectId: e.target.value })}
-                        className="min-w-0 flex-1 rounded-lg border border-black/10 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500"
+                        className="min-w-0 flex-1 rounded-lg border border-black/10 dark:border-white/15 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500"
                       >
                         {subjectOptions.map((s) => (
                           <option key={s.id} value={s.id}>{s.name}</option>
@@ -127,13 +127,13 @@ export default function PersonEditor({ role, initial, classOptions, subjectOptio
                       <select
                         value={a.classId}
                         onChange={(e) => updateAssignment(i, { classId: e.target.value })}
-                        className="min-w-0 flex-1 rounded-lg border border-black/10 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500"
+                        className="min-w-0 flex-1 rounded-lg border border-black/10 dark:border-white/15 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500"
                       >
                         {classOptions.map((c) => (
                           <option key={c.id} value={c.id}>{c.name}</option>
                         ))}
                       </select>
-                      <button onClick={() => removeAssignment(i)} className="shrink-0 rounded-md p-2 text-ink/30 hover:bg-crimson-50 hover:text-crimson-700">
+                      <button onClick={() => removeAssignment(i)} className="shrink-0 rounded-md p-2 text-ink/30 dark:text-white/30 hover:bg-crimson-50 dark:hover:bg-crimson-600/15 hover:text-crimson-700 dark:hover:text-crimson-500">
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -143,7 +143,7 @@ export default function PersonEditor({ role, initial, classOptions, subjectOptio
                   type="button"
                   onClick={addAssignment}
                   disabled={subjectOptions.length === 0 || classOptions.length === 0}
-                  className="mt-2 flex items-center gap-1.5 text-[12.5px] font-medium text-crimson-700 hover:text-crimson-800 disabled:opacity-40"
+                  className="mt-2 flex items-center gap-1.5 text-[12.5px] font-medium text-crimson-700 dark:text-crimson-500 hover:text-crimson-800 disabled:opacity-40"
                 >
                   <Plus size={13} /> Add subject &amp; class
                 </button>
@@ -151,14 +151,14 @@ export default function PersonEditor({ role, initial, classOptions, subjectOptio
             </>
           )}
 
-          {error && <p className="rounded-md bg-crimson-50 px-3 py-2 text-[12.5px] text-crimson-700">{error}</p>}
+          {error && <p className="rounded-md bg-crimson-50 dark:bg-crimson-600/15 px-3 py-2 text-[12.5px] text-crimson-700 dark:text-crimson-500">{error}</p>}
         </div>
 
-        <div className="flex gap-2.5 border-t border-black/5 px-5 py-4">
+        <div className="flex gap-2.5 border-t border-black/5 dark:border-white/10 px-5 py-4">
           <button
             onClick={onCancel}
             disabled={saving}
-            className="flex-1 rounded-lg border border-black/10 py-2.5 text-[13px] font-medium text-ink/70 hover:bg-background-muted disabled:opacity-50"
+            className="flex-1 rounded-lg border border-black/10 dark:border-white/15 py-2.5 text-[13px] font-medium text-ink/70 dark:text-white/70 hover:bg-background-muted dark:hover:bg-white/5 disabled:opacity-50"
           >
             Cancel
           </button>
@@ -179,13 +179,13 @@ export default function PersonEditor({ role, initial, classOptions, subjectOptio
 function Field({ label, value, onChange, placeholder, type = "text" }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[12px] font-medium text-ink/60">{label}</span>
+      <span className="mb-1 block text-[12px] font-medium text-ink/60 dark:text-white/60">{label}</span>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-black/10 px-3.5 py-2.5 text-[13px] outline-none focus:border-crimson-500"
+        className="w-full rounded-lg border border-black/10 dark:border-white/15 px-3.5 py-2.5 text-[13px] outline-none focus:border-crimson-500"
       />
     </label>
   );

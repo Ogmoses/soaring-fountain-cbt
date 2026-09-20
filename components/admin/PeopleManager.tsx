@@ -73,13 +73,13 @@ export default function PeopleManager({
     <div>
       <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h1 className="font-display text-[18px] font-semibold text-ink sm:text-[20px]">Students &amp; teachers</h1>
-          <p className="mt-0.5 text-[13px] text-ink/50">{students.length} students · {teachers.length} teachers</p>
+          <h1 className="font-display text-[18px] font-semibold text-ink dark:text-white sm:text-[20px]">Students &amp; teachers</h1>
+          <p className="mt-0.5 text-[13px] text-ink/50 dark:text-white/50">{students.length} students · {teachers.length} teachers</p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={() => setImportOpen(true)}
-            className="flex items-center gap-1.5 rounded-lg border border-black/10 px-3.5 py-2.5 text-[13px] font-medium text-ink/70 hover:bg-background-muted"
+            className="flex items-center gap-1.5 rounded-lg border border-black/10 dark:border-white/15 px-3.5 py-2.5 text-[13px] font-medium text-ink/70 dark:text-white/70 hover:bg-background-muted dark:hover:bg-white/5"
           >
             <Upload size={15} /> Bulk import
           </button>
@@ -93,7 +93,7 @@ export default function PeopleManager({
       </div>
 
       <div className="mb-4 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="grid grid-cols-2 rounded-lg bg-background-muted p-1 sm:w-64">
+        <div className="grid grid-cols-2 rounded-lg bg-background-muted dark:bg-white/5 p-1 sm:w-64">
           {(["student", "teacher"] as PersonRole[]).map((r) => (
             <button
               key={r}
@@ -102,7 +102,7 @@ export default function PeopleManager({
                 setSearch("");
               }}
               className={`rounded-md py-2 text-[12.5px] font-semibold capitalize transition-colors duration-200 ${
-                tab === r ? "bg-white text-crimson-700 shadow-card" : "text-ink/50"
+                tab === r ? "bg-white dark:bg-[#1A1C20] text-crimson-700 dark:text-crimson-500 shadow-card" : "text-ink/50 dark:text-white/50"
               }`}
             >
               {r}s
@@ -110,48 +110,48 @@ export default function PeopleManager({
           ))}
         </div>
         <div className="relative sm:w-64">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink/35" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink/35 dark:text-white/35" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={`Search ${tab}s`}
-            className="w-full rounded-lg border border-black/10 py-2.5 pl-9 pr-3 text-[13px] outline-none focus:border-crimson-500"
+            className="w-full rounded-lg border border-black/10 dark:border-white/15 py-2.5 pl-9 pr-3 text-[13px] outline-none focus:border-crimson-500"
           />
         </div>
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-black/10 bg-white px-4 py-10 text-center text-[13px] text-ink/45">
+        <div className="rounded-lg border border-dashed border-black/10 dark:border-white/15 bg-white dark:bg-[#1A1C20] px-4 py-10 text-center text-[13px] text-ink/45 dark:text-white/45">
           No {tab}s match. Add one, or bulk import from a CSV.
         </div>
       ) : (
-        <div className="divide-y divide-black/5 rounded-lg border border-black/5 bg-white">
+        <div className="divide-y divide-black/5 dark:divide-white/10 rounded-lg border border-black/5 dark:border-white/10 bg-white dark:bg-[#1A1C20]">
           {filtered.map((p) => (
             <div key={p.id} className="flex flex-col gap-2.5 px-4 py-3.5 sm:flex-row sm:items-center sm:px-5">
               <div className="min-w-0 flex-1">
-                <p className={`truncate text-[13.5px] font-medium ${p.isActive ? "text-ink" : "text-ink/40"}`}>{p.fullName}</p>
-                <p className="truncate text-[12px] text-ink/50">
+                <p className={`truncate text-[13.5px] font-medium ${p.isActive ? "text-ink dark:text-white" : "text-ink/40 dark:text-white/40"}`}>{p.fullName}</p>
+                <p className="truncate text-[12px] text-ink/50 dark:text-white/50">
                   {p.role === "student" ? `${classNameById(p.classId)} · ${p.admissionNumber}` : `${p.email} · ${p.staffId}${p.subjectNames?.length ? ` · ${p.subjectNames.join(", ")}` : ""}`}
                 </p>
               </div>
-              {!p.isActive && <span className="w-fit shrink-0 rounded-full bg-background-muted px-2 py-0.5 text-[11px] font-medium text-ink/50">Inactive</span>}
+              {!p.isActive && <span className="w-fit shrink-0 rounded-full bg-background-muted dark:bg-white/5 px-2 py-0.5 text-[11px] font-medium text-ink/50 dark:text-white/50">Inactive</span>}
               <div className="flex shrink-0 items-center gap-1 self-end sm:self-auto">
-                <button onClick={() => setEditorState(p)} className="rounded-md p-1.5 text-ink/40 hover:bg-background-muted hover:text-ink" title="Edit">
+                <button onClick={() => setEditorState(p)} className="rounded-md p-1.5 text-ink/40 dark:text-white/40 hover:bg-background-muted dark:hover:bg-white/5 hover:text-ink dark:hover:text-white" title="Edit">
                   <Pencil size={15} />
                 </button>
                 {p.role === "teacher" && (
-                  <button onClick={() => handleResendAccess(p)} className="rounded-md p-1.5 text-ink/40 hover:bg-background-muted hover:text-ink" title="Resend access email">
+                  <button onClick={() => handleResendAccess(p)} className="rounded-md p-1.5 text-ink/40 dark:text-white/40 hover:bg-background-muted dark:hover:bg-white/5 hover:text-ink dark:hover:text-white" title="Resend access email">
                     <Send size={15} />
                   </button>
                 )}
                 <button
                   onClick={() => onToggleActive(tab, p.id, !p.isActive)}
-                  className="rounded-md p-1.5 text-ink/40 hover:bg-background-muted hover:text-ink"
+                  className="rounded-md p-1.5 text-ink/40 dark:text-white/40 hover:bg-background-muted dark:hover:bg-white/5 hover:text-ink dark:hover:text-white"
                   title={p.isActive ? "Deactivate" : "Reactivate"}
                 >
                   {p.isActive ? <Ban size={15} /> : <CheckCircle size={15} />}
                 </button>
-                <button onClick={() => setDeleteTarget(p)} className="rounded-md p-1.5 text-ink/40 hover:bg-crimson-50 hover:text-crimson-700" title="Delete">
+                <button onClick={() => setDeleteTarget(p)} className="rounded-md p-1.5 text-ink/40 dark:text-white/40 hover:bg-crimson-50 dark:hover:bg-crimson-600/15 hover:text-crimson-700 dark:hover:text-crimson-500" title="Delete">
                   <Trash2 size={15} />
                 </button>
               </div>
@@ -184,13 +184,13 @@ export default function PeopleManager({
 
       {deleteTarget && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/50 p-4">
-          <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-card-hover">
-            <h2 className="font-display text-[15px] font-semibold text-ink">Delete {deleteTarget.fullName}?</h2>
-            <p className="mt-1.5 text-[13px] text-ink/60">
+          <div className="w-full max-w-sm rounded-lg bg-white dark:bg-[#1A1C20] p-6 shadow-card-hover">
+            <h2 className="font-display text-[15px] font-semibold text-ink dark:text-white">Delete {deleteTarget.fullName}?</h2>
+            <p className="mt-1.5 text-[13px] text-ink/60 dark:text-white/60">
               This removes their account permanently. Consider deactivating instead if they might return.
             </p>
             <div className="mt-4 flex gap-2.5">
-              <button onClick={() => setDeleteTarget(null)} className="flex-1 rounded-lg border border-black/10 py-2.5 text-[13px] font-medium text-ink/70 hover:bg-background-muted">
+              <button onClick={() => setDeleteTarget(null)} className="flex-1 rounded-lg border border-black/10 dark:border-white/15 py-2.5 text-[13px] font-medium text-ink/70 dark:text-white/70 hover:bg-background-muted dark:hover:bg-white/5">
                 Cancel
               </button>
               <button
@@ -209,15 +209,15 @@ export default function PeopleManager({
 
       {createdStudent && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/50 p-4">
-          <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-card-hover">
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-crimson-50 text-crimson-700">
+          <div className="w-full max-w-sm rounded-lg bg-white dark:bg-[#1A1C20] p-6 shadow-card-hover">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-crimson-50 dark:bg-crimson-600/15 text-crimson-700 dark:text-crimson-500">
               <KeyRound size={18} />
             </div>
-            <h2 className="font-display text-[15px] font-semibold text-ink">Account created</h2>
-            <p className="mt-1.5 text-[13px] leading-relaxed text-ink/60">
+            <h2 className="font-display text-[15px] font-semibold text-ink dark:text-white">Account created</h2>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-ink/60 dark:text-white/60">
               No password to hand over — {createdStudent.name} signs in with their full name (not case-sensitive) and their student ID:
             </p>
-            <p className="mt-3 rounded-md bg-background-muted px-3 py-2.5 text-center font-mono text-[15px] font-semibold text-ink">
+            <p className="mt-3 rounded-md bg-background-muted dark:bg-white/5 px-3 py-2.5 text-center font-mono text-[15px] font-semibold text-ink dark:text-white">
               {createdStudent.studentId}
             </p>
             <button
@@ -232,13 +232,13 @@ export default function PeopleManager({
 
       {invitedTeacher && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/50 p-4">
-          <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-card-hover">
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-crimson-50 text-crimson-700">
+          <div className="w-full max-w-sm rounded-lg bg-white dark:bg-[#1A1C20] p-6 shadow-card-hover">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-crimson-50 dark:bg-crimson-600/15 text-crimson-700 dark:text-crimson-500">
               <Mail size={18} />
             </div>
-            <h2 className="font-display text-[15px] font-semibold text-ink">Invite sent</h2>
-            <p className="mt-1.5 text-[13px] text-ink/60">
-              {invitedTeacher.name} will get an email at <span className="font-medium text-ink">{invitedTeacher.email}</span> to set their own password and sign in.
+            <h2 className="font-display text-[15px] font-semibold text-ink dark:text-white">Invite sent</h2>
+            <p className="mt-1.5 text-[13px] text-ink/60 dark:text-white/60">
+              {invitedTeacher.name} will get an email at <span className="font-medium text-ink dark:text-white">{invitedTeacher.email}</span> to set their own password and sign in.
             </p>
             <button
               onClick={() => setInvitedTeacher(null)}

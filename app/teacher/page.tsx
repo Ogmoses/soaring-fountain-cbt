@@ -90,8 +90,8 @@ export default function TeacherOverviewPage() {
         <PageLoading />
       ) : (
         <div className="pb-10">
-          <h1 className="font-display text-[18px] font-semibold text-ink sm:text-[20px]">Welcome back{authUser?.fullName ? `, ${authUser.fullName.trim().split(/\s+/).pop()}` : ""}</h1>
-          <p className="mt-0.5 text-[13px] text-ink/50">{new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</p>
+          <h1 className="font-display text-[18px] font-semibold text-ink dark:text-white sm:text-[20px]">Welcome back{authUser?.fullName ? `, ${authUser.fullName.trim().split(/\s+/).pop()}` : ""}</h1>
+          <p className="mt-0.5 text-[13px] text-ink/50 dark:text-white/50">{new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</p>
 
           <div className="mt-5 grid grid-cols-3 gap-3">
             <StatCard icon={BookOpen} label="Subjects" value={subjectCount} />
@@ -100,23 +100,23 @@ export default function TeacherOverviewPage() {
           </div>
 
           <div className="mt-6">
-            <h2 className="mb-3 font-display text-[15px] font-semibold text-ink">Today's batches for your exams</h2>
+            <h2 className="mb-3 font-display text-[15px] font-semibold text-ink dark:text-white">Today's batches for your exams</h2>
             {todayBatches.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-black/10 bg-white px-4 py-8 text-center text-[13px] text-ink/45">
+              <div className="rounded-lg border border-dashed border-black/10 bg-white px-4 py-8 text-center text-[13px] text-ink/45 dark:border-white/15 dark:bg-[#1A1C20] dark:text-white/45">
                 Nothing scheduled today.
               </div>
             ) : (
-              <div className="divide-y divide-black/5 rounded-lg border border-black/5 bg-white">
+              <div className="divide-y divide-black/5 rounded-lg border border-black/5 bg-white dark:divide-white/10 dark:border-white/10 dark:bg-[#1A1C20]">
                 {todayBatches.map((b) => (
                   <div key={b.id} className="flex items-center gap-3.5 px-4 py-3.5 sm:px-5">
-                    <div className="w-16 shrink-0 text-[12px] font-semibold tabular-nums text-ink/60">
+                    <div className="w-16 shrink-0 text-[12px] font-semibold tabular-nums text-ink/60 dark:text-white/60">
                       {formatTime(b.startsAt)}–{formatTime(b.endsAt)}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[13.5px] font-medium text-ink">{b.examTitle}</p>
-                      <p className="text-[12px] text-ink/50">{b.batchLabel}</p>
+                      <p className="truncate text-[13.5px] font-medium text-ink dark:text-white">{b.examTitle}</p>
+                      <p className="text-[12px] text-ink/50 dark:text-white/50">{b.batchLabel}</p>
                     </div>
-                    <span className="shrink-0 text-[12px] text-ink/45">{b.studentCount} students</span>
+                    <span className="shrink-0 text-[12px] text-ink/45 dark:text-white/45">{b.studentCount} students</span>
                   </div>
                 ))}
               </div>
@@ -137,23 +137,23 @@ export default function TeacherOverviewPage() {
 
 function StatCard({ icon: Icon, label, value, tone = "default" }: { icon: React.ElementType; label: string; value: number; tone?: "warn" | "default" }) {
   return (
-    <div className="rounded-lg border border-black/5 bg-white p-4 shadow-card">
-      <div className={`mb-2 flex h-8 w-8 items-center justify-center rounded-md ${tone === "warn" ? "bg-crimson-50 text-crimson-700" : "bg-background-muted text-ink/60"}`}>
+    <div className="rounded-lg border border-black/5 bg-white p-4 shadow-card dark:border-white/10 dark:bg-[#1A1C20]">
+      <div className={`mb-2 flex h-8 w-8 items-center justify-center rounded-md ${tone === "warn" ? "bg-crimson-50 text-crimson-700 dark:bg-crimson-600/15 dark:text-crimson-500" : "bg-background-muted text-ink/60 dark:bg-white/5 dark:text-white/60"}`}>
         <Icon size={16} />
       </div>
-      <p className="font-display text-[19px] font-semibold text-ink">{value}</p>
-      <p className="text-[11.5px] text-ink/45">{label}</p>
+      <p className="font-display text-[19px] font-semibold text-ink dark:text-white">{value}</p>
+      <p className="text-[11.5px] text-ink/45 dark:text-white/45">{label}</p>
     </div>
   );
 }
 
 function QuickLink({ href, icon: Icon, label }: { href: string; icon: React.ElementType; label: string }) {
   return (
-    <Link href={href} className="flex flex-col items-center gap-2 rounded-lg border border-black/5 bg-white p-4 text-center shadow-card transition-shadow duration-200 hover:shadow-card-hover">
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-crimson-50 text-crimson-700">
+    <Link href={href} className="flex flex-col items-center gap-2 rounded-lg border border-black/5 bg-white p-4 text-center shadow-card transition-shadow duration-200 hover:shadow-card-hover dark:border-white/10 dark:bg-[#1A1C20]">
+      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-crimson-50 text-crimson-700 dark:bg-crimson-600/15 dark:text-crimson-500">
         <Icon size={17} />
       </div>
-      <span className="text-[12px] font-medium text-ink/75">{label}</span>
+      <span className="text-[12px] font-medium text-ink/75 dark:text-white/75">{label}</span>
     </Link>
   );
 }

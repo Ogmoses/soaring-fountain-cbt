@@ -141,17 +141,17 @@ export default function QuestionEditor({ initial, subjects, classes, defaultSubj
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/50 p-4">
-      <div className="flex max-h-[90vh] w-full max-w-xl flex-col rounded-lg bg-white shadow-card-hover">
-        <div className="flex items-center justify-between border-b border-black/5 px-5 py-4">
+      <div className="flex max-h-[90vh] w-full max-w-xl flex-col rounded-lg bg-white dark:bg-[#1A1C20] shadow-card-hover">
+        <div className="flex items-center justify-between border-b border-black/5 dark:border-white/10 px-5 py-4">
           <div>
-            <h2 className="font-display text-[15px] font-semibold text-ink">{initial ? "Edit question" : "New question"}</h2>
+            <h2 className="font-display text-[15px] font-semibold text-ink dark:text-white">{initial ? "Edit question" : "New question"}</h2>
             {!initial && savedCount > 0 && (
               <p className="mt-0.5 text-[12px] font-medium text-crimson-600">
                 {savedCount} saved this session — keep going or tap Done
               </p>
             )}
           </div>
-          <button onClick={onCancel} className="rounded-md p-1.5 text-ink/40 hover:bg-background-muted">
+          <button onClick={onCancel} className="rounded-md p-1.5 text-ink/40 dark:text-white/40 hover:bg-background-muted dark:hover:bg-white/5">
             <X size={18} />
           </button>
         </div>
@@ -159,11 +159,11 @@ export default function QuestionEditor({ initial, subjects, classes, defaultSubj
         <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
           <div className="grid grid-cols-2 gap-3">
             <label className="block">
-              <span className="mb-1 block text-[12px] font-medium text-ink/60">Subject</span>
+              <span className="mb-1 block text-[12px] font-medium text-ink/60 dark:text-white/60">Subject</span>
               <select
                 value={subjectId}
                 onChange={(e) => setSubjectId(e.target.value)}
-                className="w-full rounded-lg border border-black/10 px-3 py-2.5 text-[13px] outline-none focus:border-crimson-500"
+                className="w-full rounded-lg border border-black/10 dark:border-white/15 px-3 py-2.5 text-[13px] outline-none focus:border-crimson-500"
               >
                 {subjects.map((s) => (
                   <option key={s.id} value={s.id}>{s.name}</option>
@@ -171,11 +171,11 @@ export default function QuestionEditor({ initial, subjects, classes, defaultSubj
               </select>
             </label>
             <label className="block">
-              <span className="mb-1 block text-[12px] font-medium text-ink/60">Class</span>
+              <span className="mb-1 block text-[12px] font-medium text-ink/60 dark:text-white/60">Class</span>
               <select
                 value={classId}
                 onChange={(e) => setClassId(e.target.value)}
-                className="w-full rounded-lg border border-black/10 px-3 py-2.5 text-[13px] outline-none focus:border-crimson-500"
+                className="w-full rounded-lg border border-black/10 dark:border-white/15 px-3 py-2.5 text-[13px] outline-none focus:border-crimson-500"
               >
                 <option value="" disabled>Select a class</option>
                 {classes.map((c) => (
@@ -186,18 +186,18 @@ export default function QuestionEditor({ initial, subjects, classes, defaultSubj
           </div>
           <div>
             <label className="block">
-              <span className="mb-1 block text-[12px] font-medium text-ink/60">Topic</span>
+              <span className="mb-1 block text-[12px] font-medium text-ink/60 dark:text-white/60">Topic</span>
               <input
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 placeholder="e.g. Quadratic equations"
-                className="w-full rounded-lg border border-black/10 px-3 py-2.5 text-[13px] outline-none focus:border-crimson-500"
+                className="w-full rounded-lg border border-black/10 dark:border-white/15 px-3 py-2.5 text-[13px] outline-none focus:border-crimson-500"
               />
             </label>
           </div>
 
           <div>
-            <span className="mb-1.5 block text-[12px] font-medium text-ink/60">Question type</span>
+            <span className="mb-1.5 block text-[12px] font-medium text-ink/60 dark:text-white/60">Question type</span>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {(Object.keys(QUESTION_TYPE_LABEL) as QuestionType[]).map((t) => (
                 <button
@@ -205,7 +205,7 @@ export default function QuestionEditor({ initial, subjects, classes, defaultSubj
                   type="button"
                   onClick={() => handleTypeChange(t)}
                   className={`rounded-md px-2.5 py-2 text-[12px] font-medium transition-colors duration-200 ${
-                    type === t ? "bg-crimson-600 text-white" : "bg-background-muted text-ink/60 hover:bg-black/5"
+                    type === t ? "bg-crimson-600 text-white" : "bg-background-muted dark:bg-white/5 text-ink/60 dark:text-white/60 hover:bg-black/5"
                   }`}
                 >
                   {QUESTION_TYPE_LABEL[t]}
@@ -215,32 +215,32 @@ export default function QuestionEditor({ initial, subjects, classes, defaultSubj
           </div>
 
           <label className="block">
-            <span className="mb-1 block text-[12px] font-medium text-ink/60">Prompt</span>
+            <span className="mb-1 block text-[12px] font-medium text-ink/60 dark:text-white/60">Prompt</span>
             <textarea
               ref={promptRef}
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               rows={3}
               placeholder="Type the question text"
-              className="w-full resize-none rounded-lg border border-black/10 px-3 py-2.5 text-[13px] outline-none focus:border-crimson-500"
+              className="w-full resize-none rounded-lg border border-black/10 dark:border-white/15 px-3 py-2.5 text-[13px] outline-none focus:border-crimson-500"
             />
           </label>
 
           <div>
-            <span className="mb-1.5 block text-[12px] font-medium text-ink/60">Diagram (optional)</span>
+            <span className="mb-1.5 block text-[12px] font-medium text-ink/60 dark:text-white/60">Diagram (optional)</span>
             {imageUrl ? (
               <div className="relative w-fit">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={imageUrl} alt="Question diagram" className="max-h-32 rounded-md border border-black/10" />
+                <img src={imageUrl} alt="Question diagram" className="max-h-32 rounded-md border border-black/10 dark:border-white/15" />
                 <button
                   onClick={() => setImageUrl(null)}
-                  className="absolute -right-2 -top-2 rounded-full bg-white p-1 text-ink/60 shadow-card hover:text-crimson-700"
+                  className="absolute -right-2 -top-2 rounded-full bg-white dark:bg-[#1A1C20] p-1 text-ink/60 dark:text-white/60 shadow-card hover:text-crimson-700 dark:hover:text-crimson-500"
                 >
                   <X size={13} />
                 </button>
               </div>
             ) : (
-              <label className="flex w-fit cursor-pointer items-center gap-2 rounded-lg border border-dashed border-black/15 px-3.5 py-2.5 text-[12.5px] font-medium text-ink/50 hover:border-black/25 hover:text-ink/70">
+              <label className="flex w-fit cursor-pointer items-center gap-2 rounded-lg border border-dashed border-black/15 px-3.5 py-2.5 text-[12.5px] font-medium text-ink/50 dark:text-white/50 hover:border-black/25 hover:text-ink/70 dark:hover:text-white/70">
                 <ImagePlus size={15} />
                 Upload image
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageChange(e.target.files?.[0] ?? null)} />
@@ -250,7 +250,7 @@ export default function QuestionEditor({ initial, subjects, classes, defaultSubj
 
           {(type === "multiple_choice" || type === "true_false") && (
             <div>
-              <span className="mb-1.5 block text-[12px] font-medium text-ink/60">Options — select the correct one</span>
+              <span className="mb-1.5 block text-[12px] font-medium text-ink/60 dark:text-white/60">Options — select the correct one</span>
               <div className="space-y-2">
                 {options.map((opt) => (
                   <div key={opt.id} className="flex items-center gap-2.5">
@@ -262,16 +262,16 @@ export default function QuestionEditor({ initial, subjects, classes, defaultSubj
                         opt.isCorrect ? "border-crimson-600 bg-crimson-600" : "border-black/20"
                       }`}
                     >
-                      {opt.isCorrect && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+                      {opt.isCorrect && <span className="h-1.5 w-1.5 rounded-full bg-white dark:bg-[#1A1C20]" />}
                     </button>
                     <input
                       value={opt.text}
                       onChange={(e) => updateOption(opt.id, { text: e.target.value })}
                       disabled={type === "true_false"}
-                      className="flex-1 rounded-lg border border-black/10 px-3 py-2 text-[13px] outline-none focus:border-crimson-500 disabled:bg-background-muted disabled:text-ink/60"
+                      className="flex-1 rounded-lg border border-black/10 dark:border-white/15 px-3 py-2 text-[13px] outline-none focus:border-crimson-500 disabled:bg-background-muted dark:bg-white/5 disabled:text-ink/60 dark:text-white/60"
                     />
                     {type === "multiple_choice" && options.length > 2 && (
-                      <button onClick={() => removeOption(opt.id)} className="text-ink/30 hover:text-crimson-600">
+                      <button onClick={() => removeOption(opt.id)} className="text-ink/30 dark:text-white/30 hover:text-crimson-600">
                         <Trash2 size={15} />
                       </button>
                     )}
@@ -282,7 +282,7 @@ export default function QuestionEditor({ initial, subjects, classes, defaultSubj
                 <button
                   type="button"
                   onClick={addOption}
-                  className="mt-2 flex items-center gap-1.5 text-[12.5px] font-medium text-crimson-700 hover:text-crimson-800"
+                  className="mt-2 flex items-center gap-1.5 text-[12.5px] font-medium text-crimson-700 dark:text-crimson-500 hover:text-crimson-800"
                 >
                   <Plus size={14} /> Add option
                 </button>
@@ -292,47 +292,47 @@ export default function QuestionEditor({ initial, subjects, classes, defaultSubj
 
           {type === "fill_blank" && (
             <label className="block">
-              <span className="mb-1 block text-[12px] font-medium text-ink/60">Expected answer (auto-graded, exact match)</span>
+              <span className="mb-1 block text-[12px] font-medium text-ink/60 dark:text-white/60">Expected answer (auto-graded, exact match)</span>
               <input
                 value={referenceAnswer}
                 onChange={(e) => setReferenceAnswer(e.target.value)}
-                className="w-full rounded-lg border border-black/10 px-3 py-2.5 text-[13px] outline-none focus:border-crimson-500"
+                className="w-full rounded-lg border border-black/10 dark:border-white/15 px-3 py-2.5 text-[13px] outline-none focus:border-crimson-500"
               />
             </label>
           )}
 
           {type === "short_theory" && (
             <label className="block">
-              <span className="mb-1 block text-[12px] font-medium text-ink/60">Marking guide (shown to the grader, not the student)</span>
+              <span className="mb-1 block text-[12px] font-medium text-ink/60 dark:text-white/60">Marking guide (shown to the grader, not the student)</span>
               <textarea
                 value={referenceAnswer}
                 onChange={(e) => setReferenceAnswer(e.target.value)}
                 rows={3}
-                className="w-full resize-none rounded-lg border border-black/10 px-3 py-2.5 text-[13px] outline-none focus:border-crimson-500"
+                className="w-full resize-none rounded-lg border border-black/10 dark:border-white/15 px-3 py-2.5 text-[13px] outline-none focus:border-crimson-500"
               />
             </label>
           )}
 
           <label className="block w-32">
-            <span className="mb-1 block text-[12px] font-medium text-ink/60">Points</span>
+            <span className="mb-1 block text-[12px] font-medium text-ink/60 dark:text-white/60">Points</span>
             <input
               type="number"
               min={0.5}
               step={0.5}
               value={points}
               onChange={(e) => setPoints(Number(e.target.value))}
-              className="w-full rounded-lg border border-black/10 px-3 py-2.5 text-[13px] outline-none focus:border-crimson-500"
+              className="w-full rounded-lg border border-black/10 dark:border-white/15 px-3 py-2.5 text-[13px] outline-none focus:border-crimson-500"
             />
           </label>
 
-          {error && <p className="rounded-md bg-crimson-50 px-3 py-2 text-[12.5px] text-crimson-700">{error}</p>}
+          {error && <p className="rounded-md bg-crimson-50 dark:bg-crimson-600/15 px-3 py-2 text-[12.5px] text-crimson-700 dark:text-crimson-500">{error}</p>}
         </div>
 
-        <div className="flex gap-2.5 border-t border-black/5 px-5 py-4">
+        <div className="flex gap-2.5 border-t border-black/5 dark:border-white/10 px-5 py-4">
           <button
             onClick={onCancel}
             disabled={saving}
-            className="flex-1 rounded-lg border border-black/10 py-2.5 text-[13px] font-medium text-ink/70 hover:bg-background-muted disabled:opacity-50"
+            className="flex-1 rounded-lg border border-black/10 dark:border-white/15 py-2.5 text-[13px] font-medium text-ink/70 dark:text-white/70 hover:bg-background-muted dark:hover:bg-white/5 disabled:opacity-50"
           >
             {!initial && savedCount > 0 ? "Done" : "Cancel"}
           </button>

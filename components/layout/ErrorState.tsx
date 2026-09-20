@@ -23,11 +23,11 @@ export default function ErrorState({
       <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-crimson-50 text-crimson-700">
         <AlertTriangle size={18} strokeWidth={2.25} />
       </div>
-      <p className="max-w-xs text-[13px] text-ink/50">{message}</p>
+      <p className="max-w-xs text-[13px] text-ink/50 dark:text-white/50">{message}</p>
       {onRetry && (
         <button
           onClick={onRetry}
-          className="mt-1 flex items-center gap-1.5 rounded-lg border border-black/10 px-3.5 py-2 text-[12.5px] font-medium text-ink/70 transition-colors hover:bg-black/5"
+          className="mt-1 flex items-center gap-1.5 rounded-lg border border-black/10 px-3.5 py-2 text-[12.5px] font-medium text-ink/70 transition-colors hover:bg-black/5 dark:border-white/15 dark:text-white/70 dark:hover:bg-white/5"
         >
           <RotateCw size={13} />
           Try again

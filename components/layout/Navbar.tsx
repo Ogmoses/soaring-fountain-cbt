@@ -26,22 +26,22 @@ export default function Navbar({
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-black/5 bg-white/90 px-4 backdrop-blur sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-black/5 bg-white/90 px-4 backdrop-blur dark:border-white/10 dark:bg-[#16181C]/90 sm:px-6">
       <div className="flex items-center gap-3">
         <button
           onClick={onMenuClick}
           aria-label="Open menu"
-          className="rounded-md p-2 text-ink/60 transition-colors duration-200 hover:bg-background-muted lg:hidden"
+          className="rounded-md p-2 text-ink/60 transition-colors duration-200 hover:bg-background-muted dark:text-white/60 dark:hover:bg-white/5 lg:hidden"
         >
           <Menu size={20} />
         </button>
-        <h1 className="font-display text-[15px] font-semibold text-ink sm:text-[17px]">{title}</h1>
+        <h1 className="font-display text-[15px] font-semibold text-ink dark:text-white sm:text-[17px]">{title}</h1>
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3">
         <button
           aria-label="Notifications"
-          className="relative rounded-md p-2 text-ink/60 transition-colors duration-200 hover:bg-background-muted"
+          className="relative rounded-md p-2 text-ink/60 transition-colors duration-200 hover:bg-background-muted dark:text-white/60 dark:hover:bg-white/5"
         >
           <Bell size={19} />
           {notificationCount > 0 && (
@@ -52,7 +52,7 @@ export default function Navbar({
         <div className="relative">
           <button
             onClick={() => setMenuOpen((v) => !v)}
-            className="flex items-center gap-2 rounded-lg py-1.5 pl-1.5 pr-2 transition-colors duration-200 hover:bg-background-muted"
+            className="flex items-center gap-2 rounded-lg py-1.5 pl-1.5 pr-2 transition-colors duration-200 hover:bg-background-muted dark:hover:bg-white/5"
           >
             <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-crimson-100 text-crimson-700">
               {userPhotoUrl ? (
@@ -62,10 +62,10 @@ export default function Navbar({
                 <UserIcon size={16} />
               )}
             </div>
-            <span className="hidden max-w-[120px] truncate text-[13px] font-medium text-ink sm:inline">
+            <span className="hidden max-w-[120px] truncate text-[13px] font-medium text-ink dark:text-white sm:inline">
               {userName}
             </span>
-            <ChevronDown size={15} className="hidden text-ink/40 sm:inline" />
+            <ChevronDown size={15} className="hidden text-ink/40 dark:text-white/40 sm:inline" />
           </button>
 
           <AnimatePresence>
@@ -77,21 +77,21 @@ export default function Navbar({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute right-0 z-40 mt-2 w-44 overflow-hidden rounded-lg border border-black/5 bg-white shadow-card-hover"
+                  className="absolute right-0 z-40 mt-2 w-44 overflow-hidden rounded-lg border border-black/5 bg-white shadow-card-hover dark:border-white/10 dark:bg-[#1A1C20]"
                 >
                   <button
                     onClick={() => {
                       setMenuOpen(false);
                       onViewProfile();
                     }}
-                    className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[13px] font-medium text-ink/70 transition-colors duration-200 hover:bg-background-muted"
+                    className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-[13px] font-medium text-ink/70 transition-colors duration-200 hover:bg-background-muted dark:text-white/70 dark:hover:bg-white/5"
                   >
                     <UserIcon size={15} />
                     Profile
                   </button>
                   <button
                     onClick={onLogout}
-                    className="flex w-full items-center gap-2 border-t border-black/5 px-3.5 py-2.5 text-left text-[13px] font-medium text-crimson-700 transition-colors duration-200 hover:bg-crimson-50"
+                    className="flex w-full items-center gap-2 border-t border-black/5 px-3.5 py-2.5 text-left text-[13px] font-medium text-crimson-700 transition-colors duration-200 hover:bg-crimson-50 dark:border-white/10 dark:hover:bg-crimson-600/10"
                   >
                     <LogOut size={15} />
                     Log out

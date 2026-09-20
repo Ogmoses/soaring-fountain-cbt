@@ -81,7 +81,7 @@ function SidebarContent({ role, userName, onNavigate }: { role: Role; userName: 
   const school = useSchoolProfile();
 
   return (
-    <div className="flex h-full flex-col bg-white">
+    <div className="flex h-full flex-col bg-white dark:bg-[#16181C]">
       <div className="flex items-center gap-2.5 px-5 py-5">
         {school.logoUrl ? (
           <img src={school.logoUrl} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover" />
@@ -91,8 +91,8 @@ function SidebarContent({ role, userName, onNavigate }: { role: Role; userName: 
           </div>
         )}
         <div className="min-w-0 leading-tight">
-          <p className="font-display text-[13.5px] font-semibold leading-snug text-ink">{school.name}</p>
-          {school.motto && <p className="truncate text-[11px] text-ink/50">{school.motto}</p>}
+          <p className="font-display text-[13.5px] font-semibold leading-snug text-ink dark:text-white">{school.name}</p>
+          {school.motto && <p className="truncate text-[11px] text-ink/50 dark:text-white/50">{school.motto}</p>}
         </div>
       </div>
 
@@ -106,8 +106,8 @@ function SidebarContent({ role, userName, onNavigate }: { role: Role; userName: 
               onClick={onNavigate}
               className={`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13.5px] font-medium transition-colors duration-200 ${
                 active
-                  ? "bg-crimson-50 text-crimson-700"
-                  : "text-ink/65 hover:bg-background-muted hover:text-ink"
+                  ? "bg-crimson-50 text-crimson-700 dark:bg-crimson-600/15 dark:text-crimson-500"
+                  : "text-ink/65 hover:bg-background-muted hover:text-ink dark:text-white/60 dark:hover:bg-white/5 dark:hover:text-white"
               }`}
             >
               {active && (
@@ -117,16 +117,16 @@ function SidebarContent({ role, userName, onNavigate }: { role: Role; userName: 
                   transition={{ type: "spring", stiffness: 500, damping: 40 }}
                 />
               )}
-              <Icon size={18} strokeWidth={2} className={active ? "text-crimson-600" : "text-ink/40 group-hover:text-ink/70"} />
+              <Icon size={18} strokeWidth={2} className={active ? "text-crimson-600 dark:text-crimson-500" : "text-ink/40 group-hover:text-ink/70 dark:text-white/40 dark:group-hover:text-white/70"} />
               <span>{label}</span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="border-t border-black/5 px-5 py-4">
-        <p className="text-[11px] uppercase tracking-wide text-ink/40">Signed in as</p>
-        <p className="mt-0.5 truncate text-[13px] font-medium text-ink">{userName}</p>
+      <div className="border-t border-black/5 px-5 py-4 dark:border-white/10">
+        <p className="text-[11px] uppercase tracking-wide text-ink/40 dark:text-white/40">Signed in as</p>
+        <p className="mt-0.5 truncate text-[13px] font-medium text-ink dark:text-white">{userName}</p>
       </div>
     </div>
   );
@@ -136,7 +136,7 @@ export default function Sidebar({ role, userName, open, onClose }: SidebarProps)
   return (
     <>
       {/* Desktop: static sidebar */}
-      <aside className="hidden w-64 shrink-0 border-r border-black/5 lg:block">
+      <aside className="hidden w-64 shrink-0 border-r border-black/5 dark:border-white/10 lg:block">
         <SidebarContent role={role} userName={userName} />
       </aside>
 
@@ -162,7 +162,7 @@ export default function Sidebar({ role, userName, open, onClose }: SidebarProps)
               <button
                 onClick={onClose}
                 aria-label="Close menu"
-                className="absolute right-3 top-4 rounded-md p-1.5 text-ink/50 hover:bg-background-muted"
+                className="absolute right-3 top-4 rounded-md p-1.5 text-ink/50 hover:bg-background-muted dark:text-white/50 dark:hover:bg-white/5"
               >
                 <X size={18} />
               </button>

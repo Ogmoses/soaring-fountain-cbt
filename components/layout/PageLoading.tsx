@@ -15,7 +15,7 @@ export default function PageLoading({ label = "Loading…" }: { label?: string }
       <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-crimson-600 text-white">
         <Waves size={18} strokeWidth={2.25} className="animate-pulse" />
       </div>
-      <p className="text-[13px] text-ink/40">{label}</p>
+      <p className="text-[13px] text-ink/40 dark:text-white/40">{label}</p>
     </div>
   );
 }

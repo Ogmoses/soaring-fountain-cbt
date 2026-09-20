@@ -23,8 +23,8 @@ export default function SettingsManager({ profile, gradingScale, onSaveProfile, 
   return (
     <div className="max-w-2xl space-y-6 pb-10">
       <div>
-        <h1 className="font-display text-[18px] font-semibold text-ink sm:text-[20px]">Settings</h1>
-        <p className="mt-0.5 text-[13px] text-ink/50">School profile and the grading scale used across results and report cards.</p>
+        <h1 className="font-display text-[18px] font-semibold text-ink dark:text-white sm:text-[20px]">Settings</h1>
+        <p className="mt-0.5 text-[13px] text-ink/50 dark:text-white/50">School profile and the grading scale used across results and report cards.</p>
       </div>
       <ProfileSection profile={profile} onSave={onSaveProfile} />
       <ThemeSection currentThemeKey={profile.themeKey} onSave={onSaveTheme} />
@@ -72,16 +72,15 @@ function ThemeSection({ currentThemeKey, onSave }: { currentThemeKey?: string; o
                 setSelected(theme.key);
                 setSaved(false);
               }}
-              className={`relative overflow-hidden rounded-lg border-2 p-2.5 text-left transition-colors ${
-                isSelected ? "border-crimson-600" : "border-transparent hover:border-black/10"
+              className={`relative overflow-hidden rounded-lg border-2 bg-white p-2.5 text-left transition-colors dark:bg-[#1A1C20] ${
+                isSelected ? "border-crimson-600" : "border-transparent hover:border-black/10 dark:hover:border-white/15"
               }`}
-              style={{ backgroundColor: "#fff" }}
             >
               <div className="mb-2 flex h-9 w-full overflow-hidden rounded-md">
                 <div className="w-1/2" style={{ backgroundColor: theme.base }} />
                 <div className="w-1/2" style={{ backgroundColor: theme.bright }} />
               </div>
-              <p className="text-[11.5px] font-medium text-ink">{theme.name}</p>
+              <p className="text-[11.5px] font-medium text-ink dark:text-white">{theme.name}</p>
               {isSelected && (
                 <div className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-crimson-600 text-white">
                   <Check size={12} strokeWidth={3} />
@@ -131,13 +130,13 @@ function ProfileSection({ profile, onSave }: { profile: SchoolProfile; onSave: (
         {logoUrl ? (
           <div className="relative">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={logoUrl} alt="School logo" className="h-16 w-16 rounded-lg border border-black/10 object-contain" />
-            <button onClick={() => setLogoUrl(null)} className="absolute -right-2 -top-2 rounded-full bg-white p-1 text-ink/60 shadow-card hover:text-crimson-700">
+            <img src={logoUrl} alt="School logo" className="h-16 w-16 rounded-lg border border-black/10 dark:border-white/15 object-contain" />
+            <button onClick={() => setLogoUrl(null)} className="absolute -right-2 -top-2 rounded-full bg-white dark:bg-[#1A1C20] p-1 text-ink/60 dark:text-white/60 shadow-card hover:text-crimson-700 dark:hover:text-crimson-500">
               <X size={12} />
             </button>
           </div>
         ) : (
-          <label className="flex h-16 w-16 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-black/15 text-ink/40 hover:border-black/25">
+          <label className="flex h-16 w-16 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-black/15 text-ink/40 dark:text-white/40 hover:border-black/25">
             <ImagePlus size={17} />
             <span className="text-[9px] font-medium">Logo</span>
             <input type="file" accept="image/*" className="hidden" onChange={(e) => handleLogo(e.target.files?.[0] ?? null)} />
@@ -149,12 +148,12 @@ function ProfileSection({ profile, onSave }: { profile: SchoolProfile; onSave: (
         </div>
       </div>
       <label className="mt-3.5 block">
-        <span className="mb-1 block text-[12px] font-medium text-ink/60">Address</span>
+        <span className="mb-1 block text-[12px] font-medium text-ink/60 dark:text-white/60">Address</span>
         <textarea
           value={address}
           onChange={(e) => setAddress(e.target.value)}
           rows={2}
-          className="w-full resize-none rounded-lg border border-black/10 px-3.5 py-2.5 text-[13px] outline-none focus:border-crimson-500"
+          className="w-full resize-none rounded-lg border border-black/10 dark:border-white/15 px-3.5 py-2.5 text-[13px] outline-none focus:border-crimson-500"
         />
       </label>
 
@@ -193,7 +192,7 @@ function GradingScaleSection({ bands: initialBands, onSave }: { bands: GradeBand
     <SectionCard title="Grading scale" subtitle="Score ranges map to a letter grade and remark">
       {/* Desktop/tablet: compact grid-table */}
       <div className="hidden space-y-2 sm:block">
-        <div className="grid grid-cols-[1fr_1fr_0.7fr_1.4fr_auto] gap-2 px-1 text-[11px] font-medium uppercase tracking-wide text-ink/40">
+        <div className="grid grid-cols-[1fr_1fr_0.7fr_1.4fr_auto] gap-2 px-1 text-[11px] font-medium uppercase tracking-wide text-ink/40 dark:text-white/40">
           <span>Min</span>
           <span>Max</span>
           <span>Grade</span>
@@ -202,11 +201,11 @@ function GradingScaleSection({ bands: initialBands, onSave }: { bands: GradeBand
         </div>
         {bands.map((b) => (
           <div key={b.id} className="grid grid-cols-[1fr_1fr_0.7fr_1.4fr_auto] items-center gap-2">
-            <input type="number" value={b.minScore} onChange={(e) => update(b.id, { minScore: Number(e.target.value) })} className="w-full min-w-0 rounded-lg border border-black/10 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500" />
-            <input type="number" value={b.maxScore} onChange={(e) => update(b.id, { maxScore: Number(e.target.value) })} className="w-full min-w-0 rounded-lg border border-black/10 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500" />
-            <input value={b.gradeLetter} onChange={(e) => update(b.id, { gradeLetter: e.target.value })} className="w-full min-w-0 rounded-lg border border-black/10 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500" />
-            <input value={b.remark} onChange={(e) => update(b.id, { remark: e.target.value })} className="w-full min-w-0 rounded-lg border border-black/10 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500" />
-            <button onClick={() => removeBand(b.id)} className="shrink-0 rounded-md p-2 text-ink/30 hover:bg-crimson-50 hover:text-crimson-700">
+            <input type="number" value={b.minScore} onChange={(e) => update(b.id, { minScore: Number(e.target.value) })} className="w-full min-w-0 rounded-lg border border-black/10 dark:border-white/15 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500" />
+            <input type="number" value={b.maxScore} onChange={(e) => update(b.id, { maxScore: Number(e.target.value) })} className="w-full min-w-0 rounded-lg border border-black/10 dark:border-white/15 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500" />
+            <input value={b.gradeLetter} onChange={(e) => update(b.id, { gradeLetter: e.target.value })} className="w-full min-w-0 rounded-lg border border-black/10 dark:border-white/15 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500" />
+            <input value={b.remark} onChange={(e) => update(b.id, { remark: e.target.value })} className="w-full min-w-0 rounded-lg border border-black/10 dark:border-white/15 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500" />
+            <button onClick={() => removeBand(b.id)} className="shrink-0 rounded-md p-2 text-ink/30 dark:text-white/30 hover:bg-crimson-50 dark:hover:bg-crimson-600/15 hover:text-crimson-700 dark:hover:text-crimson-500">
               <Trash2 size={14} />
             </button>
           </div>
@@ -216,7 +215,7 @@ function GradingScaleSection({ bands: initialBands, onSave }: { bands: GradeBand
       {/* Mobile: one card per band — a 5-column grid never fits a phone width */}
       <div className="space-y-2.5 sm:hidden">
         {bands.map((b) => (
-          <div key={b.id} className="rounded-lg border border-black/10 p-3">
+          <div key={b.id} className="rounded-lg border border-black/10 dark:border-white/15 p-3">
             <div className="mb-2 grid grid-cols-3 gap-2">
               <MiniField label="Min" value={b.minScore} onChange={(v) => update(b.id, { minScore: Number(v) })} type="number" />
               <MiniField label="Max" value={b.maxScore} onChange={(v) => update(b.id, { maxScore: Number(v) })} type="number" />
@@ -226,7 +225,7 @@ function GradingScaleSection({ bands: initialBands, onSave }: { bands: GradeBand
               <div className="flex-1">
                 <MiniField label="Remark" value={b.remark} onChange={(v) => update(b.id, { remark: v })} />
               </div>
-              <button onClick={() => removeBand(b.id)} className="shrink-0 rounded-md border border-black/10 p-2.5 text-ink/40 hover:bg-crimson-50 hover:text-crimson-700">
+              <button onClick={() => removeBand(b.id)} className="shrink-0 rounded-md border border-black/10 dark:border-white/15 p-2.5 text-ink/40 dark:text-white/40 hover:bg-crimson-50 dark:hover:bg-crimson-600/15 hover:text-crimson-700 dark:hover:text-crimson-500">
                 <Trash2 size={14} />
               </button>
             </div>
@@ -234,11 +233,11 @@ function GradingScaleSection({ bands: initialBands, onSave }: { bands: GradeBand
         ))}
       </div>
 
-      <button onClick={addBand} className="mt-3 flex items-center gap-1.5 text-[12.5px] font-medium text-crimson-700 hover:text-crimson-800">
+      <button onClick={addBand} className="mt-3 flex items-center gap-1.5 text-[12.5px] font-medium text-crimson-700 dark:text-crimson-500 hover:text-crimson-800">
         <Plus size={14} /> Add band
       </button>
 
-      {error && <p className="mt-3 rounded-md bg-crimson-50 px-3 py-2 text-[12.5px] text-crimson-700">{error}</p>}
+      {error && <p className="mt-3 rounded-md bg-crimson-50 dark:bg-crimson-600/15 px-3 py-2 text-[12.5px] text-crimson-700 dark:text-crimson-500">{error}</p>}
       <SaveButton onClick={handleSave} saving={saving} saved={saved} />
     </SectionCard>
   );
@@ -247,12 +246,12 @@ function GradingScaleSection({ bands: initialBands, onSave }: { bands: GradeBand
 function MiniField({ label, value, onChange, type = "text" }: { label: string; value: string | number; onChange: (v: string) => void; type?: string }) {
   return (
     <label className="block min-w-0">
-      <span className="mb-0.5 block text-[9.5px] font-medium uppercase tracking-wide text-ink/40">{label}</span>
+      <span className="mb-0.5 block text-[9.5px] font-medium uppercase tracking-wide text-ink/40 dark:text-white/40">{label}</span>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full min-w-0 rounded-lg border border-black/10 px-2 py-2 text-[12.5px] outline-none focus:border-crimson-500"
+        className="w-full min-w-0 rounded-lg border border-black/10 dark:border-white/15 px-2 py-2 text-[12.5px] outline-none focus:border-crimson-500"
       />
     </label>
   );
@@ -260,10 +259,10 @@ function MiniField({ label, value, onChange, type = "text" }: { label: string; v
 
 function SectionCard({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-black/5 bg-white p-4.5 shadow-card sm:p-5">
+    <div className="rounded-lg border border-black/5 dark:border-white/10 bg-white dark:bg-[#1A1C20] p-4.5 shadow-card sm:p-5">
       <div className="mb-4">
-        <h2 className="font-display text-[14px] font-semibold text-ink">{title}</h2>
-        <p className="text-[12px] text-ink/45">{subtitle}</p>
+        <h2 className="font-display text-[14px] font-semibold text-ink dark:text-white">{title}</h2>
+        <p className="text-[12px] text-ink/45 dark:text-white/45">{subtitle}</p>
       </div>
       {children}
     </div>
@@ -273,8 +272,8 @@ function SectionCard({ title, subtitle, children }: { title: string; subtitle: s
 function TextField({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[12px] font-medium text-ink/60">{label}</span>
-      <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="w-full rounded-lg border border-black/10 px-3.5 py-2.5 text-[13px] outline-none focus:border-crimson-500" />
+      <span className="mb-1 block text-[12px] font-medium text-ink/60 dark:text-white/60">{label}</span>
+      <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="w-full rounded-lg border border-black/10 dark:border-white/15 px-3.5 py-2.5 text-[13px] outline-none focus:border-crimson-500" />
     </label>
   );
 }

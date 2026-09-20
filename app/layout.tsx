@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
 import { getTheme, themeCssVars } from "@/lib/themes";
+import { colorSchemeBootstrapScript } from "@/lib/colorScheme";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -51,7 +52,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en" className={`${inter.variable} ${plusJakarta.variable}`}>
-      <head>{themeVars && <style dangerouslySetInnerHTML={{ __html: `:root { ${themeVars} }` }} />}</head>
+      <head>
+        {/* Runs before hydration so the dark/light class is set on the
+            very first paint — without this, the page would flash light
+            mode for a moment even for someone who's chosen dark. */}
+        <script dangerouslySetInnerHTML={{ __html: colorSchemeBootstrapScript() }} />
+        {themeVars && <style dangerouslySetInnerHTML={{ __html: `:root { ${themeVars} }` }} />}
+      </head>
       <body className="font-sans antialiased">{children}</body>
     </html>
   );
