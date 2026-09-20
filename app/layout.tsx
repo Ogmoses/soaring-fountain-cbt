@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
-import { getTheme, themeCssVars } from "@/lib/themes";
+import { themeCssVars, DEFAULT_THEME_COLOR } from "@/lib/themes";
 import { colorSchemeBootstrapScript } from "@/lib/colorScheme";
 import "./globals.css";
 
@@ -44,8 +44,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   let themeVars = "";
   try {
     const supabase = await createClient();
-    const { data } = await supabase.from("school_profile").select("theme_key").eq("id", true).single();
-    themeVars = themeCssVars(getTheme(data?.theme_key));
+    const { data } = await supabase.from("school_profile").select("theme_color").eq("id", true).single();
+    themeVars = themeCssVars(data?.theme_color || DEFAULT_THEME_COLOR);
   } catch {
     // Fall through to globals.css's static defaults.
   }

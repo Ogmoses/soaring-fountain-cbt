@@ -7,16 +7,16 @@
  */
 
 import { useState } from "react";
-import { Plus, Trash2, Loader2, ImagePlus, X, Save, Check } from "lucide-react";
+import { Plus, Trash2, Loader2, ImagePlus, X, Save, Check, Pipette } from "lucide-react";
 import type { GradeBand, SchoolProfile } from "./types";
-import { THEMES, DEFAULT_THEME_KEY, themeCssVars, getTheme } from "@/lib/themes";
+import { RECOMMENDED_COLORS, DEFAULT_THEME_COLOR, themeCssVars, buildRampFromHex, isValidHex } from "@/lib/themes";
 
 interface SettingsManagerProps {
   profile: SchoolProfile;
   gradingScale: GradeBand[];
   onSaveProfile: (profile: SchoolProfile) => Promise<void>;
   onSaveGradingScale: (bands: GradeBand[]) => Promise<void>;
-  onSaveTheme: (themeKey: string) => Promise<void>;
+  onSaveTheme: (themeColor: string) => Promise<void>;
 }
 
 export default function SettingsManager({ profile, gradingScale, onSaveProfile, onSaveGradingScale, onSaveTheme }: SettingsManagerProps) {
@@ -27,16 +27,48 @@ export default function SettingsManager({ profile, gradingScale, onSaveProfile, 
         <p className="mt-0.5 text-[13px] text-ink/50 dark:text-white/50">School profile and the grading scale used across results and report cards.</p>
       </div>
       <ProfileSection profile={profile} onSave={onSaveProfile} />
-      <ThemeSection currentThemeKey={profile.themeKey} onSave={onSaveTheme} />
+      <ThemeSection currentColor={profile.themeColor} onSave={onSaveTheme} />
       <GradingScaleSection bands={gradingScale} onSave={onSaveGradingScale} />
     </div>
   );
 }
 
-function ThemeSection({ currentThemeKey, onSave }: { currentThemeKey?: string; onSave: (themeKey: string) => Promise<void> }) {
-  const [selected, setSelected] = useState(currentThemeKey ?? DEFAULT_THEME_KEY);
+function applyPreview(color: string) {
+  const styleTag =
+    document.getElementById("theme-vars-override") ??
+    (() => {
+      const el = document.createElement("style");
+      el.id = "theme-vars-override";
+      document.head.appendChild(el);
+      return el;
+    })();
+  styleTag.textContent = `:root { ${themeCssVars(color)} }`;
+}
+
+function ThemeSection({ currentColor, onSave }: { currentColor?: string; onSave: (color: string) => Promise<void> }) {
+  const [selected, setSelected] = useState(currentColor || DEFAULT_THEME_COLOR);
+  const [hexInput, setHexInput] = useState(currentColor || DEFAULT_THEME_COLOR);
+  const [hexError, setHexError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  const choose = (color: string) => {
+    setSelected(color);
+    setHexInput(color);
+    setHexError(false);
+    setSaved(false);
+  };
+
+  const handleHexInputChange = (value: string) => {
+    setHexInput(value);
+    const normalized = value.startsWith("#") ? value : `#${value}`;
+    if (isValidHex(normalized)) {
+      setHexError(false);
+      choose(normalized.toUpperCase());
+    } else {
+      setHexError(value.trim().length > 0);
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -47,48 +79,97 @@ function ThemeSection({ currentThemeKey, onSave }: { currentThemeKey?: string; o
       // waiting for a reload — every other visitor picks it up on their
       // next page load, since app/layout.tsx reads it fresh server-side
       // each time.
-      const styleTag = document.getElementById("theme-vars-override") ?? (() => {
-        const el = document.createElement("style");
-        el.id = "theme-vars-override";
-        document.head.appendChild(el);
-        return el;
-      })();
-      styleTag.textContent = `:root { ${themeCssVars(getTheme(selected))} }`;
+      applyPreview(selected);
       setSaved(true);
     } finally {
       setSaving(false);
     }
   };
 
+  const ramp = buildRampFromHex(selected);
+
   return (
     <SectionCard title="Site theme" subtitle="Sets the accent color used for buttons, links, and highlights across the whole site — for everyone, not just you">
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-        {THEMES.map((theme) => {
-          const isSelected = selected === theme.key;
+      <p className="mb-2.5 text-[11.5px] font-medium uppercase tracking-wide text-ink/40 dark:text-white/40">Recommended — from your brand palettes</p>
+      <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-5">
+        {RECOMMENDED_COLORS.map((c) => {
+          const isSelected = selected.toUpperCase() === c.hex.toUpperCase();
           return (
             <button
-              key={theme.key}
-              onClick={() => {
-                setSelected(theme.key);
-                setSaved(false);
-              }}
-              className={`relative overflow-hidden rounded-lg border-2 bg-white p-2.5 text-left transition-colors dark:bg-[#1A1C20] ${
-                isSelected ? "border-crimson-600" : "border-transparent hover:border-black/10 dark:hover:border-white/15"
-              }`}
+              key={c.key}
+              onClick={() => choose(c.hex)}
+              className="flex flex-col items-center gap-1.5"
+              title={c.name}
             >
-              <div className="mb-2 flex h-9 w-full overflow-hidden rounded-md">
-                <div className="w-1/2" style={{ backgroundColor: theme.base }} />
-                <div className="w-1/2" style={{ backgroundColor: theme.bright }} />
+              <div
+                className={`relative flex h-11 w-11 items-center justify-center rounded-full border-2 transition-colors ${
+                  isSelected ? "border-crimson-600" : "border-transparent"
+                }`}
+              >
+                <div className="h-9 w-9 rounded-full ring-1 ring-inset ring-black/10 dark:ring-white/15" style={{ backgroundColor: c.hex }} />
+                {isSelected && (
+                  <div className="absolute -right-0.5 -top-0.5 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-crimson-600 text-white ring-2 ring-white dark:ring-[#1A1C20]">
+                    <Check size={10} strokeWidth={3.5} />
+                  </div>
+                )}
               </div>
-              <p className="text-[11.5px] font-medium text-ink dark:text-white">{theme.name}</p>
-              {isSelected && (
-                <div className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-crimson-600 text-white">
-                  <Check size={12} strokeWidth={3} />
-                </div>
-              )}
+              <span className="max-w-[64px] truncate text-[10.5px] font-medium text-ink/60 dark:text-white/60">{c.name}</span>
             </button>
           );
         })}
+      </div>
+
+      <div className="mt-5 border-t border-black/5 pt-4 dark:border-white/10">
+        <p className="mb-2.5 text-[11.5px] font-medium uppercase tracking-wide text-ink/40 dark:text-white/40">Custom color</p>
+        <p className="mb-3 text-[12px] text-ink/50 dark:text-white/50">
+          Not limited to the palette above — pick any color from the full spectrum, or type an exact hex code (e.g. from your school's brand guide).
+        </p>
+        <div className="flex items-center gap-3">
+          <label className="relative flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full ring-1 ring-inset ring-black/10 dark:ring-white/15">
+            <input
+              type="color"
+              value={isValidHex(selected) ? selected : DEFAULT_THEME_COLOR}
+              onChange={(e) => choose(e.target.value.toUpperCase())}
+              className="absolute inset-0 h-[150%] w-[150%] -translate-x-1/4 -translate-y-1/4 cursor-pointer border-none p-0"
+              aria-label="Pick a custom color"
+            />
+          </label>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 rounded-lg border border-black/10 px-3 py-2 dark:border-white/15">
+              <Pipette size={14} className="shrink-0 text-ink/40 dark:text-white/40" />
+              <input
+                type="text"
+                value={hexInput}
+                onChange={(e) => handleHexInputChange(e.target.value)}
+                placeholder="#AB1509"
+                spellCheck={false}
+                className="w-full bg-transparent text-[13px] uppercase tracking-wide text-ink outline-none dark:text-white"
+              />
+            </div>
+            {hexError && <p className="mt-1 text-[11px] text-crimson-600">Not a valid hex color — try a format like #AB1509.</p>}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-5 border-t border-black/5 pt-4 dark:border-white/10">
+        <p className="mb-2.5 text-[11.5px] font-medium uppercase tracking-wide text-ink/40 dark:text-white/40">Preview</p>
+        <div className="flex items-center gap-3 rounded-lg bg-background-muted p-3 dark:bg-white/5">
+          <button
+            type="button"
+            className="rounded-lg px-3.5 py-2 text-[12.5px] font-semibold text-white"
+            style={{ backgroundColor: ramp[600] }}
+          >
+            Sample button
+          </button>
+          <span className="rounded-full px-2.5 py-1 text-[11px] font-semibold" style={{ backgroundColor: ramp[50], color: ramp[700] }}>
+            Sample badge
+          </span>
+          <div className="ml-auto flex overflow-hidden rounded-md">
+            {([50, 100, 300, 500, 700, 900] as const).map((shade) => (
+              <div key={shade} className="h-6 w-5" style={{ backgroundColor: ramp[shade] }} />
+            ))}
+          </div>
+        </div>
       </div>
 
       <SaveButton onClick={handleSave} saving={saving} saved={saved} label="Apply theme" />

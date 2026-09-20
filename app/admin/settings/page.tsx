@@ -8,10 +8,10 @@ import { createClient } from "@/lib/supabase/client";
 import { orThrow } from "@/lib/supabaseErrors";
 import { useAuthUser, signOutAndRedirect } from "@/lib/useAuthUser";
 import type { GradeBand, SchoolProfile } from "@/components/admin/types";
-import { DEFAULT_THEME_KEY } from "@/lib/themes";
+import { DEFAULT_THEME_COLOR } from "@/lib/themes";
 import PageLoading from "@/components/layout/PageLoading";
 
-const EMPTY_PROFILE: SchoolProfile = { schoolName: "", motto: "", address: "", logoUrl: null, themeKey: DEFAULT_THEME_KEY };
+const EMPTY_PROFILE: SchoolProfile = { schoolName: "", motto: "", address: "", logoUrl: null, themeColor: DEFAULT_THEME_COLOR };
 
 export default function AdminSettingsPage() {
   const router = useRouter();
@@ -24,7 +24,7 @@ export default function AdminSettingsPage() {
 
   const loadAll = async () => {
     const [{ data: profileRow }, { data: scaleRows }] = await Promise.all([
-      supabase.from("school_profile").select("school_name, motto, address, logo_url, theme_key").eq("id", true).single(),
+      supabase.from("school_profile").select("school_name, motto, address, logo_url, theme_color").eq("id", true).single(),
       supabase.from("grading_scale").select("id, min_score, max_score, grade_letter, remark").order("min_score", { ascending: false }),
     ]);
 
@@ -34,7 +34,7 @@ export default function AdminSettingsPage() {
         motto: profileRow.motto ?? "",
         address: profileRow.address ?? "",
         logoUrl: profileRow.logo_url,
-        themeKey: profileRow.theme_key ?? DEFAULT_THEME_KEY,
+        themeColor: profileRow.theme_color || DEFAULT_THEME_COLOR,
       });
     }
     setScale((scaleRows ?? []).map((r) => ({ id: r.id, minScore: r.min_score, maxScore: r.max_score, gradeLetter: r.grade_letter, remark: r.remark ?? "" })));
@@ -55,8 +55,8 @@ export default function AdminSettingsPage() {
     await loadAll();
   };
 
-  const handleSaveTheme = async (themeKey: string) => {
-    await orThrow(supabase.from("school_profile").update({ theme_key: themeKey }).eq("id", true));
+  const handleSaveTheme = async (themeColor: string) => {
+    await orThrow(supabase.from("school_profile").update({ theme_color: themeColor }).eq("id", true));
     await loadAll();
   };
 
