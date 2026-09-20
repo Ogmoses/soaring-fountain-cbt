@@ -104,7 +104,7 @@ function StudentExamContent() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-cream-50">
         <Loader2 size={22} className="animate-spin text-crimson-600" />
-        <p className="text-[13px] text-ink/50">Starting your exam…</p>
+        <p className="text-[13px] text-ink/50 dark:text-white/50">Starting your exam…</p>
       </div>
     );
   }
@@ -113,7 +113,7 @@ function StudentExamContent() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-cream-50 px-6 text-center">
         <AlertTriangle size={24} className="text-crimson-600" />
-        <p className="max-w-sm text-[14px] text-ink">{error}</p>
+        <p className="max-w-sm text-[14px] text-ink dark:text-white">{error}</p>
         <button onClick={() => router.push("/student")} className="mt-2 rounded-lg bg-crimson-600 px-4 py-2.5 text-[13px] font-semibold text-white hover:bg-crimson-700">
           Back to Exam Launchpad
         </button>
@@ -127,16 +127,16 @@ function StudentExamContent() {
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-success/10 text-success">
           <CheckCircle2 size={28} />
         </div>
-        <p className="text-[15px] font-semibold text-ink">Exam submitted</p>
+        <p className="text-[15px] font-semibold text-ink dark:text-white">Exam submitted</p>
         {submissionResult.showResultInstantly ? (
           <>
-            <p className="text-[13px] text-ink/50">Your score</p>
+            <p className="text-[13px] text-ink/50 dark:text-white/50">Your score</p>
             <p className="font-display text-[32px] font-bold text-crimson-600">
               {submissionResult.objectiveScore}/{submissionResult.maxScore}
             </p>
           </>
         ) : (
-          <p className="max-w-sm text-[13.5px] leading-relaxed text-ink/60">
+          <p className="max-w-sm text-[13.5px] leading-relaxed text-ink/60 dark:text-white/60">
             Your answers are recorded. Your teacher will publish your result once it's ready.
           </p>
         )}
@@ -146,7 +146,7 @@ function StudentExamContent() {
         {submissionResult.allowReview && (
           <button
             onClick={() => router.push(`/student/exam/${params.examId}/review`)}
-            className="rounded-lg border border-black/10 px-4 py-2.5 text-[13px] font-medium text-ink/70 hover:bg-black/5"
+            className="rounded-lg border border-black/10 dark:border-white/15 px-4 py-2.5 text-[13px] font-medium text-ink/70 dark:text-white/70 hover:bg-black/5"
           >
             Review your answers
           </button>

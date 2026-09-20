@@ -195,12 +195,12 @@ export default function ExamInterface({ exam, sessionId, studentName, initialAns
   handleSubmitRef.current = () => setConfirmOpen(true);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-cream-50 font-sans text-ink">
+    <div className="fixed inset-0 z-50 flex flex-col bg-cream-50 font-sans text-ink dark:text-white">
       {/* ---------- Header ---------- */}
-      <header className="flex items-center justify-between border-b border-black/5 bg-white px-4 py-3 sm:px-6">
+      <header className="flex items-center justify-between border-b border-black/5 dark:border-white/10 bg-white dark:bg-[#1A1C20] px-4 py-3 sm:px-6">
         <div className="min-w-0">
-          <p className="truncate font-display text-[14px] font-semibold text-ink sm:text-[16px]">{exam.title}</p>
-          <p className="truncate text-[11.5px] text-ink/50">{exam.subjectName} · {studentName}</p>
+          <p className="truncate font-display text-[14px] font-semibold text-ink dark:text-white sm:text-[16px]">{exam.title}</p>
+          <p className="truncate text-[11.5px] text-ink/50 dark:text-white/50">{exam.subjectName} · {studentName}</p>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
@@ -211,8 +211,8 @@ export default function ExamInterface({ exam, sessionId, studentName, initialAns
               isWarn1
                 ? "animate-pulse-warn bg-crimson-600 text-white"
                 : isWarn5
-                ? "bg-crimson-50 text-crimson-700"
-                : "bg-background-muted text-ink"
+                ? "bg-crimson-50 dark:bg-crimson-600/15 text-crimson-700 dark:text-crimson-500"
+                : "bg-background-muted dark:bg-white/5 text-ink dark:text-white"
             }`}
           >
             <Clock size={15} />
@@ -221,7 +221,7 @@ export default function ExamInterface({ exam, sessionId, studentName, initialAns
 
           <button
             onClick={() => setPaletteOpen(true)}
-            className="rounded-lg bg-background-muted p-2 text-ink/70 transition-colors duration-200 hover:bg-crimson-50 hover:text-crimson-700 lg:hidden"
+            className="rounded-lg bg-background-muted dark:bg-white/5 p-2 text-ink/70 dark:text-white/70 transition-colors duration-200 hover:bg-crimson-50 dark:hover:bg-crimson-600/15 hover:text-crimson-700 dark:hover:text-crimson-500 lg:hidden"
             aria-label="Question palette"
           >
             <Grid3x3 size={18} />
@@ -232,7 +232,7 @@ export default function ExamInterface({ exam, sessionId, studentName, initialAns
       {(isWarn5 || isWarn1) && (
         <div
           className={`flex items-center justify-center gap-2 px-4 py-1.5 text-[12.5px] font-medium ${
-            isWarn1 ? "bg-crimson-600 text-white" : "bg-crimson-50 text-crimson-700"
+            isWarn1 ? "bg-crimson-600 text-white" : "bg-crimson-50 dark:bg-crimson-600/15 text-crimson-700 dark:text-crimson-500"
           }`}
         >
           <AlertTriangle size={13} />
@@ -246,15 +246,15 @@ export default function ExamInterface({ exam, sessionId, studentName, initialAns
         <main className="flex-1 overflow-y-auto px-4 py-6 sm:px-8 lg:px-12">
           <div className="mx-auto max-w-2xl">
             <div className="mb-4 flex items-center justify-between">
-              <span className="text-[12px] font-medium uppercase tracking-wide text-ink/40">
+              <span className="text-[12px] font-medium uppercase tracking-wide text-ink/40 dark:text-white/40">
                 Question {currentIndex + 1} of {total}
               </span>
               <button
                 onClick={() => toggleFlag(question.id)}
                 className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-medium transition-colors duration-200 ${
                   answers[question.id]?.flagged
-                    ? "bg-crimson-50 text-crimson-700"
-                    : "text-ink/50 hover:bg-background-muted"
+                    ? "bg-crimson-50 dark:bg-crimson-600/15 text-crimson-700 dark:text-crimson-500"
+                    : "text-ink/50 dark:text-white/50 hover:bg-background-muted dark:hover:bg-white/5"
                 }`}
               >
                 <Flag size={13} fill={answers[question.id]?.flagged ? "currentColor" : "none"} />
@@ -267,17 +267,17 @@ export default function ExamInterface({ exam, sessionId, studentName, initialAns
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.18 }}
-              className="rounded-lg bg-white p-5 shadow-card sm:p-7"
+              className="rounded-lg bg-white dark:bg-[#1A1C20] p-5 shadow-card sm:p-7"
             >
-              <p className="mb-1 text-[11px] font-medium text-ink/40">{question.points} point{question.points === 1 ? "" : "s"}</p>
-              <p className="text-[15px] font-medium leading-relaxed text-ink sm:text-[16px]">{question.prompt}</p>
+              <p className="mb-1 text-[11px] font-medium text-ink/40 dark:text-white/40">{question.points} point{question.points === 1 ? "" : "s"}</p>
+              <p className="text-[15px] font-medium leading-relaxed text-ink dark:text-white sm:text-[16px]">{question.prompt}</p>
 
               {question.imageUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={question.imageUrl}
                   alt="Question diagram"
-                  className="mt-4 max-h-72 w-full rounded-md border border-black/5 object-contain"
+                  className="mt-4 max-h-72 w-full rounded-md border border-black/5 dark:border-white/10 object-contain"
                 />
               )}
 
@@ -291,7 +291,7 @@ export default function ExamInterface({ exam, sessionId, studentName, initialAns
               <button
                 onClick={() => goTo(currentIndex - 1)}
                 disabled={currentIndex === 0}
-                className="flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-[13.5px] font-medium text-ink/70 transition-colors duration-200 hover:bg-background-muted disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-[13.5px] font-medium text-ink/70 dark:text-white/70 transition-colors duration-200 hover:bg-background-muted dark:hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <ChevronLeft size={16} /> Previous
               </button>
@@ -316,7 +316,7 @@ export default function ExamInterface({ exam, sessionId, studentName, initialAns
         </main>
 
         {/* Desktop palette */}
-        <aside className="hidden w-72 shrink-0 overflow-y-auto border-l border-black/5 bg-white p-5 lg:block">
+        <aside className="hidden w-72 shrink-0 overflow-y-auto border-l border-black/5 dark:border-white/10 bg-white dark:bg-[#1A1C20] p-5 lg:block">
           <PaletteContent exam={exam} answers={answers} currentIndex={currentIndex} onSelect={goTo} stats={stats} />
         </aside>
       </div>
@@ -337,11 +337,11 @@ export default function ExamInterface({ exam, sessionId, studentName, initialAns
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "tween", duration: 0.25, ease: "easeOut" }}
-              className="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-lg bg-white p-5 shadow-card-hover lg:hidden"
+              className="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-lg bg-white dark:bg-[#1A1C20] p-5 shadow-card-hover lg:hidden"
             >
               <div className="mb-4 flex items-center justify-between">
                 <p className="font-display text-[14px] font-semibold">Question palette</p>
-                <button onClick={() => setPaletteOpen(false)} className="rounded-md p-1.5 text-ink/50 hover:bg-background-muted">
+                <button onClick={() => setPaletteOpen(false)} className="rounded-md p-1.5 text-ink/50 dark:text-white/50 hover:bg-background-muted dark:hover:bg-white/5">
                   <X size={18} />
                 </button>
               </div>
@@ -365,14 +365,14 @@ export default function ExamInterface({ exam, sessionId, studentName, initialAns
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 8 }}
               transition={{ duration: 0.18 }}
-              className="w-full max-w-sm rounded-lg bg-white p-6 shadow-card-hover"
+              className="w-full max-w-sm rounded-lg bg-white dark:bg-[#1A1C20] p-6 shadow-card-hover"
             >
-              <h2 className="font-display text-[16px] font-semibold text-ink">Submit exam?</h2>
-              <p className="mt-1.5 text-[13px] leading-relaxed text-ink/60">
+              <h2 className="font-display text-[16px] font-semibold text-ink dark:text-white">Submit exam?</h2>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-ink/60 dark:text-white/60">
                 Once submitted, you cannot change your answers. Review the summary below before confirming.
               </p>
 
-              <dl className="mt-4 space-y-1.5 rounded-md bg-background-muted p-3.5 text-[13px]">
+              <dl className="mt-4 space-y-1.5 rounded-md bg-background-muted dark:bg-white/5 p-3.5 text-[13px]">
                 <Row label="Answered" value={stats.answered} tone="success" />
                 <Row label="Unanswered" value={stats.unanswered} tone={stats.unanswered > 0 ? "warn" : "default"} />
                 <Row label="Flagged for review" value={stats.flagged} tone="default" />
@@ -382,7 +382,7 @@ export default function ExamInterface({ exam, sessionId, studentName, initialAns
                 <button
                   onClick={() => setConfirmOpen(false)}
                   disabled={submitting}
-                  className="flex-1 rounded-lg border border-black/10 py-2.5 text-[13.5px] font-medium text-ink/70 transition-colors duration-200 hover:bg-background-muted disabled:opacity-50"
+                  className="flex-1 rounded-lg border border-black/10 dark:border-white/15 py-2.5 text-[13.5px] font-medium text-ink/70 dark:text-white/70 transition-colors duration-200 hover:bg-background-muted dark:hover:bg-white/5 disabled:opacity-50"
                 >
                   Keep reviewing
                 </button>
@@ -426,8 +426,8 @@ function QuestionInput({
               key={opt.id}
               className={`flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-[13.5px] transition-colors duration-200 ${
                 selected
-                  ? "border-crimson-600 bg-crimson-50 text-crimson-800"
-                  : "border-black/10 text-ink/80 hover:border-black/20 hover:bg-background-muted"
+                  ? "border-crimson-600 bg-crimson-50 dark:bg-crimson-600/15 text-crimson-800"
+                  : "border-black/10 dark:border-white/15 text-ink/80 dark:text-white/80 hover:border-black/20 hover:bg-background-muted dark:hover:bg-white/5"
               }`}
             >
               <span
@@ -459,7 +459,7 @@ function QuestionInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Type your answer"
-        className="w-full rounded-lg border border-black/10 px-4 py-3 text-[13.5px] outline-none transition-shadow duration-200 focus:border-crimson-500 focus:shadow-focus"
+        className="w-full rounded-lg border border-black/10 dark:border-white/15 px-4 py-3 text-[13.5px] outline-none transition-shadow duration-200 focus:border-crimson-500 focus:shadow-focus"
       />
     );
   }
@@ -471,7 +471,7 @@ function QuestionInput({
       onChange={(e) => onChange(e.target.value)}
       rows={7}
       placeholder="Write your answer"
-      className="w-full resize-none rounded-lg border border-black/10 px-4 py-3 text-[13.5px] leading-relaxed outline-none transition-shadow duration-200 focus:border-crimson-500 focus:shadow-focus"
+      className="w-full resize-none rounded-lg border border-black/10 dark:border-white/15 px-4 py-3 text-[13.5px] leading-relaxed outline-none transition-shadow duration-200 focus:border-crimson-500 focus:shadow-focus"
     />
   );
 }
@@ -512,8 +512,8 @@ function PaletteContent({
                 isCurrent
                   ? "bg-crimson-600 text-white"
                   : isAnswered
-                  ? "bg-crimson-50 text-crimson-700"
-                  : "bg-background-muted text-ink/50 hover:bg-black/5"
+                  ? "bg-crimson-50 dark:bg-crimson-600/15 text-crimson-700 dark:text-crimson-500"
+                  : "bg-background-muted dark:bg-white/5 text-ink/50 dark:text-white/50 hover:bg-black/5"
               }`}
             >
               {i + 1}
@@ -523,10 +523,10 @@ function PaletteContent({
         })}
       </div>
 
-      <div className="mt-5 space-y-1.5 text-[11.5px] text-ink/50">
+      <div className="mt-5 space-y-1.5 text-[11.5px] text-ink/50 dark:text-white/50">
         <LegendRow swatchClass="bg-crimson-600" label="Current question" />
-        <LegendRow swatchClass="bg-crimson-50 border border-crimson-200" label="Answered" />
-        <LegendRow swatchClass="bg-background-muted" label="Unanswered" />
+        <LegendRow swatchClass="bg-crimson-50 dark:bg-crimson-600/15 border border-crimson-200" label="Answered" />
+        <LegendRow swatchClass="bg-background-muted dark:bg-white/5" label="Unanswered" />
       </div>
     </div>
   );
@@ -534,11 +534,11 @@ function PaletteContent({
 
 function StatChip({ label, value, tone }: { label: string; value: number; tone: "success" | "warn" | "default" }) {
   const toneClass =
-    tone === "success" ? "text-success" : tone === "warn" ? "text-crimson-600" : "text-ink/70";
+    tone === "success" ? "text-success" : tone === "warn" ? "text-crimson-600" : "text-ink/70 dark:text-white/70";
   return (
-    <div className="rounded-md bg-background-muted py-2">
+    <div className="rounded-md bg-background-muted dark:bg-white/5 py-2">
       <p className={`text-[15px] font-bold tabular-nums ${toneClass}`}>{value}</p>
-      <p className="text-[10px] text-ink/45">{label}</p>
+      <p className="text-[10px] text-ink/45 dark:text-white/45">{label}</p>
     </div>
   );
 }
@@ -553,10 +553,10 @@ function LegendRow({ swatchClass, label }: { swatchClass: string; label: string 
 }
 
 function Row({ label, value, tone }: { label: string; value: number; tone: "success" | "warn" | "default" }) {
-  const toneClass = tone === "success" ? "text-success" : tone === "warn" ? "text-crimson-600" : "text-ink";
+  const toneClass = tone === "success" ? "text-success" : tone === "warn" ? "text-crimson-600" : "text-ink dark:text-white";
   return (
     <div className="flex items-center justify-between">
-      <dt className="text-ink/60">{label}</dt>
+      <dt className="text-ink/60 dark:text-white/60">{label}</dt>
       <dd className={`font-semibold tabular-nums ${toneClass}`}>{value}</dd>
     </div>
   );
@@ -565,7 +565,7 @@ function Row({ label, value, tone }: { label: string; value: number; tone: "succ
 function SaveIndicator({ state }: { state: SaveState }) {
   const config: Record<SaveState, { icon: React.ElementType; label: string; className: string }> = {
     idle: { icon: CloudCheck, label: "", className: "hidden" },
-    saving: { icon: CloudUpload, label: "Saving…", className: "text-ink/40" },
+    saving: { icon: CloudUpload, label: "Saving…", className: "text-ink/40 dark:text-white/40" },
     saved: { icon: CloudCheck, label: "Saved", className: "text-success" },
     error: { icon: AlertTriangle, label: "Saved locally", className: "text-crimson-600" },
   };

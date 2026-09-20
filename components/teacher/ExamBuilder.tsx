@@ -244,18 +244,18 @@ export default function ExamBuilder({ subjects, classes, terms, questionBank, st
         )}
       </AnimatePresence>
 
-      <h1 className="font-display text-[18px] font-semibold text-ink sm:text-[20px]">Exam builder</h1>
-      <p className="mt-0.5 text-[13px] text-ink/50">Set the rules, pick questions, then schedule lab batches.</p>
+      <h1 className="font-display text-[18px] font-semibold text-ink dark:text-white sm:text-[20px]">Exam builder</h1>
+      <p className="mt-0.5 text-[13px] text-ink/50 dark:text-white/50">Set the rules, pick questions, then schedule lab batches.</p>
 
       {/* ---------- Details ---------- */}
       <SectionCard title="Details" className="mt-5">
         <label className="mb-3.5 block">
-          <span className="mb-1 block text-[12px] font-medium text-ink/60">Exam title</span>
+          <span className="mb-1 block text-[12px] font-medium text-ink/60 dark:text-white/60">Exam title</span>
           <input
             value={form.title}
             onChange={(e) => update("title", e.target.value)}
             placeholder="e.g. Second Term Mid-Term Test"
-            className="w-full rounded-lg border border-black/10 px-3.5 py-2.5 text-[13.5px] outline-none focus:border-crimson-500"
+            className="w-full rounded-lg border border-black/10 dark:border-white/15 px-3.5 py-2.5 text-[13.5px] outline-none focus:border-crimson-500"
           />
         </label>
 
@@ -284,19 +284,19 @@ export default function ExamBuilder({ subjects, classes, terms, questionBank, st
       <SectionCard title="Questions" subtitle={`${selectedQuestions.length} selected · ${totalPoints} points total`} className="mt-5">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <p className="mb-2 text-[12px] font-medium text-ink/50">Question bank</p>
+            <p className="mb-2 text-[12px] font-medium text-ink/50 dark:text-white/50">Question bank</p>
             <div className="relative mb-2.5">
-              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink/35" />
+              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink/35 dark:text-white/35" />
               <input
                 value={questionSearch}
                 onChange={(e) => setQuestionSearch(e.target.value)}
                 placeholder="Search"
-                className="w-full rounded-lg border border-black/10 py-2 pl-8 pr-3 text-[12.5px] outline-none focus:border-crimson-500"
+                className="w-full rounded-lg border border-black/10 dark:border-white/15 py-2 pl-8 pr-3 text-[12.5px] outline-none focus:border-crimson-500"
               />
             </div>
-            <div className="max-h-64 space-y-1.5 overflow-y-auto rounded-lg border border-black/5 bg-background-muted p-2">
+            <div className="max-h-64 space-y-1.5 overflow-y-auto rounded-lg border border-black/5 dark:border-white/10 bg-background-muted dark:bg-white/5 p-2">
               {availableQuestions.length === 0 ? (
-                <p className="px-2 py-3 text-center text-[12px] text-ink/40">
+                <p className="px-2 py-3 text-center text-[12px] text-ink/40 dark:text-white/40">
                   No questions tagged for this class and subject yet — add some from Question Bank, or check whether existing ones still need a class assigned.
                 </p>
               ) : (
@@ -304,7 +304,7 @@ export default function ExamBuilder({ subjects, classes, terms, questionBank, st
                   <button
                     key={q.id}
                     onClick={() => addQuestion(q.id)}
-                    className="flex w-full items-start justify-between gap-2 rounded-md bg-white px-3 py-2 text-left text-[12.5px] text-ink shadow-card transition-shadow duration-200 hover:shadow-card-hover"
+                    className="flex w-full items-start justify-between gap-2 rounded-md bg-white dark:bg-[#1A1C20] px-3 py-2 text-left text-[12.5px] text-ink dark:text-white shadow-card transition-shadow duration-200 hover:shadow-card-hover"
                   >
                     <span className="line-clamp-2">{q.prompt}</span>
                     <Plus size={14} className="mt-0.5 shrink-0 text-crimson-600" />
@@ -315,24 +315,24 @@ export default function ExamBuilder({ subjects, classes, terms, questionBank, st
           </div>
 
           <div>
-            <p className="mb-2 text-[12px] font-medium text-ink/50">In this exam, in order</p>
-            <div className="max-h-64 space-y-1.5 overflow-y-auto rounded-lg border border-black/5 p-2">
+            <p className="mb-2 text-[12px] font-medium text-ink/50 dark:text-white/50">In this exam, in order</p>
+            <div className="max-h-64 space-y-1.5 overflow-y-auto rounded-lg border border-black/5 dark:border-white/10 p-2">
               {selectedQuestions.length === 0 ? (
-                <p className="px-2 py-3 text-center text-[12px] text-ink/40">Add questions from the bank.</p>
+                <p className="px-2 py-3 text-center text-[12px] text-ink/40 dark:text-white/40">Add questions from the bank.</p>
               ) : (
                 selectedQuestions.map((q, i) => (
-                  <div key={q.id} className="flex items-start gap-2 rounded-md bg-white px-3 py-2 text-[12.5px] shadow-card">
-                    <span className="mt-0.5 shrink-0 text-ink/35">{i + 1}.</span>
-                    <span className="flex-1 line-clamp-2 text-ink">{q.prompt}</span>
-                    <div className="flex shrink-0 flex-col items-center gap-0.5 text-ink/35">
-                      <button onClick={() => moveQuestion(i, -1)} disabled={i === 0} className="hover:text-ink/70 disabled:opacity-30">
+                  <div key={q.id} className="flex items-start gap-2 rounded-md bg-white dark:bg-[#1A1C20] px-3 py-2 text-[12.5px] shadow-card">
+                    <span className="mt-0.5 shrink-0 text-ink/35 dark:text-white/35">{i + 1}.</span>
+                    <span className="flex-1 line-clamp-2 text-ink dark:text-white">{q.prompt}</span>
+                    <div className="flex shrink-0 flex-col items-center gap-0.5 text-ink/35 dark:text-white/35">
+                      <button onClick={() => moveQuestion(i, -1)} disabled={i === 0} className="hover:text-ink/70 dark:hover:text-white/70 disabled:opacity-30">
                         <ChevronUp size={13} />
                       </button>
-                      <button onClick={() => moveQuestion(i, 1)} disabled={i === selectedQuestions.length - 1} className="hover:text-ink/70 disabled:opacity-30">
+                      <button onClick={() => moveQuestion(i, 1)} disabled={i === selectedQuestions.length - 1} className="hover:text-ink/70 dark:hover:text-white/70 disabled:opacity-30">
                         <ChevronDown size={13} />
                       </button>
                     </div>
-                    <button onClick={() => removeQuestion(q.id)} className="mt-0.5 shrink-0 text-ink/30 hover:text-crimson-600">
+                    <button onClick={() => removeQuestion(q.id)} className="mt-0.5 shrink-0 text-ink/30 dark:text-white/30 hover:text-crimson-600">
                       <Trash2 size={13} />
                     </button>
                   </div>
@@ -347,17 +347,17 @@ export default function ExamBuilder({ subjects, classes, terms, questionBank, st
       <SectionCard title="Lab batches" subtitle="Time windows students can sit this exam in" className="mt-5">
         <div className="space-y-3">
           {form.batches.map((b) => (
-            <div key={b.id} className="grid grid-cols-1 gap-2.5 rounded-lg border border-black/5 p-3 sm:grid-cols-[1fr_1fr_1fr_1fr_auto] sm:items-end">
+            <div key={b.id} className="grid grid-cols-1 gap-2.5 rounded-lg border border-black/5 dark:border-white/10 p-3 sm:grid-cols-[1fr_1fr_1fr_1fr_auto] sm:items-end">
               <TextField label="Label" value={b.label} onChange={(v) => updateBatch(b.id, { label: v })} />
               <TextField label="Starts" value={b.startsAt} onChange={(v) => updateBatchStart(b.id, v)} type="datetime-local" />
               <div>
-                <span className="mb-1 block text-[12px] font-medium text-ink/60">Ends</span>
-                <p className="rounded-lg border border-black/10 bg-background-muted px-3 py-2.5 text-[13px] text-ink/60">
+                <span className="mb-1 block text-[12px] font-medium text-ink/60 dark:text-white/60">Ends</span>
+                <p className="rounded-lg border border-black/10 dark:border-white/15 bg-background-muted dark:bg-white/5 px-3 py-2.5 text-[13px] text-ink/60 dark:text-white/60">
                   {b.startsAt ? `${formatEndsAt(b.endsAt)} (${form.durationMinutes} min)` : "Set a start time"}
                 </p>
               </div>
               <TextField label="Lab room" value={b.labRoom ?? ""} onChange={(v) => updateBatch(b.id, { labRoom: v })} placeholder="Optional" />
-              <button onClick={() => removeBatch(b.id)} className="flex items-center justify-center rounded-lg border border-black/10 p-2.5 text-ink/40 hover:bg-crimson-50 hover:text-crimson-700">
+              <button onClick={() => removeBatch(b.id)} className="flex items-center justify-center rounded-lg border border-black/10 dark:border-white/15 p-2.5 text-ink/40 dark:text-white/40 hover:bg-crimson-50 dark:hover:bg-crimson-600/15 hover:text-crimson-700 dark:hover:text-crimson-500">
                 <Trash2 size={15} />
               </button>
             </div>
@@ -365,15 +365,15 @@ export default function ExamBuilder({ subjects, classes, terms, questionBank, st
         </div>
         <button
           onClick={addBatch}
-          className="mt-3 flex items-center gap-1.5 rounded-lg border border-dashed border-black/15 px-3.5 py-2.5 text-[12.5px] font-medium text-ink/60 hover:border-black/25 hover:text-ink/80"
+          className="mt-3 flex items-center gap-1.5 rounded-lg border border-dashed border-black/15 px-3.5 py-2.5 text-[12.5px] font-medium text-ink/60 dark:text-white/60 hover:border-black/25 hover:text-ink/80 dark:hover:text-white/80"
         >
           <CalendarClock size={14} /> Add batch
         </button>
 
         {form.batches.length > 1 && roster.length > 0 && (
-          <div className="mt-5 border-t border-black/5 pt-4">
+          <div className="mt-5 border-t border-black/5 dark:border-white/10 pt-4">
             <div className="mb-2.5 flex items-center justify-between">
-              <p className="flex items-center gap-1.5 text-[12.5px] font-semibold text-ink/70">
+              <p className="flex items-center gap-1.5 text-[12.5px] font-semibold text-ink/70 dark:text-white/70">
                 <Users size={14} /> Who sits which batch
               </p>
               <button
@@ -385,15 +385,15 @@ export default function ExamBuilder({ subjects, classes, terms, questionBank, st
             </div>
             <div className="space-y-1.5">
               {roster.map((s) => (
-                <div key={s.id} className="flex items-center justify-between gap-3 rounded-lg border border-black/5 px-3 py-2">
+                <div key={s.id} className="flex items-center justify-between gap-3 rounded-lg border border-black/5 dark:border-white/10 px-3 py-2">
                   <div className="min-w-0">
-                    <p className="truncate text-[13px] text-ink">{s.fullName}</p>
-                    {s.admissionNumber && <p className="text-[11px] text-ink/40">{s.admissionNumber}</p>}
+                    <p className="truncate text-[13px] text-ink dark:text-white">{s.fullName}</p>
+                    {s.admissionNumber && <p className="text-[11px] text-ink/40 dark:text-white/40">{s.admissionNumber}</p>}
                   </div>
                   <select
                     value={form.studentAssignments[s.id] ?? ""}
                     onChange={(e) => update("studentAssignments", { ...form.studentAssignments, [s.id]: e.target.value })}
-                    className="shrink-0 rounded-md border border-black/10 px-2 py-1.5 text-[12.5px] outline-none focus:border-crimson-500"
+                    className="shrink-0 rounded-md border border-black/10 dark:border-white/15 px-2 py-1.5 text-[12.5px] outline-none focus:border-crimson-500"
                   >
                     {form.batches.map((b) => (
                       <option key={b.id} value={b.id}>{b.label}</option>
@@ -406,13 +406,13 @@ export default function ExamBuilder({ subjects, classes, terms, questionBank, st
         )}
       </SectionCard>
 
-      {error && <p className="mt-4 rounded-md bg-crimson-50 px-3.5 py-2.5 text-[13px] text-crimson-700">{error}</p>}
+      {error && <p className="mt-4 rounded-md bg-crimson-50 dark:bg-crimson-600/15 px-3.5 py-2.5 text-[13px] text-crimson-700 dark:text-crimson-500">{error}</p>}
 
       <div className="mt-6 flex gap-3">
         <button
           onClick={() => handleSave("draft")}
           disabled={saving !== null}
-          className="flex items-center gap-1.5 rounded-lg border border-black/10 px-4 py-2.5 text-[13.5px] font-medium text-ink/70 hover:bg-background-muted disabled:opacity-60"
+          className="flex items-center gap-1.5 rounded-lg border border-black/10 dark:border-white/15 px-4 py-2.5 text-[13.5px] font-medium text-ink/70 dark:text-white/70 hover:bg-background-muted dark:hover:bg-white/5 disabled:opacity-60"
         >
           {saving === "draft" && <Loader2 size={14} className="animate-spin" />}
           Save as draft
@@ -436,10 +436,10 @@ export default function ExamBuilder({ subjects, classes, terms, questionBank, st
 
 function SectionCard({ title, subtitle, className, children }: { title: string; subtitle?: string; className?: string; children: React.ReactNode }) {
   return (
-    <div className={`rounded-lg border border-black/5 bg-white p-4.5 shadow-card sm:p-5 ${className ?? ""}`}>
+    <div className={`rounded-lg border border-black/5 dark:border-white/10 bg-white dark:bg-[#1A1C20] p-4.5 shadow-card sm:p-5 ${className ?? ""}`}>
       <div className="mb-4">
-        <h2 className="font-display text-[14px] font-semibold text-ink">{title}</h2>
-        {subtitle && <p className="text-[12px] text-ink/45">{subtitle}</p>}
+        <h2 className="font-display text-[14px] font-semibold text-ink dark:text-white">{title}</h2>
+        {subtitle && <p className="text-[12px] text-ink/45 dark:text-white/45">{subtitle}</p>}
       </div>
       {children}
     </div>
@@ -449,11 +449,11 @@ function SectionCard({ title, subtitle, className, children }: { title: string; 
 function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { id: string; name: string }[] }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[12px] font-medium text-ink/60">{label}</span>
+      <span className="mb-1 block text-[12px] font-medium text-ink/60 dark:text-white/60">{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-black/10 px-3 py-2.5 text-[13px] outline-none focus:border-crimson-500"
+        className="w-full rounded-lg border border-black/10 dark:border-white/15 px-3 py-2.5 text-[13px] outline-none focus:border-crimson-500"
       >
         {options.map((o) => (
           <option key={o.id} value={o.id}>{o.name}</option>
@@ -466,14 +466,14 @@ function Select({ label, value, onChange, options }: { label: string; value: str
 function NumberField({ label, value, onChange, hint }: { label: string; value: number; onChange: (v: number) => void; hint?: string }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[12px] font-medium text-ink/60">
-        {label} {hint && <span className="text-ink/35">({hint})</span>}
+      <span className="mb-1 block text-[12px] font-medium text-ink/60 dark:text-white/60">
+        {label} {hint && <span className="text-ink/35 dark:text-white/35">({hint})</span>}
       </span>
       <input
         type="number"
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full rounded-lg border border-black/10 px-3 py-2.5 text-[13px] outline-none focus:border-crimson-500"
+        className="w-full rounded-lg border border-black/10 dark:border-white/15 px-3 py-2.5 text-[13px] outline-none focus:border-crimson-500"
       />
     </label>
   );
@@ -482,13 +482,13 @@ function NumberField({ label, value, onChange, hint }: { label: string; value: n
 function TextField({ label, value, onChange, type = "text", placeholder }: { label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[11.5px] font-medium text-ink/55">{label}</span>
+      <span className="mb-1 block text-[11.5px] font-medium text-ink/55 dark:text-white/55">{label}</span>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-black/10 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500"
+        className="w-full rounded-lg border border-black/10 dark:border-white/15 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500"
       />
     </label>
   );
@@ -512,9 +512,9 @@ function formatEndsAt(iso: string): string {
 
 function Toggle({ icon: Icon, label, checked, onChange }: { icon: React.ElementType; label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
-    <label className="flex cursor-pointer items-center justify-between gap-3 rounded-lg bg-background-muted px-3.5 py-2.5">
-      <span className="flex items-center gap-2 text-[13px] text-ink/75">
-        <Icon size={14} className="text-ink/40" />
+    <label className="flex cursor-pointer items-center justify-between gap-3 rounded-lg bg-background-muted dark:bg-white/5 px-3.5 py-2.5">
+      <span className="flex items-center gap-2 text-[13px] text-ink/75 dark:text-white/75">
+        <Icon size={14} className="text-ink/40 dark:text-white/40" />
         {label}
       </span>
       <button
@@ -523,7 +523,7 @@ function Toggle({ icon: Icon, label, checked, onChange }: { icon: React.ElementT
         className={`relative h-5 w-9 shrink-0 rounded-full transition-colors duration-200 ${checked ? "bg-crimson-600" : "bg-black/15"}`}
       >
         <span
-          className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+          className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white dark:bg-[#1A1C20] shadow-sm transition-transform duration-200 ${
             checked ? "translate-x-[16px]" : "translate-x-0"
           }`}
         />

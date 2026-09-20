@@ -181,18 +181,18 @@ export default function EditExamPage() {
       {loading ? (
         <PageLoading />
       ) : loadError ? (
-        <p className="py-10 text-center text-[13px] text-ink/50">{loadError}</p>
+        <p className="py-10 text-center text-[13px] text-ink/50 dark:text-white/50">{loadError}</p>
       ) : locked ? (
         <div className="mx-auto mt-4 max-w-md rounded-lg border border-warning/30 bg-warning/10 p-5 text-center">
           <AlertTriangle size={22} className="mx-auto text-warning" />
-          <h1 className="mt-2 font-display text-[15px] font-semibold text-ink">This exam can't be edited directly</h1>
-          <p className="mt-1.5 text-[13px] leading-relaxed text-ink/60">
+          <h1 className="mt-2 font-display text-[15px] font-semibold text-ink dark:text-white">This exam can't be edited directly</h1>
+          <p className="mt-1.5 text-[13px] leading-relaxed text-ink/60 dark:text-white/60">
             Students have already been assigned to it, started it, or finished it, so changing its questions or schedule now could disrupt or lose their work. View who's involved, or archive it from My Exams — once archived you can come back here to edit it and set up a new round.
           </p>
           <div className="mt-4 flex justify-center gap-2.5">
             <Link
               href="/teacher/exams"
-              className="flex items-center gap-1.5 rounded-lg border border-black/10 px-3.5 py-2 text-[13px] font-medium text-ink/70 hover:bg-background-muted"
+              className="flex items-center gap-1.5 rounded-lg border border-black/10 dark:border-white/15 px-3.5 py-2 text-[13px] font-medium text-ink/70 dark:text-white/70 hover:bg-background-muted dark:hover:bg-white/5"
             >
               <Users size={14} /> Back to My Exams
             </Link>
@@ -201,7 +201,7 @@ export default function EditExamPage() {
       ) : (
         <>
           {resetBatches && (
-            <div className="mx-auto mb-4 max-w-2xl rounded-lg border border-black/10 bg-background-muted px-4 py-3 text-[12.5px] leading-relaxed text-ink/65">
+            <div className="mx-auto mb-4 max-w-2xl rounded-lg border border-black/10 dark:border-white/15 bg-background-muted dark:bg-white/5 px-4 py-3 text-[12.5px] leading-relaxed text-ink/65 dark:text-white/65">
               This exam's earlier sittings had real students in them, so that schedule is kept exactly as it happened rather than being editable here — it stays visible in Students on My Exams. The batch list below starts empty: add a new one to set up this round, then Publish when ready.
             </div>
           )}

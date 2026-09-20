@@ -30,7 +30,7 @@ export default function ResetPasswordPage() {
 
 function PageLoading() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-cream-100">
+    <div className="flex min-h-screen items-center justify-center bg-cream-100 dark:bg-[#101114]">
       <Loader2 size={20} className="animate-spin text-crimson-600" />
     </div>
   );
@@ -82,13 +82,13 @@ function ResetPasswordInner() {
 
   if (!token) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-cream-100 px-4 font-sans">
-        <div className="w-full max-w-sm rounded-lg bg-white p-7 shadow-card-hover text-center sm:p-8">
-          <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-crimson-50 text-crimson-700 mx-auto">
+      <div className="flex min-h-screen items-center justify-center bg-cream-100 dark:bg-[#101114] px-4 font-sans">
+        <div className="w-full max-w-sm rounded-lg bg-white dark:bg-[#1A1C20] p-7 shadow-card-hover text-center sm:p-8">
+          <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-crimson-50 dark:bg-crimson-600/15 text-crimson-700 dark:text-crimson-500 mx-auto">
             <AlertCircle size={20} />
           </div>
-          <h1 className="font-display text-[15px] font-semibold text-ink">No reset link found</h1>
-          <p className="mt-1 text-[12.5px] text-ink/50">
+          <h1 className="font-display text-[15px] font-semibold text-ink dark:text-white">No reset link found</h1>
+          <p className="mt-1 text-[12.5px] text-ink/50 dark:text-white/50">
             Open this page using the link from your password reset email, or ask your admin to resend it from Students &amp; Teachers.
           </p>
         </div>
@@ -98,21 +98,21 @@ function ResetPasswordInner() {
 
   if (done) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-cream-100 px-4 font-sans">
-        <div className="w-full max-w-sm rounded-lg bg-white p-7 shadow-card-hover text-center sm:p-8">
-          <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-crimson-50 text-crimson-700 mx-auto">
+      <div className="flex min-h-screen items-center justify-center bg-cream-100 dark:bg-[#101114] px-4 font-sans">
+        <div className="w-full max-w-sm rounded-lg bg-white dark:bg-[#1A1C20] p-7 shadow-card-hover text-center sm:p-8">
+          <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-crimson-50 dark:bg-crimson-600/15 text-crimson-700 dark:text-crimson-500 mx-auto">
             <CheckCircle2 size={20} />
           </div>
-          <h1 className="font-display text-[15px] font-semibold text-ink">Password reset</h1>
-          <p className="mt-1 text-[12.5px] text-ink/50">Taking you to the login page…</p>
+          <h1 className="font-display text-[15px] font-semibold text-ink dark:text-white">Password reset</h1>
+          <p className="mt-1 text-[12.5px] text-ink/50 dark:text-white/50">Taking you to the login page…</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-cream-100 px-4 font-sans">
-      <div className="w-full max-w-sm rounded-lg bg-white p-7 shadow-card-hover sm:p-8">
+    <div className="flex min-h-screen items-center justify-center bg-cream-100 dark:bg-[#101114] px-4 font-sans">
+      <div className="w-full max-w-sm rounded-lg bg-white dark:bg-[#1A1C20] p-7 shadow-card-hover sm:p-8">
         <div className="mb-6 flex flex-col items-center text-center">
           {school.logoUrl ? (
             <img src={school.logoUrl} alt="" className="mb-3 h-11 w-11 rounded-lg object-cover" />
@@ -121,13 +121,13 @@ function ResetPasswordInner() {
               <Waves size={22} strokeWidth={2.25} />
             </div>
           )}
-          <h1 className="font-display text-[17px] font-semibold text-ink">Reset your password</h1>
-          <p className="mt-1 text-[12.5px] text-ink/50">for your {school.name} account</p>
+          <h1 className="font-display text-[17px] font-semibold text-ink dark:text-white">Reset your password</h1>
+          <p className="mt-1 text-[12.5px] text-ink/50 dark:text-white/50">for your {school.name} account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3.5">
           <label className="block">
-            <span className="mb-1 block text-[12px] font-medium text-ink/60">New password</span>
+            <span className="mb-1 block text-[12px] font-medium text-ink/60 dark:text-white/60">New password</span>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -135,27 +135,27 @@ function ResetPasswordInner() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="At least 8 characters"
                 autoFocus
-                className="w-full rounded-lg border border-black/10 px-3.5 py-2.5 pr-10 text-[13.5px] outline-none focus:border-crimson-500"
+                className="w-full rounded-lg border border-black/10 dark:border-white/15 px-3.5 py-2.5 pr-10 text-[13.5px] outline-none focus:border-crimson-500"
               />
-              <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/40 hover:text-ink/60">
+              <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/40 dark:text-white/40 hover:text-ink/60 dark:hover:text-white/60">
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-[12px] font-medium text-ink/60">Confirm new password</span>
+            <span className="mb-1 block text-[12px] font-medium text-ink/60 dark:text-white/60">Confirm new password</span>
             <input
               type={showPassword ? "text" : "password"}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Type it again"
-              className="w-full rounded-lg border border-black/10 px-3.5 py-2.5 text-[13.5px] outline-none focus:border-crimson-500"
+              className="w-full rounded-lg border border-black/10 dark:border-white/15 px-3.5 py-2.5 text-[13.5px] outline-none focus:border-crimson-500"
             />
           </label>
 
           {error && (
-            <div className="flex items-start gap-2 rounded-md bg-crimson-50 px-3 py-2.5 text-[12.5px] text-crimson-700">
+            <div className="flex items-start gap-2 rounded-md bg-crimson-50 dark:bg-crimson-600/15 px-3 py-2.5 text-[12.5px] text-crimson-700 dark:text-crimson-500">
               <AlertCircle size={14} className="mt-0.5 shrink-0" />
               {error}
             </div>

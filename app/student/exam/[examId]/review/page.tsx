@@ -38,9 +38,9 @@ export default function StudentExamReviewPage() {
   }, [params.examId, retryCount]);
 
   return (
-    <div className="min-h-screen bg-background-muted">
+    <div className="min-h-screen bg-background-muted dark:bg-white/5">
       <div className="mx-auto flex max-w-2xl items-center gap-2 px-4 pt-5">
-        <button onClick={() => router.push("/student")} className="flex items-center gap-1 text-[13px] font-medium text-ink/60 hover:text-ink">
+        <button onClick={() => router.push("/student")} className="flex items-center gap-1 text-[13px] font-medium text-ink/60 dark:text-white/60 hover:text-ink dark:hover:text-white">
           <ArrowLeft size={15} /> Back to Exam Launchpad
         </button>
       </div>

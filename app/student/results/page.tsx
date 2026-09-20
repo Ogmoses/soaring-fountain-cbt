@@ -66,27 +66,27 @@ export default function StudentResultsPage() {
         <PageLoading />
       ) : (
         <div className="pb-10">
-          <h1 className="font-display text-[18px] font-semibold text-ink sm:text-[20px]">Past results</h1>
-          <p className="mt-0.5 text-[13px] text-ink/50">Every published score, across every term.</p>
+          <h1 className="font-display text-[18px] font-semibold text-ink dark:text-white sm:text-[20px]">Past results</h1>
+          <p className="mt-0.5 text-[13px] text-ink/50 dark:text-white/50">Every published score, across every term.</p>
 
           {results.length === 0 ? (
-            <div className="mt-5 rounded-lg border border-dashed border-black/10 bg-white px-4 py-10 text-center text-[13px] text-ink/45">
+            <div className="mt-5 rounded-lg border border-dashed border-black/10 dark:border-white/15 bg-white dark:bg-[#1A1C20] px-4 py-10 text-center text-[13px] text-ink/45 dark:text-white/45">
               Nothing published yet — your results will appear here once a teacher publishes them.
             </div>
           ) : (
-            <div className="mt-5 overflow-hidden rounded-lg border border-black/5 bg-white">
-              <div className="divide-y divide-black/5 sm:hidden">
+            <div className="mt-5 overflow-hidden rounded-lg border border-black/5 dark:border-white/10 bg-white dark:bg-[#1A1C20]">
+              <div className="divide-y divide-black/5 dark:divide-white/10 sm:hidden">
                 {results.map((r) => (
                   <div key={r.id} className="px-4 py-3.5">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="truncate text-[13.5px] font-medium text-ink">{r.examTitle}</p>
-                        <p className="text-[12px] text-ink/50">{r.subjectName} · {r.termName}</p>
+                        <p className="truncate text-[13.5px] font-medium text-ink dark:text-white">{r.examTitle}</p>
+                        <p className="text-[12px] text-ink/50 dark:text-white/50">{r.subjectName} · {r.termName}</p>
                       </div>
                       <div className="flex shrink-0 flex-col items-end">
-                        <p className="text-[13px] font-semibold tabular-nums text-ink">{r.totalScore}/{r.maxScore}</p>
+                        <p className="text-[13px] font-semibold tabular-nums text-ink dark:text-white">{r.totalScore}/{r.maxScore}</p>
                         {r.gradeLetter && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-crimson-50 px-2 py-0.5 text-[11px] font-semibold text-crimson-700">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-crimson-50 dark:bg-crimson-600/15 px-2 py-0.5 text-[11px] font-semibold text-crimson-700 dark:text-crimson-500">
                             <Award size={11} /> {r.gradeLetter}
                           </span>
                         )}
@@ -97,21 +97,21 @@ export default function StudentResultsPage() {
               </div>
               <table className="hidden w-full text-left sm:table">
                 <thead>
-                  <tr className="border-b border-black/5 text-[11.5px] uppercase tracking-wide text-ink/40">
+                  <tr className="border-b border-black/5 dark:border-white/10 text-[11.5px] uppercase tracking-wide text-ink/40 dark:text-white/40">
                     <th className="px-5 py-3 font-medium">Exam</th>
                     <th className="px-5 py-3 font-medium">Term</th>
                     <th className="px-5 py-3 font-medium">Score</th>
                     <th className="px-5 py-3 font-medium">Grade</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-black/5">
+                <tbody className="divide-y divide-black/5 dark:divide-white/10">
                   {results.map((r) => (
-                    <tr key={r.id} className="text-[13px] text-ink">
+                    <tr key={r.id} className="text-[13px] text-ink dark:text-white">
                       <td className="px-5 py-3.5">
                         <p className="font-medium">{r.examTitle}</p>
-                        <p className="text-[12px] text-ink/45">{r.subjectName}</p>
+                        <p className="text-[12px] text-ink/45 dark:text-white/45">{r.subjectName}</p>
                       </td>
-                      <td className="px-5 py-3.5 text-ink/60">{r.termName}</td>
+                      <td className="px-5 py-3.5 text-ink/60 dark:text-white/60">{r.termName}</td>
                       <td className="px-5 py-3.5 font-medium tabular-nums">{r.totalScore} / {r.maxScore}</td>
                       <td className="px-5 py-3.5">{r.gradeLetter ?? "—"}</td>
                     </tr>

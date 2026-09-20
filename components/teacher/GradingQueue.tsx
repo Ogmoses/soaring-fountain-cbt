@@ -46,15 +46,15 @@ export default function GradingQueue({ examOptions, selectedExamId, onExamChange
     <div>
       <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h1 className="font-display text-[18px] font-semibold text-ink sm:text-[20px]">Grading queue</h1>
-          <p className="mt-0.5 text-[13px] text-ink/50">
+          <h1 className="font-display text-[18px] font-semibold text-ink dark:text-white sm:text-[20px]">Grading queue</h1>
+          <p className="mt-0.5 text-[13px] text-ink/50 dark:text-white/50">
             {items.length === 0 ? "No manually-marked answers for this exam." : `${gradedCount} of ${items.length} graded`}
           </p>
         </div>
         <select
           value={selectedExamId}
           onChange={(e) => onExamChange(e.target.value)}
-          className="rounded-lg border border-black/10 px-3.5 py-2.5 text-[13px] outline-none focus:border-crimson-500"
+          className="rounded-lg border border-black/10 dark:border-white/15 px-3.5 py-2.5 text-[13px] outline-none focus:border-crimson-500"
         >
           {examOptions.map((e) => (
             <option key={e.id} value={e.id}>{e.title} · {e.subjectName}</option>
@@ -63,35 +63,35 @@ export default function GradingQueue({ examOptions, selectedExamId, onExamChange
       </div>
 
       {items.length > 0 && (
-        <div className="mb-5 h-1.5 overflow-hidden rounded-full bg-background-muted">
+        <div className="mb-5 h-1.5 overflow-hidden rounded-full bg-background-muted dark:bg-white/5">
           <div className="h-full rounded-full bg-crimson-600 transition-all duration-300" style={{ width: `${(gradedCount / items.length) * 100}%` }} />
         </div>
       )}
 
       {items.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-black/10 bg-white px-4 py-10 text-center text-[13px] text-ink/45">
+        <div className="rounded-lg border border-dashed border-black/10 dark:border-white/15 bg-white dark:bg-[#1A1C20] px-4 py-10 text-center text-[13px] text-ink/45 dark:text-white/45">
           Nothing to grade here yet — objective questions are marked automatically.
         </div>
       ) : (
-        <div className="divide-y divide-black/5 rounded-lg border border-black/5 bg-white">
+        <div className="divide-y divide-black/5 dark:divide-white/10 rounded-lg border border-black/5 dark:border-white/10 bg-white dark:bg-[#1A1C20]">
           {items.map((item) => {
             const graded = item.pointsAwarded !== null;
             return (
               <button
                 key={item.id}
                 onClick={() => setActiveId(item.id)}
-                className="flex w-full items-start gap-3.5 px-4 py-3.5 text-left transition-colors duration-200 hover:bg-background-muted sm:px-5"
+                className="flex w-full items-start gap-3.5 px-4 py-3.5 text-left transition-colors duration-200 hover:bg-background-muted dark:hover:bg-white/5 sm:px-5"
               >
                 {graded ? (
                   <CheckCircle2 size={17} className="mt-0.5 shrink-0 text-success" />
                 ) : (
-                  <Circle size={17} className="mt-0.5 shrink-0 text-ink/25" />
+                  <Circle size={17} className="mt-0.5 shrink-0 text-ink/25 dark:text-white/25" />
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13.5px] font-medium text-ink">{item.studentName}</p>
-                  <p className="truncate text-[12.5px] text-ink/50">{item.questionPrompt}</p>
+                  <p className="truncate text-[13.5px] font-medium text-ink dark:text-white">{item.studentName}</p>
+                  <p className="truncate text-[12.5px] text-ink/50 dark:text-white/50">{item.questionPrompt}</p>
                 </div>
-                <span className={`shrink-0 text-[12px] font-semibold tabular-nums ${graded ? "text-ink/60" : "text-ink/30"}`}>
+                <span className={`shrink-0 text-[12px] font-semibold tabular-nums ${graded ? "text-ink/60 dark:text-white/60" : "text-ink/30 dark:text-white/30"}`}>
                   {graded ? `${item.pointsAwarded}/${item.maxPoints}` : `— /${item.maxPoints}`}
                 </span>
               </button>

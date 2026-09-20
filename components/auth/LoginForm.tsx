@@ -60,12 +60,12 @@ export default function LoginForm({ onStudentLogin, onStaffLogin }: LoginFormPro
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-cream-100 px-4 font-sans">
+    <div className="flex min-h-screen items-center justify-center bg-cream-100 dark:bg-[#101114] px-4 font-sans">
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
-        className="w-full max-w-sm rounded-lg bg-white p-7 shadow-card-hover sm:p-8"
+        className="w-full max-w-sm rounded-lg bg-white dark:bg-[#1A1C20] p-7 shadow-card-hover sm:p-8"
       >
         <div className="mb-6 flex flex-col items-center text-center">
           {school.logoUrl ? (
@@ -75,12 +75,12 @@ export default function LoginForm({ onStudentLogin, onStaffLogin }: LoginFormPro
               <Waves size={22} strokeWidth={2.25} />
             </div>
           )}
-          <h1 className="font-display text-[17px] font-semibold text-ink">{school.name}</h1>
-          <p className="text-[12.5px] text-ink/50">{school.motto ? school.motto : "CBT Portal"}</p>
+          <h1 className="font-display text-[17px] font-semibold text-ink dark:text-white">{school.name}</h1>
+          <p className="text-[12.5px] text-ink/50 dark:text-white/50">{school.motto ? school.motto : "CBT Portal"}</p>
         </div>
 
         {/* Mode toggle */}
-        <div className="mb-5 grid grid-cols-2 rounded-lg bg-background-muted p-1">
+        <div className="mb-5 grid grid-cols-2 rounded-lg bg-background-muted dark:bg-white/5 p-1">
           {(["student", "staff"] as Mode[]).map((m) => (
             <button
               key={m}
@@ -90,7 +90,7 @@ export default function LoginForm({ onStudentLogin, onStaffLogin }: LoginFormPro
                 setError(null);
               }}
               className={`rounded-md py-2 text-[12.5px] font-semibold capitalize transition-colors duration-200 ${
-                mode === m ? "bg-white text-crimson-700 shadow-card" : "text-ink/50"
+                mode === m ? "bg-white dark:bg-[#1A1C20] text-crimson-700 dark:text-crimson-500 shadow-card" : "text-ink/50 dark:text-white/50"
               }`}
             >
               {m === "student" ? "Student" : "Teacher / Admin"}
@@ -114,7 +114,7 @@ export default function LoginForm({ onStudentLogin, onStaffLogin }: LoginFormPro
                 placeholder="••••••••"
                 type={showSecret ? "text" : "password"}
                 trailingIcon={
-                  <button type="button" onClick={() => setShowSecret((v) => !v)} className="text-ink/40 hover:text-ink/60">
+                  <button type="button" onClick={() => setShowSecret((v) => !v)} className="text-ink/40 dark:text-white/40 hover:text-ink/60 dark:hover:text-white/60">
                     {showSecret ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 }
@@ -123,7 +123,7 @@ export default function LoginForm({ onStudentLogin, onStaffLogin }: LoginFormPro
           )}
 
           {error && (
-            <div className="flex items-start gap-2 rounded-md bg-crimson-50 px-3 py-2.5 text-[12.5px] text-crimson-700">
+            <div className="flex items-start gap-2 rounded-md bg-crimson-50 dark:bg-crimson-600/15 px-3 py-2.5 text-[12.5px] text-crimson-700 dark:text-crimson-500">
               <AlertCircle size={14} className="mt-0.5 shrink-0" />
               {error}
             </div>
@@ -140,7 +140,7 @@ export default function LoginForm({ onStudentLogin, onStaffLogin }: LoginFormPro
         </form>
 
         {mode === "student" && (
-          <p className="mt-4 text-center text-[11.5px] text-ink/45">
+          <p className="mt-4 text-center text-[11.5px] text-ink/45 dark:text-white/45">
             Not sure of your student ID? Ask your class teacher.
           </p>
         )}
@@ -170,7 +170,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[12px] font-medium text-ink/60">{label}</span>
+      <span className="mb-1 block text-[12px] font-medium text-ink/60 dark:text-white/60">{label}</span>
       <div className="relative">
         <input
           type={type}
@@ -179,7 +179,7 @@ function Field({
           placeholder={placeholder}
           autoFocus={autoFocus}
           inputMode={inputMode}
-          className="w-full rounded-lg border border-black/10 px-3.5 py-2.5 text-[13.5px] outline-none transition-shadow duration-200 focus:border-crimson-500 focus:shadow-focus"
+          className="w-full rounded-lg border border-black/10 dark:border-white/15 px-3.5 py-2.5 text-[13.5px] outline-none transition-shadow duration-200 focus:border-crimson-500 focus:shadow-focus"
         />
         {trailingIcon && <div className="absolute right-3 top-1/2 -translate-y-1/2">{trailingIcon}</div>}
       </div>
