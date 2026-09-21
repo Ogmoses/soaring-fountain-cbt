@@ -159,7 +159,7 @@ export default function BulkImportModal({ role, classOptions, subjectOptions, on
                   <div
                     key={i}
                     className={`flex items-center gap-2.5 rounded-md px-3 py-2 text-[12.5px] ${
-                      row.data ? "bg-background-muted dark:bg-white/5 text-ink/70 dark:text-white/70" : "bg-crimson-50 dark:bg-crimson-600/15 text-crimson-700 dark:text-crimson-500"
+                      row.data ? "bg-background-muted dark:bg-white/5 text-ink/70 dark:text-on-crimson/70" : "bg-crimson-50 dark:bg-crimson-600/15 text-crimson-700 dark:text-crimson-500"
                     }`}
                   >
                     {row.data ? <CheckCircle2 size={14} className="shrink-0" /> : <XCircle size={14} className="shrink-0" />}
@@ -183,7 +183,7 @@ export default function BulkImportModal({ role, classOptions, subjectOptions, on
           <button
             onClick={handleConfirm}
             disabled={!parsed || validRows.length === 0 || importing}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-white hover:bg-crimson-700 disabled:opacity-50"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-on-crimson hover:bg-crimson-700 disabled:opacity-50"
           >
             {importing && <Loader2 size={14} className="animate-spin" />}
             {importing ? "Importing…" : `Import ${validRows.length || ""} ${role === "student" ? "student" : "teacher"}${validRows.length === 1 ? "" : "s"}`}

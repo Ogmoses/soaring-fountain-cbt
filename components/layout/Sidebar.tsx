@@ -86,7 +86,7 @@ function SidebarContent({ role, userName, onNavigate }: { role: Role; userName: 
         {school.logoUrl ? (
           <img src={school.logoUrl} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover" />
         ) : (
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-crimson-600 text-cream-50">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-crimson-600 text-on-crimson">
             <Waves size={18} strokeWidth={2.25} />
           </div>
         )}

@@ -116,7 +116,7 @@ export default function StudentReview({ studentName, examTitle, totalScore, maxS
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <div className="rounded-md bg-crimson-50 dark:bg-crimson-600/15 px-3 py-2 text-[12.5px] text-ink dark:text-white">
+                      <div className="rounded-md bg-crimson-50 dark:bg-crimson-600/15 px-3 py-2 text-[12.5px] text-ink dark:text-on-crimson">
                         <span className="mr-1.5 text-[11px] font-medium uppercase tracking-wide text-crimson-700 dark:text-crimson-500/70">Student's answer</span>
                         <p className="whitespace-pre-wrap">{q.freeTextAnswer?.trim() || "— left blank —"}</p>
                       </div>

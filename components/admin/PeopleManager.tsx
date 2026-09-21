@@ -85,7 +85,7 @@ export default function PeopleManager({
           </button>
           <button
             onClick={() => setEditorState("new")}
-            className="flex items-center gap-1.5 rounded-lg bg-crimson-600 px-3.5 py-2.5 text-[13px] font-semibold text-white hover:bg-crimson-700"
+            className="flex items-center gap-1.5 rounded-lg bg-crimson-600 px-3.5 py-2.5 text-[13px] font-semibold text-on-crimson hover:bg-crimson-700"
           >
             <Plus size={15} /> Add {tab}
           </button>
@@ -151,7 +151,7 @@ export default function PeopleManager({
                 >
                   {p.isActive ? <Ban size={15} /> : <CheckCircle size={15} />}
                 </button>
-                <button onClick={() => setDeleteTarget(p)} className="rounded-md p-1.5 text-ink/40 dark:text-white/40 hover:bg-crimson-50 dark:hover:bg-crimson-600/15 hover:text-crimson-700 dark:hover:text-crimson-500" title="Delete">
+                <button onClick={() => setDeleteTarget(p)} className="rounded-md p-1.5 text-ink/40 dark:text-on-crimson/40 hover:bg-crimson-50 dark:hover:bg-crimson-600/15 hover:text-crimson-700 dark:hover:text-crimson-500" title="Delete">
                   <Trash2 size={15} />
                 </button>
               </div>
@@ -198,7 +198,7 @@ export default function PeopleManager({
                   await onDelete(tab, deleteTarget.id);
                   setDeleteTarget(null);
                 }}
-                className="flex-1 rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-white hover:bg-crimson-700"
+                className="flex-1 rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-on-crimson hover:bg-crimson-700"
               >
                 Delete
               </button>
@@ -222,7 +222,7 @@ export default function PeopleManager({
             </p>
             <button
               onClick={() => setCreatedStudent(null)}
-              className="mt-4 w-full rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-white hover:bg-crimson-700"
+              className="mt-4 w-full rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-on-crimson hover:bg-crimson-700"
             >
               Done
             </button>
@@ -242,7 +242,7 @@ export default function PeopleManager({
             </p>
             <button
               onClick={() => setInvitedTeacher(null)}
-              className="mt-4 w-full rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-white hover:bg-crimson-700"
+              className="mt-4 w-full rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-on-crimson hover:bg-crimson-700"
             >
               Done
             </button>

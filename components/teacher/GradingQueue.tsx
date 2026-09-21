@@ -103,7 +103,7 @@ export default function GradingQueue({ examOptions, selectedExamId, onExamChange
       {items.length > 0 && pendingIds.length > 0 && !activeId && (
         <button
           onClick={() => setActiveId(pendingIds[0])}
-          className="mt-4 flex items-center gap-1.5 rounded-lg bg-crimson-600 px-4 py-2.5 text-[13px] font-semibold text-white hover:bg-crimson-700"
+          className="mt-4 flex items-center gap-1.5 rounded-lg bg-crimson-600 px-4 py-2.5 text-[13px] font-semibold text-on-crimson hover:bg-crimson-700"
         >
           <ClipboardCheck size={15} /> Start grading ({pendingIds.length} left)
         </button>

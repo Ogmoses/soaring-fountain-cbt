@@ -205,7 +205,7 @@ export default function QuestionEditor({ initial, subjects, classes, defaultSubj
                   type="button"
                   onClick={() => handleTypeChange(t)}
                   className={`rounded-md px-2.5 py-2 text-[12px] font-medium transition-colors duration-200 ${
-                    type === t ? "bg-crimson-600 text-white" : "bg-background-muted dark:bg-white/5 text-ink/60 dark:text-white/60 hover:bg-black/5"
+                    type === t ? "bg-crimson-600 text-on-crimson" : "bg-background-muted dark:bg-white/5 text-ink/60 dark:text-on-crimson/60 hover:bg-black/5"
                   }`}
                 >
                   {QUESTION_TYPE_LABEL[t]}
@@ -339,7 +339,7 @@ export default function QuestionEditor({ initial, subjects, classes, defaultSubj
           <button
             onClick={handleSubmit}
             disabled={saving}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-white hover:bg-crimson-700 disabled:opacity-70"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-on-crimson hover:bg-crimson-700 disabled:opacity-70"
           >
             {saving && <Loader2 size={14} className="animate-spin" />}
             {saving ? "Saving…" : "Save question"}

@@ -105,7 +105,7 @@ export default function ReportCardsManager({
                 </a>
                 <a
                   href={`/api/report-cards/${s.studentId}/${selectedTermId}?${buildQuery(s.studentId)}`}
-                  className="flex items-center gap-1.5 rounded-lg bg-crimson-600 px-3 py-2 text-[12.5px] font-semibold text-white hover:bg-crimson-700"
+                  className="flex items-center gap-1.5 rounded-lg bg-crimson-600 px-3 py-2 text-[12.5px] font-semibold text-on-crimson hover:bg-crimson-700"
                 >
                   <Download size={14} /> PDF
                 </a>

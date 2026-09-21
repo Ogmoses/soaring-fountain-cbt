@@ -71,7 +71,7 @@ export default function LoginForm({ onStudentLogin, onStaffLogin }: LoginFormPro
           {school.logoUrl ? (
             <img src={school.logoUrl} alt="" className="mb-3 h-11 w-11 rounded-lg object-cover" />
           ) : (
-            <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-crimson-600 text-white">
+            <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-crimson-600 text-on-crimson">
               <Waves size={22} strokeWidth={2.25} />
             </div>
           )}
@@ -132,7 +132,7 @@ export default function LoginForm({ onStudentLogin, onStaffLogin }: LoginFormPro
           <button
             type="submit"
             disabled={loading}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-crimson-600 py-3 text-[13.5px] font-semibold text-white transition-colors duration-200 hover:bg-crimson-700 disabled:opacity-70"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-crimson-600 py-3 text-[13.5px] font-semibold text-on-crimson transition-colors duration-200 hover:bg-crimson-700 disabled:opacity-70"
           >
             {loading && <Loader2 size={15} className="animate-spin" />}
             {loading ? "Signing in…" : "Sign in"}

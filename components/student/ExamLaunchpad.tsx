@@ -215,7 +215,7 @@ function ExamCard({ exam, now, onEnter }: { exam: AvailableExam; now: Date; onEn
       ) : isOpen ? (
         <button
           onClick={onEnter}
-          className="flex items-center justify-center gap-1.5 rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-white transition-colors duration-200 hover:bg-crimson-700"
+          className="flex items-center justify-center gap-1.5 rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-on-crimson transition-colors duration-200 hover:bg-crimson-700"
         >
           {exam.alreadyInProgress ? "Resume exam" : "Enter exam"} <ChevronRight size={15} />
         </button>

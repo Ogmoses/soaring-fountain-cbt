@@ -3,6 +3,7 @@ import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
 import { themeCssVars, DEFAULT_THEME_COLOR } from "@/lib/themes";
 import { colorSchemeBootstrapScript } from "@/lib/colorScheme";
+import ColorSchemeSync from "@/components/ColorSchemeSync";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -59,7 +60,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <script dangerouslySetInnerHTML={{ __html: colorSchemeBootstrapScript() }} />
         {themeVars && <style dangerouslySetInnerHTML={{ __html: `:root { ${themeVars} }` }} />}
       </head>
-      <body className="font-sans antialiased">{children}</body>
+      <body className="font-sans antialiased">
+        <ColorSchemeSync />
+        {children}
+      </body>
     </html>
   );
 }

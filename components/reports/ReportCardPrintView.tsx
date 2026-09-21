@@ -36,7 +36,7 @@ export default function ReportCardPrintView({ data, pdfUrl }: ReportCardPrintVie
             <Download size={15} /> Download PDF
           </a>
         )}
-        <button onClick={() => window.print()} className="flex items-center gap-1.5 rounded-lg bg-crimson-600 px-3.5 py-2 text-[13px] font-semibold text-white hover:bg-crimson-700">
+        <button onClick={() => window.print()} className="flex items-center gap-1.5 rounded-lg bg-crimson-600 px-3.5 py-2 text-[13px] font-semibold text-on-crimson hover:bg-crimson-700">
           <Printer size={15} /> Print
         </button>
       </div>

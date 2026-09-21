@@ -117,7 +117,7 @@ function ResetPasswordInner() {
           {school.logoUrl ? (
             <img src={school.logoUrl} alt="" className="mb-3 h-11 w-11 rounded-lg object-cover" />
           ) : (
-            <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-crimson-600 text-white">
+            <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-crimson-600 text-on-crimson">
               <Waves size={22} strokeWidth={2.25} />
             </div>
           )}
@@ -164,7 +164,7 @@ function ResetPasswordInner() {
           <button
             type="submit"
             disabled={submitting}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-crimson-600 py-3 text-[13.5px] font-semibold text-white transition-colors duration-200 hover:bg-crimson-700 disabled:opacity-70"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-crimson-600 py-3 text-[13.5px] font-semibold text-on-crimson transition-colors duration-200 hover:bg-crimson-700 disabled:opacity-70"
           >
             {submitting && <Loader2 size={15} className="animate-spin" />}
             {submitting ? "Resetting…" : "Reset password & continue"}

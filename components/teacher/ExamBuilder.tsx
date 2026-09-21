@@ -357,7 +357,7 @@ export default function ExamBuilder({ subjects, classes, terms, questionBank, st
                 </p>
               </div>
               <TextField label="Lab room" value={b.labRoom ?? ""} onChange={(v) => updateBatch(b.id, { labRoom: v })} placeholder="Optional" />
-              <button onClick={() => removeBatch(b.id)} className="flex items-center justify-center rounded-lg border border-black/10 dark:border-white/15 p-2.5 text-ink/40 dark:text-white/40 hover:bg-crimson-50 dark:hover:bg-crimson-600/15 hover:text-crimson-700 dark:hover:text-crimson-500">
+              <button onClick={() => removeBatch(b.id)} className="flex items-center justify-center rounded-lg border border-black/10 dark:border-white/15 p-2.5 text-ink/40 dark:text-on-crimson/40 hover:bg-crimson-50 dark:hover:bg-crimson-600/15 hover:text-crimson-700 dark:hover:text-crimson-500">
                 <Trash2 size={15} />
               </button>
             </div>
@@ -420,7 +420,7 @@ export default function ExamBuilder({ subjects, classes, terms, questionBank, st
         <button
           onClick={() => handleSave("publish")}
           disabled={saving !== null}
-          className="flex items-center gap-1.5 rounded-lg bg-crimson-600 px-4 py-2.5 text-[13.5px] font-semibold text-white hover:bg-crimson-700 disabled:opacity-70"
+          className="flex items-center gap-1.5 rounded-lg bg-crimson-600 px-4 py-2.5 text-[13.5px] font-semibold text-on-crimson hover:bg-crimson-700 disabled:opacity-70"
         >
           {saving === "publish" && <Loader2 size={14} className="animate-spin" />}
           Publish exam

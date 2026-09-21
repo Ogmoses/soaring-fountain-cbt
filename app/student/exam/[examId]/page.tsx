@@ -114,7 +114,7 @@ function StudentExamContent() {
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-cream-50 px-6 text-center">
         <AlertTriangle size={24} className="text-crimson-600" />
         <p className="max-w-sm text-[14px] text-ink dark:text-white">{error}</p>
-        <button onClick={() => router.push("/student")} className="mt-2 rounded-lg bg-crimson-600 px-4 py-2.5 text-[13px] font-semibold text-white hover:bg-crimson-700">
+        <button onClick={() => router.push("/student")} className="mt-2 rounded-lg bg-crimson-600 px-4 py-2.5 text-[13px] font-semibold text-on-crimson hover:bg-crimson-700">
           Back to Exam Launchpad
         </button>
       </div>
@@ -140,7 +140,7 @@ function StudentExamContent() {
             Your answers are recorded. Your teacher will publish your result once it's ready.
           </p>
         )}
-        <button onClick={() => router.push("/student")} className="mt-3 rounded-lg bg-crimson-600 px-4 py-2.5 text-[13px] font-semibold text-white hover:bg-crimson-700">
+        <button onClick={() => router.push("/student")} className="mt-3 rounded-lg bg-crimson-600 px-4 py-2.5 text-[13px] font-semibold text-on-crimson hover:bg-crimson-700">
           Back to Exam Launchpad
         </button>
         {submissionResult.allowReview && (

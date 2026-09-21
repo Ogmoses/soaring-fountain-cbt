@@ -209,7 +209,7 @@ export default function ExamInterface({ exam, sessionId, studentName, initialAns
           <div
             className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-semibold tabular-nums transition-colors duration-200 ${
               isWarn1
-                ? "animate-pulse-warn bg-crimson-600 text-white"
+                ? "animate-pulse-warn bg-crimson-600 text-on-crimson"
                 : isWarn5
                 ? "bg-crimson-50 dark:bg-crimson-600/15 text-crimson-700 dark:text-crimson-500"
                 : "bg-background-muted dark:bg-white/5 text-ink dark:text-white"
@@ -221,7 +221,7 @@ export default function ExamInterface({ exam, sessionId, studentName, initialAns
 
           <button
             onClick={() => setPaletteOpen(true)}
-            className="rounded-lg bg-background-muted dark:bg-white/5 p-2 text-ink/70 dark:text-white/70 transition-colors duration-200 hover:bg-crimson-50 dark:hover:bg-crimson-600/15 hover:text-crimson-700 dark:hover:text-crimson-500 lg:hidden"
+            className="rounded-lg bg-background-muted dark:bg-white/5 p-2 text-ink/70 dark:text-on-crimson/70 transition-colors duration-200 hover:bg-crimson-50 dark:hover:bg-crimson-600/15 hover:text-crimson-700 dark:hover:text-crimson-500 lg:hidden"
             aria-label="Question palette"
           >
             <Grid3x3 size={18} />
@@ -232,7 +232,7 @@ export default function ExamInterface({ exam, sessionId, studentName, initialAns
       {(isWarn5 || isWarn1) && (
         <div
           className={`flex items-center justify-center gap-2 px-4 py-1.5 text-[12.5px] font-medium ${
-            isWarn1 ? "bg-crimson-600 text-white" : "bg-crimson-50 dark:bg-crimson-600/15 text-crimson-700 dark:text-crimson-500"
+            isWarn1 ? "bg-crimson-600 text-on-crimson" : "bg-crimson-50 dark:bg-crimson-600/15 text-crimson-700 dark:text-crimson-500"
           }`}
         >
           <AlertTriangle size={13} />
@@ -299,14 +299,14 @@ export default function ExamInterface({ exam, sessionId, studentName, initialAns
               {currentIndex === total - 1 ? (
                 <button
                   onClick={() => setConfirmOpen(true)}
-                  className="rounded-lg bg-crimson-600 px-5 py-2.5 text-[13.5px] font-semibold text-white shadow-card transition-colors duration-200 hover:bg-crimson-700"
+                  className="rounded-lg bg-crimson-600 px-5 py-2.5 text-[13.5px] font-semibold text-on-crimson shadow-card transition-colors duration-200 hover:bg-crimson-700"
                 >
                   Review &amp; submit
                 </button>
               ) : (
                 <button
                   onClick={() => goTo(currentIndex + 1)}
-                  className="flex items-center gap-1.5 rounded-lg bg-crimson-600 px-4 py-2.5 text-[13.5px] font-medium text-white transition-colors duration-200 hover:bg-crimson-700"
+                  className="flex items-center gap-1.5 rounded-lg bg-crimson-600 px-4 py-2.5 text-[13.5px] font-medium text-on-crimson transition-colors duration-200 hover:bg-crimson-700"
                 >
                   Next <ChevronRight size={16} />
                 </button>
@@ -389,7 +389,7 @@ export default function ExamInterface({ exam, sessionId, studentName, initialAns
                 <button
                   onClick={doSubmit}
                   disabled={submitting}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-crimson-600 py-2.5 text-[13.5px] font-semibold text-white transition-colors duration-200 hover:bg-crimson-700 disabled:opacity-70"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-crimson-600 py-2.5 text-[13.5px] font-semibold text-on-crimson transition-colors duration-200 hover:bg-crimson-700 disabled:opacity-70"
                 >
                   {submitting && <Loader2 size={14} className="animate-spin" />}
                   {submitting ? "Submitting…" : "Submit final answers"}
@@ -510,7 +510,7 @@ function PaletteContent({
               onClick={() => onSelect(i)}
               className={`relative flex h-9 w-9 items-center justify-center rounded-md text-[12px] font-semibold transition-colors duration-200 ${
                 isCurrent
-                  ? "bg-crimson-600 text-white"
+                  ? "bg-crimson-600 text-on-crimson"
                   : isAnswered
                   ? "bg-crimson-50 dark:bg-crimson-600/15 text-crimson-700 dark:text-crimson-500"
                   : "bg-background-muted dark:bg-white/5 text-ink/50 dark:text-white/50 hover:bg-black/5"

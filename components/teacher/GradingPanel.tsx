@@ -126,7 +126,7 @@ export default function GradingPanel({ item, hasNext, onSave, onSaveAndNext, onC
           <button
             onClick={() => handle("next")}
             disabled={saving !== null}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-white hover:bg-crimson-700 disabled:opacity-70"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-on-crimson hover:bg-crimson-700 disabled:opacity-70"
           >
             {saving === "next" ? <Loader2 size={14} className="animate-spin" /> : hasNext ? <ArrowRight size={14} /> : <ChevronRight size={14} />}
             {hasNext ? "Save & next" : "Save & finish"}

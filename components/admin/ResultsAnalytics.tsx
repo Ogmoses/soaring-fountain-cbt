@@ -71,7 +71,7 @@ export default function ResultsAnalytics({ pendingResults, classPerformance, sub
                 </div>
                 <button
                   onClick={() => setConfirmExamId(r.examId)}
-                  className="shrink-0 rounded-lg bg-crimson-600 px-3.5 py-2 text-[12.5px] font-semibold text-white hover:bg-crimson-700"
+                  className="shrink-0 rounded-lg bg-crimson-600 px-3.5 py-2 text-[12.5px] font-semibold text-on-crimson hover:bg-crimson-700"
                 >
                   Publish
                 </button>
@@ -118,7 +118,7 @@ export default function ResultsAnalytics({ pendingResults, classPerformance, sub
               <button
                 onClick={() => handlePublish(confirmExamId)}
                 disabled={publishing === confirmExamId}
-                className="flex-1 rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-white hover:bg-crimson-700 disabled:opacity-70"
+                className="flex-1 rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-on-crimson hover:bg-crimson-700 disabled:opacity-70"
               >
                 {publishing === confirmExamId ? "Publishing…" : "Publish"}
               </button>

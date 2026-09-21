@@ -36,6 +36,13 @@ const config: Config = {
           800: "rgb(var(--color-crimson-800) / <alpha-value>)",
           900: "rgb(var(--color-crimson-900) / <alpha-value>)",
         },
+        // Label/icon color to use on top of a crimson-600 (or 700, for
+        // hover) fill — automatically white or near-black, whichever
+        // actually contrasts against the currently chosen accent color.
+        // See lib/themes.ts's getOnAccentColor(). Every button/badge that
+        // sits on a crimson background uses this instead of a hardcoded
+        // `text-white`.
+        "on-crimson": "rgb(var(--color-on-crimson) / <alpha-value>)",
         cream: {
           DEFAULT: "#fff7d3",
           50: "#FFFDF6",

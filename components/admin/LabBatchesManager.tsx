@@ -47,7 +47,7 @@ export default function LabBatchesManager({ rooms, templates, onSaveRoom, onDele
       {tab === "templates" ? (
         <div>
           <div className="mb-3 flex justify-end">
-            <button onClick={() => setTemplateEditor("new")} className="flex items-center gap-1.5 rounded-lg bg-crimson-600 px-3.5 py-2 text-[12.5px] font-semibold text-white hover:bg-crimson-700">
+            <button onClick={() => setTemplateEditor("new")} className="flex items-center gap-1.5 rounded-lg bg-crimson-600 px-3.5 py-2 text-[12.5px] font-semibold text-on-crimson hover:bg-crimson-700">
               <Plus size={14} /> New template
             </button>
           </div>
@@ -68,7 +68,7 @@ export default function LabBatchesManager({ rooms, templates, onSaveRoom, onDele
                     <button onClick={() => setTemplateEditor(t)} className="rounded-md p-1.5 text-ink/40 dark:text-white/40 hover:bg-background-muted dark:hover:bg-white/5 hover:text-ink dark:hover:text-white">
                       <Pencil size={15} />
                     </button>
-                    <button onClick={() => onDeleteTemplate(t.id)} className="rounded-md p-1.5 text-ink/40 dark:text-white/40 hover:bg-crimson-50 dark:hover:bg-crimson-600/15 hover:text-crimson-700 dark:hover:text-crimson-500">
+                    <button onClick={() => onDeleteTemplate(t.id)} className="rounded-md p-1.5 text-ink/40 dark:text-on-crimson/40 hover:bg-crimson-50 dark:hover:bg-crimson-600/15 hover:text-crimson-700 dark:hover:text-crimson-500">
                       <Trash2 size={15} />
                     </button>
                   </div>
@@ -80,7 +80,7 @@ export default function LabBatchesManager({ rooms, templates, onSaveRoom, onDele
       ) : (
         <div>
           <div className="mb-3 flex justify-end">
-            <button onClick={() => setRoomEditor("new")} className="flex items-center gap-1.5 rounded-lg bg-crimson-600 px-3.5 py-2 text-[12.5px] font-semibold text-white hover:bg-crimson-700">
+            <button onClick={() => setRoomEditor("new")} className="flex items-center gap-1.5 rounded-lg bg-crimson-600 px-3.5 py-2 text-[12.5px] font-semibold text-on-crimson hover:bg-crimson-700">
               <Plus size={14} /> New room
             </button>
           </div>
@@ -101,7 +101,7 @@ export default function LabBatchesManager({ rooms, templates, onSaveRoom, onDele
                     <button onClick={() => setRoomEditor(r)} className="rounded-md p-1.5 text-ink/40 dark:text-white/40 hover:bg-background-muted dark:hover:bg-white/5 hover:text-ink dark:hover:text-white">
                       <Pencil size={15} />
                     </button>
-                    <button onClick={() => onDeleteRoom(r.id)} className="rounded-md p-1.5 text-ink/40 dark:text-white/40 hover:bg-crimson-50 dark:hover:bg-crimson-600/15 hover:text-crimson-700 dark:hover:text-crimson-500">
+                    <button onClick={() => onDeleteRoom(r.id)} className="rounded-md p-1.5 text-ink/40 dark:text-on-crimson/40 hover:bg-crimson-50 dark:hover:bg-crimson-600/15 hover:text-crimson-700 dark:hover:text-crimson-500">
                       <Trash2 size={15} />
                     </button>
                   </div>
@@ -240,7 +240,7 @@ function ModalShell({ title, onCancel, onSubmit, saving, error, children }: { ti
           <button onClick={onCancel} disabled={saving} className="flex-1 rounded-lg border border-black/10 dark:border-white/15 py-2.5 text-[13px] font-medium text-ink/70 dark:text-white/70 hover:bg-background-muted dark:hover:bg-white/5 disabled:opacity-50">
             Cancel
           </button>
-          <button onClick={onSubmit} disabled={saving} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-white hover:bg-crimson-700 disabled:opacity-70">
+          <button onClick={onSubmit} disabled={saving} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-on-crimson hover:bg-crimson-700 disabled:opacity-70">
             {saving && <Loader2 size={14} className="animate-spin" />}
             {saving ? "Saving…" : "Save"}
           </button>

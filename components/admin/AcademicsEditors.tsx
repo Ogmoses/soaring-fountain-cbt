@@ -35,7 +35,7 @@ function Shell({ title, onCancel, onSubmit, saving, error, children }: {
           <button onClick={onCancel} disabled={saving} className="flex-1 rounded-lg border border-black/10 dark:border-white/15 py-2.5 text-[13px] font-medium text-ink/70 dark:text-white/70 hover:bg-background-muted dark:hover:bg-white/5 disabled:opacity-50">
             Cancel
           </button>
-          <button onClick={onSubmit} disabled={saving} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-white hover:bg-crimson-700 disabled:opacity-70">
+          <button onClick={onSubmit} disabled={saving} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-on-crimson hover:bg-crimson-700 disabled:opacity-70">
             {saving && <Loader2 size={14} className="animate-spin" />}
             {saving ? "Saving…" : "Save"}
           </button>
@@ -213,7 +213,7 @@ export function SubjectEditor({ initial, classOptions, onSave, onCancel }: {
               type="button"
               onClick={() => toggleClass(c.id)}
               className={`rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors duration-200 ${
-                classIds.includes(c.id) ? "bg-crimson-600 text-white" : "bg-background-muted dark:bg-white/5 text-ink/60 dark:text-white/60 hover:bg-black/5"
+                classIds.includes(c.id) ? "bg-crimson-600 text-on-crimson" : "bg-background-muted dark:bg-white/5 text-ink/60 dark:text-on-crimson/60 hover:bg-black/5"
               }`}
             >
               {c.name}

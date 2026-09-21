@@ -7,9 +7,9 @@
  */
 
 import { useState } from "react";
-import { Plus, Trash2, Loader2, ImagePlus, X, Save, Check, Pipette } from "lucide-react";
+import { Plus, Trash2, Loader2, ImagePlus, X, Save, Check } from "lucide-react";
 import type { GradeBand, SchoolProfile } from "./types";
-import { RECOMMENDED_COLORS, DEFAULT_THEME_COLOR, themeCssVars, buildRampFromHex, isValidHex } from "@/lib/themes";
+import { RECOMMENDED_COLORS, DEFAULT_THEME_COLOR, themeCssVars, buildRampFromHex, getOnAccentColor } from "@/lib/themes";
 
 interface SettingsManagerProps {
   profile: SchoolProfile;
@@ -47,27 +47,12 @@ function applyPreview(color: string) {
 
 function ThemeSection({ currentColor, onSave }: { currentColor?: string; onSave: (color: string) => Promise<void> }) {
   const [selected, setSelected] = useState(currentColor || DEFAULT_THEME_COLOR);
-  const [hexInput, setHexInput] = useState(currentColor || DEFAULT_THEME_COLOR);
-  const [hexError, setHexError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
   const choose = (color: string) => {
     setSelected(color);
-    setHexInput(color);
-    setHexError(false);
     setSaved(false);
-  };
-
-  const handleHexInputChange = (value: string) => {
-    setHexInput(value);
-    const normalized = value.startsWith("#") ? value : `#${value}`;
-    if (isValidHex(normalized)) {
-      setHexError(false);
-      choose(normalized.toUpperCase());
-    } else {
-      setHexError(value.trim().length > 0);
-    }
   };
 
   const handleSave = async () => {
@@ -90,8 +75,7 @@ function ThemeSection({ currentColor, onSave }: { currentColor?: string; onSave:
 
   return (
     <SectionCard title="Site theme" subtitle="Sets the accent color used for buttons, links, and highlights across the whole site — for everyone, not just you">
-      <p className="mb-2.5 text-[11.5px] font-medium uppercase tracking-wide text-ink/40 dark:text-white/40">Recommended — from your brand palettes</p>
-      <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-5">
+      <div className="grid grid-cols-4 gap-3 sm:grid-cols-6">
         {RECOMMENDED_COLORS.map((c) => {
           const isSelected = selected.toUpperCase() === c.hex.toUpperCase();
           return (
@@ -108,7 +92,10 @@ function ThemeSection({ currentColor, onSave }: { currentColor?: string; onSave:
               >
                 <div className="h-9 w-9 rounded-full ring-1 ring-inset ring-black/10 dark:ring-white/15" style={{ backgroundColor: c.hex }} />
                 {isSelected && (
-                  <div className="absolute -right-0.5 -top-0.5 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-crimson-600 text-white ring-2 ring-white dark:ring-[#1A1C20]">
+                  <div
+                    className="absolute -right-0.5 -top-0.5 flex h-4.5 w-4.5 items-center justify-center rounded-full ring-2 ring-white dark:ring-[#1A1C20]"
+                    style={{ backgroundColor: c.hex, color: getOnAccentColor(c.hex) }}
+                  >
                     <Check size={10} strokeWidth={3.5} />
                   </div>
                 )}
@@ -120,44 +107,12 @@ function ThemeSection({ currentColor, onSave }: { currentColor?: string; onSave:
       </div>
 
       <div className="mt-5 border-t border-black/5 pt-4 dark:border-white/10">
-        <p className="mb-2.5 text-[11.5px] font-medium uppercase tracking-wide text-ink/40 dark:text-white/40">Custom color</p>
-        <p className="mb-3 text-[12px] text-ink/50 dark:text-white/50">
-          Not limited to the palette above — pick any color from the full spectrum, or type an exact hex code (e.g. from your school's brand guide).
-        </p>
-        <div className="flex items-center gap-3">
-          <label className="relative flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full ring-1 ring-inset ring-black/10 dark:ring-white/15">
-            <input
-              type="color"
-              value={isValidHex(selected) ? selected : DEFAULT_THEME_COLOR}
-              onChange={(e) => choose(e.target.value.toUpperCase())}
-              className="absolute inset-0 h-[150%] w-[150%] -translate-x-1/4 -translate-y-1/4 cursor-pointer border-none p-0"
-              aria-label="Pick a custom color"
-            />
-          </label>
-          <div className="flex-1">
-            <div className="flex items-center gap-2 rounded-lg border border-black/10 px-3 py-2 dark:border-white/15">
-              <Pipette size={14} className="shrink-0 text-ink/40 dark:text-white/40" />
-              <input
-                type="text"
-                value={hexInput}
-                onChange={(e) => handleHexInputChange(e.target.value)}
-                placeholder="#AB1509"
-                spellCheck={false}
-                className="w-full bg-transparent text-[13px] uppercase tracking-wide text-ink outline-none dark:text-white"
-              />
-            </div>
-            {hexError && <p className="mt-1 text-[11px] text-crimson-600">Not a valid hex color — try a format like #AB1509.</p>}
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-5 border-t border-black/5 pt-4 dark:border-white/10">
         <p className="mb-2.5 text-[11.5px] font-medium uppercase tracking-wide text-ink/40 dark:text-white/40">Preview</p>
         <div className="flex items-center gap-3 rounded-lg bg-background-muted p-3 dark:bg-white/5">
           <button
             type="button"
-            className="rounded-lg px-3.5 py-2 text-[12.5px] font-semibold text-white"
-            style={{ backgroundColor: ramp[600] }}
+            className="rounded-lg border border-black/10 px-3.5 py-2 text-[12.5px] font-semibold dark:border-white/15"
+            style={{ backgroundColor: ramp[600], color: getOnAccentColor(ramp[600]) }}
           >
             Sample button
           </button>
@@ -286,7 +241,7 @@ function GradingScaleSection({ bands: initialBands, onSave }: { bands: GradeBand
             <input type="number" value={b.maxScore} onChange={(e) => update(b.id, { maxScore: Number(e.target.value) })} className="w-full min-w-0 rounded-lg border border-black/10 dark:border-white/15 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500" />
             <input value={b.gradeLetter} onChange={(e) => update(b.id, { gradeLetter: e.target.value })} className="w-full min-w-0 rounded-lg border border-black/10 dark:border-white/15 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500" />
             <input value={b.remark} onChange={(e) => update(b.id, { remark: e.target.value })} className="w-full min-w-0 rounded-lg border border-black/10 dark:border-white/15 px-2.5 py-2 text-[12.5px] outline-none focus:border-crimson-500" />
-            <button onClick={() => removeBand(b.id)} className="shrink-0 rounded-md p-2 text-ink/30 dark:text-white/30 hover:bg-crimson-50 dark:hover:bg-crimson-600/15 hover:text-crimson-700 dark:hover:text-crimson-500">
+            <button onClick={() => removeBand(b.id)} className="shrink-0 rounded-md p-2 text-ink/30 dark:text-on-crimson/30 hover:bg-crimson-50 dark:hover:bg-crimson-600/15 hover:text-crimson-700 dark:hover:text-crimson-500">
               <Trash2 size={14} />
             </button>
           </div>
@@ -306,7 +261,7 @@ function GradingScaleSection({ bands: initialBands, onSave }: { bands: GradeBand
               <div className="flex-1">
                 <MiniField label="Remark" value={b.remark} onChange={(v) => update(b.id, { remark: v })} />
               </div>
-              <button onClick={() => removeBand(b.id)} className="shrink-0 rounded-md border border-black/10 dark:border-white/15 p-2.5 text-ink/40 dark:text-white/40 hover:bg-crimson-50 dark:hover:bg-crimson-600/15 hover:text-crimson-700 dark:hover:text-crimson-500">
+              <button onClick={() => removeBand(b.id)} className="shrink-0 rounded-md border border-black/10 dark:border-white/15 p-2.5 text-ink/40 dark:text-on-crimson/40 hover:bg-crimson-50 dark:hover:bg-crimson-600/15 hover:text-crimson-700 dark:hover:text-crimson-500">
                 <Trash2 size={14} />
               </button>
             </div>
@@ -364,7 +319,7 @@ function SaveButton({ onClick, saving, saved, label = "Save changes" }: { onClic
     <button
       onClick={onClick}
       disabled={saving}
-      className="mt-4 flex items-center gap-1.5 rounded-lg bg-crimson-600 px-4 py-2.5 text-[13px] font-semibold text-white transition-colors duration-200 hover:bg-crimson-700 disabled:opacity-70"
+      className="mt-4 flex items-center gap-1.5 rounded-lg bg-crimson-600 px-4 py-2.5 text-[13px] font-semibold text-on-crimson transition-colors duration-200 hover:bg-crimson-700 disabled:opacity-70"
     >
       {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
       {saving ? "Saving…" : saved ? "Saved" : label}

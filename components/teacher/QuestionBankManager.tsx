@@ -62,7 +62,7 @@ export default function QuestionBankManager({ subjects, classes, questions, onCr
         </div>
         <button
           onClick={() => setEditorState("new")}
-          className="flex items-center justify-center gap-1.5 rounded-lg bg-crimson-600 px-4 py-2.5 text-[13px] font-semibold text-white transition-colors duration-200 hover:bg-crimson-700"
+          className="flex items-center justify-center gap-1.5 rounded-lg bg-crimson-600 px-4 py-2.5 text-[13px] font-semibold text-on-crimson transition-colors duration-200 hover:bg-crimson-700"
         >
           <Plus size={16} /> New question
         </button>
@@ -149,7 +149,7 @@ export default function QuestionBankManager({ subjects, classes, questions, onCr
                 <button onClick={() => setEditorState(q)} className="rounded-md p-1.5 text-ink/40 dark:text-white/40 hover:bg-background-muted dark:hover:bg-white/5 hover:text-ink dark:hover:text-white">
                   <Pencil size={15} />
                 </button>
-                <button onClick={() => setDeleteTarget(q)} className="rounded-md p-1.5 text-ink/40 dark:text-white/40 hover:bg-crimson-50 dark:hover:bg-crimson-600/15 hover:text-crimson-700 dark:hover:text-crimson-500">
+                <button onClick={() => setDeleteTarget(q)} className="rounded-md p-1.5 text-ink/40 dark:text-on-crimson/40 hover:bg-crimson-50 dark:hover:bg-crimson-600/15 hover:text-crimson-700 dark:hover:text-crimson-500">
                   <Trash2 size={15} />
                 </button>
               </div>
@@ -190,7 +190,7 @@ export default function QuestionBankManager({ subjects, classes, questions, onCr
                   await onDelete(deleteTarget.id);
                   setDeleteTarget(null);
                 }}
-                className="flex-1 rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-white hover:bg-crimson-700"
+                className="flex-1 rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-on-crimson hover:bg-crimson-700"
               >
                 Delete
               </button>

@@ -95,7 +95,7 @@ function ExamRow({ exam, onEdit, onReuse, onViewRoster, onRequestDelete }: {
           </button>
         )}
         {exam.status !== "archived" && (
-          <button onClick={onRequestDelete} className="rounded-md p-2 text-ink/50 dark:text-white/50 hover:bg-crimson-50 dark:hover:bg-crimson-600/15 hover:text-crimson-600" title={exam.hasStudentActivity ? "Archive" : "Delete"}>
+          <button onClick={onRequestDelete} className="rounded-md p-2 text-ink/50 dark:text-on-crimson/50 hover:bg-crimson-50 dark:hover:bg-crimson-600/15 hover:text-crimson-600" title={exam.hasStudentActivity ? "Archive" : "Delete"}>
             {exam.hasStudentActivity ? <Archive size={15} /> : <Trash2 size={15} />}
           </button>
         )}
@@ -179,7 +179,7 @@ export default function MyExams({ exams, classes, onNew, onEdit, onReuse, onView
         </div>
         <button
           onClick={onNew}
-          className="flex items-center justify-center gap-1.5 rounded-lg bg-crimson-600 px-4 py-2.5 text-[13px] font-semibold text-white hover:bg-crimson-700"
+          className="flex items-center justify-center gap-1.5 rounded-lg bg-crimson-600 px-4 py-2.5 text-[13px] font-semibold text-on-crimson hover:bg-crimson-700"
         >
           <Plus size={16} /> New exam
         </button>
@@ -237,7 +237,7 @@ export default function MyExams({ exams, classes, onNew, onEdit, onReuse, onView
               <button
                 onClick={handleConfirm}
                 disabled={busy}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-white hover:bg-crimson-700 disabled:opacity-70"
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-crimson-600 py-2.5 text-[13px] font-semibold text-on-crimson hover:bg-crimson-700 disabled:opacity-70"
               >
                 {busy && <Loader2 size={14} className="animate-spin" />}
                 {confirmTarget.hasStudentActivity ? "Archive" : "Delete"}
